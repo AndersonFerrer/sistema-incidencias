@@ -45,12 +45,14 @@ public class AuthService {
     }
 
     public UsuarioSesionResponse obtenerSesionActual(String authorizationHeader) {
+        return mapearUsuarioSesion(obtenerUsuarioActual(authorizationHeader));
+    }
+
+    public Usuario obtenerUsuarioActual(String authorizationHeader) {
         TokenClaims claims = jwtService.validarToken(extraerToken(authorizationHeader));
-        Usuario usuario = usuarioDao.buscarPorId(claims.getUsuarioId())
+        return usuarioDao.buscarPorId(claims.getUsuarioId())
                 .filter(Usuario::estaActivo)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario de sesion no encontrado"));
-
-        return mapearUsuarioSesion(usuario);
     }
 
     private AuthResponse construirRespuesta(Usuario usuario) {
