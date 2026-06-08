@@ -1,8 +1,8 @@
 package com.integrador.sistemaincidencias.catalogos.controller;
 
-import com.integrador.sistemaincidencias.catalogos.dto.EstadoProcesoRequest;
-import com.integrador.sistemaincidencias.catalogos.dto.EstadoProcesoResponse;
-import com.integrador.sistemaincidencias.catalogos.service.EstadoProcesoService;
+import com.integrador.sistemaincidencias.catalogos.dto.EstadoAprobacionRequest;
+import com.integrador.sistemaincidencias.catalogos.dto.EstadoAprobacionResponse;
+import com.integrador.sistemaincidencias.catalogos.service.EstadoAprobacionService;
 import com.integrador.sistemaincidencias.usuarios.service.PermisoAdministracionService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -20,42 +20,42 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/estados-proceso")
+@RequestMapping("/api/estados-aprobacion")
 @RequiredArgsConstructor
-public class EstadoProcesoController {
+public class EstadoAprobacionController {
 
-    private final EstadoProcesoService estadoProcesoService;
+    private final EstadoAprobacionService estadoAprobacionService;
     private final PermisoAdministracionService permisoAdministracionService;
 
     @GetMapping
-    public ResponseEntity<List<EstadoProcesoResponse>> listar(
+    public ResponseEntity<List<EstadoAprobacionResponse>> listar(
             @RequestHeader("Authorization") String token
     ) {
         permisoAdministracionService.validarAdministrador(token);
-        return ResponseEntity.ok(estadoProcesoService.listar());
+        return ResponseEntity.ok(estadoAprobacionService.listar());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EstadoProcesoResponse> obtener(@PathVariable UUID id) {
-        return ResponseEntity.ok(estadoProcesoService.obtener(id));
+    public ResponseEntity<EstadoAprobacionResponse> obtener(@PathVariable UUID id) {
+        return ResponseEntity.ok(estadoAprobacionService.obtener(id));
     }
 
     @PostMapping
-    public ResponseEntity<EstadoProcesoResponse> crear(
+    public ResponseEntity<EstadoAprobacionResponse> crear(
             @RequestHeader("Authorization") String token,
-            @Valid @RequestBody EstadoProcesoRequest request
+            @Valid @RequestBody EstadoAprobacionRequest request
     ) {
         permisoAdministracionService.validarAdministrador(token);
-        return ResponseEntity.status(HttpStatus.CREATED).body(estadoProcesoService.crear(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(estadoAprobacionService.crear(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EstadoProcesoResponse> actualizar(
+    public ResponseEntity<EstadoAprobacionResponse> actualizar(
             @PathVariable UUID id,
             @RequestHeader("Authorization") String token,
-            @Valid @RequestBody EstadoProcesoRequest request
+            @Valid @RequestBody EstadoAprobacionRequest request
     ) {
         permisoAdministracionService.validarAdministrador(token);
-        return ResponseEntity.ok(estadoProcesoService.actualizar(id, request));
+        return ResponseEntity.ok(estadoAprobacionService.actualizar(id, request));
     }
 }

@@ -1,8 +1,8 @@
 package com.integrador.sistemaincidencias.catalogos.controller;
 
-import com.integrador.sistemaincidencias.catalogos.dto.EstadoProcesoRequest;
-import com.integrador.sistemaincidencias.catalogos.dto.EstadoProcesoResponse;
-import com.integrador.sistemaincidencias.catalogos.service.EstadoProcesoService;
+import com.integrador.sistemaincidencias.catalogos.dto.CategoriaRequest;
+import com.integrador.sistemaincidencias.catalogos.dto.CategoriaResponse;
+import com.integrador.sistemaincidencias.catalogos.service.CategoriaService;
 import com.integrador.sistemaincidencias.usuarios.service.PermisoAdministracionService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -20,42 +20,42 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/estados-proceso")
+@RequestMapping("/api/categorias")
 @RequiredArgsConstructor
-public class EstadoProcesoController {
+public class CategoriaController {
 
-    private final EstadoProcesoService estadoProcesoService;
+    private final CategoriaService categoriaService;
     private final PermisoAdministracionService permisoAdministracionService;
 
     @GetMapping
-    public ResponseEntity<List<EstadoProcesoResponse>> listar(
+    public ResponseEntity<List<CategoriaResponse>> listar(
             @RequestHeader("Authorization") String token
     ) {
         permisoAdministracionService.validarAdministrador(token);
-        return ResponseEntity.ok(estadoProcesoService.listar());
+        return ResponseEntity.ok(categoriaService.listar());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EstadoProcesoResponse> obtener(@PathVariable UUID id) {
-        return ResponseEntity.ok(estadoProcesoService.obtener(id));
+    public ResponseEntity<CategoriaResponse> obtener(@PathVariable UUID id) {
+        return ResponseEntity.ok(categoriaService.obtener(id));
     }
 
     @PostMapping
-    public ResponseEntity<EstadoProcesoResponse> crear(
+    public ResponseEntity<CategoriaResponse> crear(
             @RequestHeader("Authorization") String token,
-            @Valid @RequestBody EstadoProcesoRequest request
+            @Valid @RequestBody CategoriaRequest request
     ) {
         permisoAdministracionService.validarAdministrador(token);
-        return ResponseEntity.status(HttpStatus.CREATED).body(estadoProcesoService.crear(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(categoriaService.crear(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EstadoProcesoResponse> actualizar(
+    public ResponseEntity<CategoriaResponse> actualizar(
             @PathVariable UUID id,
             @RequestHeader("Authorization") String token,
-            @Valid @RequestBody EstadoProcesoRequest request
+            @Valid @RequestBody CategoriaRequest request
     ) {
         permisoAdministracionService.validarAdministrador(token);
-        return ResponseEntity.ok(estadoProcesoService.actualizar(id, request));
+        return ResponseEntity.ok(categoriaService.actualizar(id, request));
     }
 }
