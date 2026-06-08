@@ -61,6 +61,11 @@ public class AplicativoClienteService {
         return toResponse(actual);
     }
 
+    public void eliminar(UUID id) {
+        AplicativoCliente actual = buscar(id);
+        aplicativoClienteDao.eliminar(actual.getId());
+    }
+
     private AplicativoCliente buscar(UUID id) {
         return aplicativoClienteDao.buscarPorId(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Aplicativo cliente no encontrado"));

@@ -41,4 +41,9 @@ public final class AplicativoClienteSql {
             SET api_key = ?
             WHERE id = ?
             """;
+
+    public static final String ELIMINAR = """
+            DELETE FROM aplicativos_cliente
+            WHERE id = ?
+            """;
 }

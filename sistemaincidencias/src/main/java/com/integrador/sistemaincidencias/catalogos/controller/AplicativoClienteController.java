@@ -76,6 +76,7 @@ public class AplicativoClienteController {
             @RequestHeader("Authorization") String token
     ) {
         permisoAdministracionService.validarAdministrador(token);
+        aplicativoClienteService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 }

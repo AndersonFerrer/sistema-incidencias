@@ -2,9 +2,9 @@
 	"info": {
 		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
 		"name": "Sistema Incidencias",
-		"description": "Colección de endpoints para el Sistema de Gestión de Incidencias.\n\nBase URL: http://localhost:8080\n\n## Autenticación\nLa mayoría de endpoints requieren header Authorization: Bearer {{token}}\nEl token se obtiene llamando a POST /api/auth/login o POST /api/auth/demo\n\n## Variables de colección\n- `baseUrl`: http://localhost:8080\n- `token`: JWT obtenido tras login\n- `usuarioId`: UUID del usuario para operaciones específicas\n- `rolId`: UUID del rol para operaciones específicas",
+		"description": "Colección de endpoints para el Sistema de Gestión de Incidencias.\n\nBase URL: http://localhost:8080\n\n## Autenticación\nLa mayoría de endpoints requieren header Authorization: Bearer {{token}}\nEl token se obtiene llamando a POST /api/auth/login o POST /api/auth/demo\n\n## Variables de colección\n- `baseUrl`: http://localhost:8080\n- `token`: JWT obtenido tras login\n- `usuarioId`: UUID del usuario para operaciones específicas\n- `rolId`: UUID del rol para operaciones específicas\n- `aplicativoId`: UUID del aplicativo\n- `categoriaId`: UUID de la categoría\n- `estadoAprobacionId`: UUID del estado de aprobación\n- `estadoProcesoId`: UUID del estado de proceso",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"version": "1.0.0"
+		"version": "1.1.0"
 	},
 	"auth": {
 		"type": "bearer",
@@ -158,16 +158,6 @@
 		{
 			"name": "Usuarios",
 			"description": "CRUD de usuarios. Requiere rol ADMINISTRADOR.",
-			"auth": {
-				"type": "bearer",
-				"bearer": [
-					{
-						"key": "token",
-						"value": "{{token}}",
-						"type": "string"
-					}
-				]
-			},
 			"item": [
 				{
 					"name": "Listar usuarios",
@@ -241,8 +231,7 @@
 							"path": ["api", "usuarios", "{{usuarioId}}"]
 						},
 						"description": "Obtiene un usuario por su UUID."
-					},
-					"response": []
+					}
 				},
 				{
 					"name": "Crear usuario",
@@ -312,8 +301,7 @@
 							"path": ["api", "usuarios", "{{usuarioId}}"]
 						},
 						"description": "Actualiza datos de un usuario existente (no incluye password).\n\nBody requerido:\n- nombre (String, 1-150)\n- email (String, email válido, 1-150)\n- rolCodigo (String, 1-50)\n- avatarUrl (String, max 500, opcional)\n- activo (Boolean, opcional, default true)"
-					},
-					"response": []
+					}
 				},
 				{
 					"name": "Cambiar password",
@@ -344,8 +332,7 @@
 							"path": ["api", "usuarios", "{{usuarioId}}", "password"]
 						},
 						"description": "Cambia la contraseña de un usuario.\n\nBody requerido:\n- password (String, 6-100): nueva contraseña\n\nRetorna 204 No Content en éxito."
-					},
-					"response": []
+					}
 				},
 				{
 					"name": "Activar usuario",
@@ -363,8 +350,7 @@
 							"path": ["api", "usuarios", "{{usuarioId}}", "activar"]
 						},
 						"description": "Activa un usuario (establece activo = true). Sin body."
-					},
-					"response": []
+					}
 				},
 				{
 					"name": "Desactivar usuario",
@@ -382,24 +368,13 @@
 							"path": ["api", "usuarios", "{{usuarioId}}", "desactivar"]
 						},
 						"description": "Desactiva un usuario (establece activo = false). Sin body."
-					},
-					"response": []
+					}
 				}
 			]
 		},
 		{
 			"name": "Roles",
 			"description": "CRUD de roles. Requiere rol ADMINISTRADOR.",
-			"auth": {
-				"type": "bearer",
-				"bearer": [
-					{
-						"key": "token",
-						"value": "{{token}}",
-						"type": "string"
-					}
-				]
-			},
 			"item": [
 				{
 					"name": "Listar roles",
@@ -443,8 +418,7 @@
 							"path": ["api", "roles", "{{rolId}}"]
 						},
 						"description": "Obtiene un rol por su UUID."
-					},
-					"response": []
+					}
 				},
 				{
 					"name": "Crear rol",
@@ -514,8 +488,7 @@
 							"path": ["api", "roles", "{{rolId}}"]
 						},
 						"description": "Actualiza un rol existente.\n\nBody requerido:\n- codigo (String, 1-50)\n- nombre (String, 1-100)\n- descripcion (String, max 255, opcional)\n- activo (Boolean, opcional, default true)"
-					},
-					"response": []
+					}
 				},
 				{
 					"name": "Eliminar rol",
@@ -533,8 +506,523 @@
 							"path": ["api", "roles", "{{rolId}}"]
 						},
 						"description": "Elimina un rol. No debe tener usuarios asignados.\nRetorna 204 No Content en éxito."
+					}
+				}
+			]
+		},
+		{
+			"name": "Aplicativos",
+			"description": "CRUD de aplicativos cliente. Requiere rol ADMINISTRADOR.",
+			"item": [
+				{
+					"name": "Listar aplicativos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/aplicativos",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "aplicativos"]
+						},
+						"description": "Lista todos los aplicativos cliente registrados."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "Lista de aplicativos (200)",
+							"status": "OK",
+							"code": 200,
+							"body": "[\n    {\n        \"id\": \"990e8400-e29b-41d4-a716-446655440005\",\n        \"nombre\": \"App Móvil\",\n        \"apiKey\": \"A1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6\",\n        \"activo\": true\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Obtener aplicativo por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/aplicativos/{{aplicativoId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "aplicativos", "{{aplicativoId}}"]
+						},
+						"description": "Obtiene un aplicativo cliente por su UUID. No requiere token de administrador."
+					}
+				},
+				{
+					"name": "Crear aplicativo",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"App Móvil\",\n    \"activo\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/aplicativos",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "aplicativos"]
+						},
+						"description": "Crea un nuevo aplicativo cliente. La API key se genera automáticamente.\n\nBody requerido:\n- nombre (String, 1-100): nombre único del aplicativo\n- activo (Boolean, opcional, default true)"
+					},
+					"response": [
+						{
+							"name": "Aplicativo creado (201)",
+							"status": "Created",
+							"code": 201,
+							"body": "{\n    \"id\": \"990e8400-e29b-41d4-a716-446655440005\",\n    \"nombre\": \"App Móvil\",\n    \"apiKey\": \"A1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6\",\n    \"activo\": true\n}"
+						}
+					]
+				},
+				{
+					"name": "Actualizar aplicativo",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"App Móvil v2\",\n    \"activo\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/aplicativos/{{aplicativoId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "aplicativos", "{{aplicativoId}}"]
+						},
+						"description": "Actualiza un aplicativo cliente existente (no incluye API key).\n\nBody requerido:\n- nombre (String, 1-100): nombre único\n- activo (Boolean, opcional, default true)"
+					}
+				},
+				{
+					"name": "Rotar API key",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/aplicativos/{{aplicativoId}}/rotar-api-key",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "aplicativos", "{{aplicativoId}}", "rotar-api-key"]
+						},
+						"description": "Genera una nueva API key para el aplicativo. La key anterior deja de ser válida. Sin body."
+					}
+				},
+				{
+					"name": "Eliminar aplicativo",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/aplicativos/{{aplicativoId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "aplicativos", "{{aplicativoId}}"]
+						},
+						"description": "Elimina un aplicativo cliente por su UUID.\nRetorna 204 No Content en éxito."
+					}
+				}
+			]
+		},
+		{
+			"name": "Categorías",
+			"description": "CRUD de categorías de incidencia. Requiere rol ADMINISTRADOR.",
+			"item": [
+				{
+					"name": "Listar categorías",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/categorias",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "categorias"]
+						},
+						"description": "Lista todas las categorías de incidencia."
+					},
+					"response": [
+						{
+							"name": "Lista de categorías (200)",
+							"status": "OK",
+							"code": 200,
+							"body": "[\n    {\n        \"id\": \"aa0e8400-e29b-41d4-a716-446655440006\",\n        \"nombre\": \"Error de sistema\",\n        \"descripcion\": \"Fallos en módulos del sistema\",\n        \"activo\": true\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Obtener categoría por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/categorias/{{categoriaId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "categorias", "{{categoriaId}}"]
+						},
+						"description": "Obtiene una categoría por su UUID."
+					}
+				},
+				{
+					"name": "Crear categoría",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Error de sistema\",\n    \"descripcion\": \"Fallos en módulos del sistema\",\n    \"activo\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/categorias",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "categorias"]
+						},
+						"description": "Crea una nueva categoría de incidencia.\n\nBody:\n- nombre (String, 1-100): nombre de la categoría\n- descripcion (String, max 500, opcional)\n- activo (Boolean, opcional, default true)"
+					},
+					"response": [
+						{
+							"name": "Categoría creada (201)",
+							"status": "Created",
+							"code": 201,
+							"body": "{\n    \"id\": \"aa0e8400-e29b-41d4-a716-446655440006\",\n    \"nombre\": \"Error de sistema\",\n    \"descripcion\": \"Fallos en módulos del sistema\",\n    \"activo\": true\n}"
+						}
+					]
+				},
+				{
+					"name": "Actualizar categoría",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Error de sistema crítico\",\n    \"descripcion\": \"Fallos graves en módulos del sistema\",\n    \"activo\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/categorias/{{categoriaId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "categorias", "{{categoriaId}}"]
+						},
+						"description": "Actualiza una categoría existente.\n\nBody:\n- nombre (String, 1-100)\n- descripcion (String, max 500, opcional)\n- activo (Boolean, opcional, default true)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Estados de Aprobación",
+			"description": "CRUD de estados de aprobación. Requiere rol ADMINISTRADOR.\n\nEstados iniciales: SOLICITADA, APROBADA, RECHAZADA",
+			"item": [
+				{
+					"name": "Listar estados de aprobación",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/estados-aprobacion",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "estados-aprobacion"]
+						},
+						"description": "Lista todos los estados de aprobación."
+					},
+					"response": [
+						{
+							"name": "Lista de estados (200)",
+							"status": "OK",
+							"code": 200,
+							"body": "[\n    {\n        \"id\": \"bb0e8400-e29b-41d4-a716-446655440007\",\n        \"clave\": \"SOLICITADA\",\n        \"etiqueta\": \"Solicitada\",\n        \"activo\": true\n    },\n    {\n        \"id\": \"bb0e8400-e29b-41d4-a716-446655440008\",\n        \"clave\": \"APROBADA\",\n        \"etiqueta\": \"Aprobada\",\n        \"activo\": true\n    },\n    {\n        \"id\": \"bb0e8400-e29b-41d4-a716-446655440009\",\n        \"clave\": \"RECHAZADA\",\n        \"etiqueta\": \"Rechazada\",\n        \"activo\": true\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Obtener estado de aprobación por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/estados-aprobacion/{{estadoAprobacionId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "estados-aprobacion", "{{estadoAprobacionId}}"]
+						},
+						"description": "Obtiene un estado de aprobación por su UUID."
+					}
+				},
+				{
+					"name": "Crear estado de aprobación",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clave\": \"EN_REVISION\",\n    \"etiqueta\": \"En Revisión\",\n    \"activo\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/estados-aprobacion",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "estados-aprobacion"]
+						},
+						"description": "Crea un nuevo estado de aprobación.\n\nBody requerido:\n- clave (String, 1-50): código único del estado\n- etiqueta (String, 1-150): nombre descriptivo\n- activo (Boolean, opcional, default true)"
+					},
+					"response": [
+						{
+							"name": "Estado creado (201)",
+							"status": "Created",
+							"code": 201,
+							"body": "{\n    \"id\": \"bb0e8400-e29b-41d4-a716-446655440010\",\n    \"clave\": \"EN_REVISION\",\n    \"etiqueta\": \"En Revisión\",\n    \"activo\": true\n}"
+						}
+					]
+				},
+				{
+					"name": "Actualizar estado de aprobación",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clave\": \"EN_REVISION\",\n    \"etiqueta\": \"En Revisión Extendida\",\n    \"activo\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/estados-aprobacion/{{estadoAprobacionId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "estados-aprobacion", "{{estadoAprobacionId}}"]
+						},
+						"description": "Actualiza un estado de aprobación existente.\n\nBody requerido:\n- clave (String, 1-50)\n- etiqueta (String, 1-150)\n- activo (Boolean, opcional, default true)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Estados de Proceso",
+			"description": "CRUD de estados de proceso operativo. Requiere rol ADMINISTRADOR.\n\nEstados iniciales: PENDIENTE, EN_PROCESO, FINALIZADA",
+			"item": [
+				{
+					"name": "Listar estados de proceso",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/estados-proceso",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "estados-proceso"]
+						},
+						"description": "Lista todos los estados de proceso operativo, ordenados por el campo orden."
+					},
+					"response": [
+						{
+							"name": "Lista de estados (200)",
+							"status": "OK",
+							"code": 200,
+							"body": "[\n    {\n        \"id\": \"cc0e8400-e29b-41d4-a716-446655440011\",\n        \"clave\": \"PENDIENTE\",\n        \"etiqueta\": \"Pendiente\",\n        \"esTerminal\": false,\n        \"orden\": 1,\n        \"activo\": true\n    },\n    {\n        \"id\": \"cc0e8400-e29b-41d4-a716-446655440012\",\n        \"clave\": \"EN_PROCESO\",\n        \"etiqueta\": \"En Proceso\",\n        \"esTerminal\": false,\n        \"orden\": 2,\n        \"activo\": true\n    },\n    {\n        \"id\": \"cc0e8400-e29b-41d4-a716-446655440013\",\n        \"clave\": \"FINALIZADA\",\n        \"etiqueta\": \"Finalizada\",\n        \"esTerminal\": true,\n        \"orden\": 3,\n        \"activo\": true\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Obtener estado de proceso por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/estados-proceso/{{estadoProcesoId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "estados-proceso", "{{estadoProcesoId}}"]
+						},
+						"description": "Obtiene un estado de proceso por su UUID."
+					}
+				},
+				{
+					"name": "Crear estado de proceso",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clave\": \"EN_ESPERA\",\n    \"etiqueta\": \"En Espera\",\n    \"esTerminal\": false,\n    \"orden\": 4,\n    \"activo\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/estados-proceso",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "estados-proceso"]
+						},
+						"description": "Crea un nuevo estado de proceso.\n\nBody requerido:\n- clave (String, 1-50, solo mayúsculas/números/guiones bajos): código único\n- etiqueta (String, 1-100): nombre descriptivo\n- esTerminal (Boolean, requerido): true si es estado final\n- orden (Integer, >=1, requerido): orden en el flujo\n- activo (Boolean, opcional, default true)"
+					},
+					"response": [
+						{
+							"name": "Estado creado (201)",
+							"status": "Created",
+							"code": 201,
+							"body": "{\n    \"id\": \"cc0e8400-e29b-41d4-a716-446655440014\",\n    \"clave\": \"EN_ESPERA\",\n    \"etiqueta\": \"En Espera\",\n    \"esTerminal\": false,\n    \"orden\": 4,\n    \"activo\": true\n}"
+						}
+					]
+				},
+				{
+					"name": "Actualizar estado de proceso",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clave\": \"EN_ESPERA\",\n    \"etiqueta\": \"En Espera de Cliente\",\n    \"esTerminal\": false,\n    \"orden\": 4,\n    \"activo\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/estados-proceso/{{estadoProcesoId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "estados-proceso", "{{estadoProcesoId}}"]
+						},
+						"description": "Actualiza un estado de proceso existente.\n\nBody requerido:\n- clave (String, 1-50)\n- etiqueta (String, 1-100)\n- esTerminal (Boolean, requerido)\n- orden (Integer, >=1, requerido)\n- activo (Boolean, opcional, default true)"
+					}
 				}
 			]
 		}
@@ -557,6 +1045,26 @@
 		},
 		{
 			"key": "rolId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "aplicativoId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "categoriaId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "estadoAprobacionId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "estadoProcesoId",
 			"value": "",
 			"type": "string"
 		}

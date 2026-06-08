@@ -98,4 +98,14 @@ public class AplicativoClienteDao {
             throw new AccesoDatosException("Error al rotar API key", exception);
         }
     }
+
+    public void eliminar(UUID id) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(AplicativoClienteSql.ELIMINAR)) {
+            statement.setObject(1, id);
+            statement.executeUpdate();
+        } catch (SQLException exception) {
+            throw new AccesoDatosException("Error al eliminar aplicativo cliente", exception);
+        }
+    }
 }
