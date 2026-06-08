@@ -1,0 +1,564 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "Sistema Incidencias",
+		"description": "Colección de endpoints para el Sistema de Gestión de Incidencias.\n\nBase URL: http://localhost:8080\n\n## Autenticación\nLa mayoría de endpoints requieren header Authorization: Bearer {{token}}\nEl token se obtiene llamando a POST /api/auth/login o POST /api/auth/demo\n\n## Variables de colección\n- `baseUrl`: http://localhost:8080\n- `token`: JWT obtenido tras login\n- `usuarioId`: UUID del usuario para operaciones específicas\n- `rolId`: UUID del rol para operaciones específicas",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"version": "1.0.0"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"description": "Endpoints de autenticación. No requieren token (excepto /me).",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('token', response.token);",
+									"    pm.collectionVariables.set('usuarioId', response.usuario.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@sistema.com\",\n    \"password\": \"admin123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "Autentica un usuario con email y password. Retorna JWT token, datos del usuario y fecha de expiración."
+					},
+					"response": [
+						{
+							"name": "Login exitoso (200)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"token\": \"eyJhbGciOiJIUzI1NiJ9...\",\n    \"tipo\": \"Bearer\",\n    \"expiraEn\": \"2026-06-08T14:30:00\",\n    \"usuario\": {\n        \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n        \"nombre\": \"Admin\",\n        \"email\": \"admin@sistema.com\",\n        \"rol\": \"ADMINISTRADOR\",\n        \"avatarUrl\": null\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Login Demo",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('token', response.token);",
+									"    pm.collectionVariables.set('usuarioId', response.usuario.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rol\": \"ADMINISTRADOR\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/demo",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "demo"]
+						},
+						"description": "Login simplificado para desarrollo. Retorna JWT directamente sin validar credenciales. Body opcional: { \"rol\": \"ADMINISTRADOR\" | \"AGENTE\" | \"USUARIO\" }"
+					},
+					"response": [
+						{
+							"name": "Login Demo exitoso (200)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"token\": \"eyJhbGciOiJIUzI1NiJ9...\",\n    \"tipo\": \"Bearer\",\n    \"expiraEn\": \"2026-06-10T14:30:00\",\n    \"usuario\": {\n        \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n        \"nombre\": \"Admin Demo\",\n        \"email\": \"admin@sistema.com\",\n        \"rol\": \"ADMINISTRADOR\",\n        \"avatarUrl\": null\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Obtener sesión actual",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "me"]
+						},
+						"description": "Retorna la información del usuario autenticado según el token JWT enviado."
+					},
+					"response": [
+						{
+							"name": "Sesión válida (200)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"nombre\": \"Admin\",\n    \"email\": \"admin@sistema.com\",\n    \"rol\": \"ADMINISTRADOR\",\n    \"avatarUrl\": null\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Usuarios",
+			"description": "CRUD de usuarios. Requiere rol ADMINISTRADOR.",
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{token}}",
+						"type": "string"
+					}
+				]
+			},
+			"item": [
+				{
+					"name": "Listar usuarios",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/usuarios?texto=&rol=&activo=&limit=20&offset=0",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "usuarios"],
+							"query": [
+								{
+									"key": "texto",
+									"value": "",
+									"description": "Filtro por nombre o email (opcional)",
+									"disabled": true
+								},
+								{
+									"key": "rol",
+									"value": "",
+									"description": "Filtro por código de rol (opcional). Ej: ADMINISTRADOR, AGENTE, USUARIO",
+									"disabled": true
+								},
+								{
+									"key": "activo",
+									"value": "",
+									"description": "Filtro por estado activo (opcional). true/false",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Límite de resultados (default 20)"
+								},
+								{
+									"key": "offset",
+									"value": "0",
+									"description": "Desplazamiento para paginación (default 0)"
+								}
+							]
+						},
+						"description": "Lista usuarios con filtros opcionales y paginación.\n\nQuery params opcionales:\n- texto: búsqueda por nombre o email\n- rol: código del rol (ADMINISTRADOR, AGENTE, USUARIO)\n- activo: true/false\n- limit: cantidad máxima (default 20)\n- offset: desplazamiento (default 0)"
+					},
+					"response": [
+						{
+							"name": "Lista de usuarios (200)",
+							"status": "OK",
+							"code": 200,
+							"body": "[\n    {\n        \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n        \"nombre\": \"Admin\",\n        \"email\": \"admin@sistema.com\",\n        \"rol\": {\n            \"id\": \"660e8400-e29b-41d4-a716-446655440001\",\n            \"codigo\": \"ADMINISTRADOR\",\n            \"nombre\": \"Administrador\",\n            \"descripcion\": \"Control total del sistema\",\n            \"activo\": true\n        },\n        \"activo\": true,\n        \"avatarUrl\": null,\n        \"creadoEn\": \"2026-01-15T10:00:00\",\n        \"actualizadoEn\": \"2026-06-01T08:00:00\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Obtener usuario por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "usuarios", "{{usuarioId}}"]
+						},
+						"description": "Obtiene un usuario por su UUID."
+					},
+					"response": []
+				},
+				{
+					"name": "Crear usuario",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Nuevo Usuario\",\n    \"email\": \"nuevo@sistema.com\",\n    \"password\": \"password123\",\n    \"rolCodigo\": \"USUARIO\",\n    \"avatarUrl\": \"https://example.com/avatar.png\",\n    \"activo\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/usuarios",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "usuarios"]
+						},
+						"description": "Crea un nuevo usuario.\n\nBody requerido:\n- nombre (String, 1-150): nombre completo\n- email (String, email válido, 1-150): debe ser único\n- password (String, 6-100): contraseña\n- rolCodigo (String, 1-50): código del rol existente\n- avatarUrl (String, max 500, opcional): URL del avatar\n- activo (Boolean, opcional, default true): estado del usuario"
+					},
+					"response": [
+						{
+							"name": "Usuario creado (201)",
+							"status": "Created",
+							"code": 201,
+							"body": "{\n    \"id\": \"770e8400-e29b-41d4-a716-446655440002\",\n    \"nombre\": \"Nuevo Usuario\",\n    \"email\": \"nuevo@sistema.com\",\n    \"rol\": {\n        \"id\": \"660e8400-e29b-41d4-a716-446655440001\",\n        \"codigo\": \"USUARIO\",\n        \"nombre\": \"Usuario\",\n        \"descripcion\": \"Usuario regular\",\n        \"activo\": true\n    },\n    \"activo\": true,\n    \"avatarUrl\": \"https://example.com/avatar.png\",\n    \"creadoEn\": \"2026-06-08T12:00:00\",\n    \"actualizadoEn\": \"2026-06-08T12:00:00\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Actualizar usuario",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Usuario Actualizado\",\n    \"email\": \"actualizado@sistema.com\",\n    \"rolCodigo\": \"AGENTE\",\n    \"avatarUrl\": \"https://example.com/avatar2.png\",\n    \"activo\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "usuarios", "{{usuarioId}}"]
+						},
+						"description": "Actualiza datos de un usuario existente (no incluye password).\n\nBody requerido:\n- nombre (String, 1-150)\n- email (String, email válido, 1-150)\n- rolCodigo (String, 1-50)\n- avatarUrl (String, max 500, opcional)\n- activo (Boolean, opcional, default true)"
+					},
+					"response": []
+				},
+				{
+					"name": "Cambiar password",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"password\": \"nuevaPassword123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}/password",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "usuarios", "{{usuarioId}}", "password"]
+						},
+						"description": "Cambia la contraseña de un usuario.\n\nBody requerido:\n- password (String, 6-100): nueva contraseña\n\nRetorna 204 No Content en éxito."
+					},
+					"response": []
+				},
+				{
+					"name": "Activar usuario",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}/activar",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "usuarios", "{{usuarioId}}", "activar"]
+						},
+						"description": "Activa un usuario (establece activo = true). Sin body."
+					},
+					"response": []
+				},
+				{
+					"name": "Desactivar usuario",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}/desactivar",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "usuarios", "{{usuarioId}}", "desactivar"]
+						},
+						"description": "Desactiva un usuario (establece activo = false). Sin body."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Roles",
+			"description": "CRUD de roles. Requiere rol ADMINISTRADOR.",
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{token}}",
+						"type": "string"
+					}
+				]
+			},
+			"item": [
+				{
+					"name": "Listar roles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/roles",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "roles"]
+						},
+						"description": "Lista todos los roles disponibles."
+					},
+					"response": [
+						{
+							"name": "Lista de roles (200)",
+							"status": "OK",
+							"code": 200,
+							"body": "[\n    {\n        \"id\": \"660e8400-e29b-41d4-a716-446655440001\",\n        \"codigo\": \"ADMINISTRADOR\",\n        \"nombre\": \"Administrador\",\n        \"descripcion\": \"Control total del sistema\",\n        \"activo\": true\n    },\n    {\n        \"id\": \"660e8400-e29b-41d4-a716-446655440002\",\n        \"codigo\": \"AGENTE\",\n        \"nombre\": \"Agente\",\n        \"descripcion\": \"Atiende incidencias\",\n        \"activo\": true\n    },\n    {\n        \"id\": \"660e8400-e29b-41d4-a716-446655440003\",\n        \"codigo\": \"USUARIO\",\n        \"nombre\": \"Usuario\",\n        \"descripcion\": \"Usuario regular\",\n        \"activo\": true\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Obtener rol por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/roles/{{rolId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "roles", "{{rolId}}"]
+						},
+						"description": "Obtiene un rol por su UUID."
+					},
+					"response": []
+				},
+				{
+					"name": "Crear rol",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"codigo\": \"SUPERVISOR\",\n    \"nombre\": \"Supervisor\",\n    \"descripcion\": \"Supervisa a los agentes\",\n    \"activo\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/roles",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "roles"]
+						},
+						"description": "Crea un nuevo rol.\n\nBody requerido:\n- codigo (String, 1-50): código único del rol\n- nombre (String, 1-100): nombre descriptivo\n- descripcion (String, max 255, opcional)\n- activo (Boolean, opcional, default true)"
+					},
+					"response": [
+						{
+							"name": "Rol creado (201)",
+							"status": "Created",
+							"code": 201,
+							"body": "{\n    \"id\": \"880e8400-e29b-41d4-a716-446655440004\",\n    \"codigo\": \"SUPERVISOR\",\n    \"nombre\": \"Supervisor\",\n    \"descripcion\": \"Supervisa a los agentes\",\n    \"activo\": true\n}"
+						}
+					]
+				},
+				{
+					"name": "Actualizar rol",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"codigo\": \"SUPERVISOR\",\n    \"nombre\": \"Supervisor Senior\",\n    \"descripcion\": \"Supervisa agentes y gestiona SLA\",\n    \"activo\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/roles/{{rolId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "roles", "{{rolId}}"]
+						},
+						"description": "Actualiza un rol existente.\n\nBody requerido:\n- codigo (String, 1-50)\n- nombre (String, 1-100)\n- descripcion (String, max 255, opcional)\n- activo (Boolean, opcional, default true)"
+					},
+					"response": []
+				},
+				{
+					"name": "Eliminar rol",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/roles/{{rolId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "roles", "{{rolId}}"]
+						},
+						"description": "Elimina un rol. No debe tener usuarios asignados.\nRetorna 204 No Content en éxito."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "usuarioId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "rolId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
