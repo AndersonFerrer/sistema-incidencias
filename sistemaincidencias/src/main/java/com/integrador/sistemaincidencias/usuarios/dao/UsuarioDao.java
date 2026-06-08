@@ -1,5 +1,6 @@
 package com.integrador.sistemaincidencias.usuarios.dao;
 
+import com.integrador.sistemaincidencias.shared.exception.AccesoDatosException;
 import com.integrador.sistemaincidencias.usuarios.mapper.UsuarioMapper;
 import com.integrador.sistemaincidencias.usuarios.model.Usuario;
 import com.integrador.sistemaincidencias.usuarios.sql.UsuarioSql;
@@ -30,7 +31,7 @@ public class UsuarioDao {
                 return rs.next() ? Optional.of(usuarioMapper.mapear(rs)) : Optional.empty();
             }
         } catch (SQLException exception) {
-            throw new IllegalStateException("Error al buscar usuario por email", exception);
+            throw new AccesoDatosException("Error al buscar usuario por email", exception);
         }
     }
 
@@ -42,7 +43,7 @@ public class UsuarioDao {
                 return rs.next() ? Optional.of(usuarioMapper.mapear(rs)) : Optional.empty();
             }
         } catch (SQLException exception) {
-            throw new IllegalStateException("Error al buscar usuario por id", exception);
+            throw new AccesoDatosException("Error al buscar usuario por id", exception);
         }
     }
 
@@ -54,7 +55,7 @@ public class UsuarioDao {
                 return rs.next() ? Optional.of(usuarioMapper.mapear(rs)) : Optional.empty();
             }
         } catch (SQLException exception) {
-            throw new IllegalStateException("Error al buscar usuario demo por rol", exception);
+            throw new AccesoDatosException("Error al buscar usuario demo por rol", exception);
         }
     }
 
@@ -78,7 +79,7 @@ public class UsuarioDao {
                 return usuarios;
             }
         } catch (SQLException exception) {
-            throw new IllegalStateException("Error al listar usuarios", exception);
+            throw new AccesoDatosException("Error al listar usuarios", exception);
         }
     }
 
@@ -95,7 +96,7 @@ public class UsuarioDao {
             statement.executeUpdate();
             return buscarPorId(usuario.getId()).orElse(usuario);
         } catch (SQLException exception) {
-            throw new IllegalStateException("Error al insertar usuario", exception);
+            throw new AccesoDatosException("Error al insertar usuario", exception);
         }
     }
 
@@ -111,7 +112,7 @@ public class UsuarioDao {
             statement.executeUpdate();
             return buscarPorId(usuario.getId()).orElse(usuario);
         } catch (SQLException exception) {
-            throw new IllegalStateException("Error al actualizar usuario", exception);
+            throw new AccesoDatosException("Error al actualizar usuario", exception);
         }
     }
 
@@ -122,7 +123,7 @@ public class UsuarioDao {
             statement.setObject(2, id);
             statement.executeUpdate();
         } catch (SQLException exception) {
-            throw new IllegalStateException("Error al cambiar password de usuario", exception);
+            throw new AccesoDatosException("Error al cambiar password de usuario", exception);
         }
     }
 
@@ -133,7 +134,7 @@ public class UsuarioDao {
             statement.setObject(2, id);
             statement.executeUpdate();
         } catch (SQLException exception) {
-            throw new IllegalStateException("Error al cambiar estado de usuario", exception);
+            throw new AccesoDatosException("Error al cambiar estado de usuario", exception);
         }
     }
 

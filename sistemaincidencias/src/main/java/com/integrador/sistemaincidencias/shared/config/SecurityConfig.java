@@ -34,8 +34,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/auth/demo").permitAll()
-                        .requestMatchers("/api/auth/me").permitAll()
-                        .anyRequest().permitAll()
+                        .requestMatchers("/api/auth/me").authenticated()
+                        .requestMatchers("/api/usuarios/**").authenticated()
+                        .requestMatchers("/api/roles/**").authenticated()
+                        .anyRequest().denyAll()
                 );
 
         return http.build();
