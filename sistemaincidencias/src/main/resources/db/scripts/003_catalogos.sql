@@ -30,3 +30,12 @@ CREATE TABLE IF NOT EXISTS categorias (
     activo boolean NOT NULL DEFAULT true,
     creado_en timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS usuarios_externos (
+    id uuid PRIMARY KEY,
+    cliente_id uuid NOT NULL REFERENCES clientes(id),
+    nombre varchar(150) NOT NULL,
+    email varchar(255) NOT NULL UNIQUE,
+    activo boolean NOT NULL DEFAULT true,
+    creado_en timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
