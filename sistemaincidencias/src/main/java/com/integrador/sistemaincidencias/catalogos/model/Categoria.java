@@ -15,6 +15,7 @@ import lombok.Setter;
 public class Categoria {
 
     private UUID id;
+    private UUID aplicativoId;
     private String nombre;
     private String descripcion;
     private Boolean activo;

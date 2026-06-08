@@ -12,6 +12,7 @@ public class CategoriaMapper {
     public Categoria mapear(ResultSet rs) throws SQLException {
         return Categoria.builder()
                 .id(rs.getObject("id", UUID.class))
+                .aplicativoId(rs.getObject("cliente_id", UUID.class))
                 .nombre(rs.getString("nombre"))
                 .descripcion(rs.getString("descripcion"))
                 .activo(rs.getBoolean("activo"))

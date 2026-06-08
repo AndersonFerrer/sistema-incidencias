@@ -7,43 +7,43 @@ public final class AplicativoClienteSql {
 
     public static final String LISTAR = """
             SELECT id, nombre, api_key, activo
-            FROM aplicativos_cliente
+            FROM clientes
             ORDER BY nombre ASC
             """;
 
     public static final String BUSCAR_POR_ID = """
             SELECT id, nombre, api_key, activo
-            FROM aplicativos_cliente
+            FROM clientes
             WHERE id = ?
             LIMIT 1
             """;
 
     public static final String BUSCAR_POR_NOMBRE = """
             SELECT id, nombre, api_key, activo
-            FROM aplicativos_cliente
+            FROM clientes
             WHERE lower(nombre) = lower(?)
             LIMIT 1
             """;
 
     public static final String INSERTAR = """
-            INSERT INTO aplicativos_cliente (id, nombre, api_key, activo)
+            INSERT INTO clientes (id, nombre, api_key, activo)
             VALUES (?, ?, ?, ?)
             """;
 
     public static final String ACTUALIZAR = """
-            UPDATE aplicativos_cliente
+            UPDATE clientes
             SET nombre = ?, activo = ?
             WHERE id = ?
             """;
 
     public static final String ROTAR_API_KEY = """
-            UPDATE aplicativos_cliente
+            UPDATE clientes
             SET api_key = ?
             WHERE id = ?
             """;
 
     public static final String ELIMINAR = """
-            DELETE FROM aplicativos_cliente
+            DELETE FROM clientes
             WHERE id = ?
             """;
 }

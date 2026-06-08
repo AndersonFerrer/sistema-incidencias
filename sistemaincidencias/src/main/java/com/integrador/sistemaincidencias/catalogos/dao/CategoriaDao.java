@@ -65,9 +65,10 @@ public class CategoriaDao {
         try (Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(CategoriaSql.INSERTAR)) {
             statement.setObject(1, categoria.getId());
-            statement.setString(2, categoria.getNombre());
-            statement.setString(3, categoria.getDescripcion());
-            statement.setBoolean(4, Boolean.TRUE.equals(categoria.getActivo()));
+            statement.setObject(2, categoria.getAplicativoId());
+            statement.setString(3, categoria.getNombre());
+            statement.setString(4, categoria.getDescripcion());
+            statement.setBoolean(5, Boolean.TRUE.equals(categoria.getActivo()));
             statement.executeUpdate();
             return categoria;
         } catch (SQLException exception) {
@@ -78,10 +79,11 @@ public class CategoriaDao {
     public Categoria actualizar(Categoria categoria) {
         try (Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(CategoriaSql.ACTUALIZAR)) {
-            statement.setString(1, categoria.getNombre());
-            statement.setString(2, categoria.getDescripcion());
-            statement.setBoolean(3, Boolean.TRUE.equals(categoria.getActivo()));
-            statement.setObject(4, categoria.getId());
+            statement.setObject(1, categoria.getAplicativoId());
+            statement.setString(2, categoria.getNombre());
+            statement.setString(3, categoria.getDescripcion());
+            statement.setBoolean(4, Boolean.TRUE.equals(categoria.getActivo()));
+            statement.setObject(5, categoria.getId());
             statement.executeUpdate();
             return categoria;
         } catch (SQLException exception) {

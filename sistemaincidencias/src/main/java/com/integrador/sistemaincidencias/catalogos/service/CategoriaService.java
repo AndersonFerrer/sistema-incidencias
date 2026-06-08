@@ -32,6 +32,7 @@ public class CategoriaService {
         });
         Categoria categoria = Categoria.builder()
                 .id(UUID.randomUUID())
+                .aplicativoId(request.getAplicativoId())
                 .nombre(nombre)
                 .descripcion(request.getDescripcion() != null ? request.getDescripcion().trim() : null)
                 .activo(Boolean.TRUE.equals(request.getActivo()))
@@ -47,6 +48,7 @@ public class CategoriaService {
                 .ifPresent(categoria -> {
                     throw new ReglaNegocioException("Ya existe otra categoría con ese nombre");
                 });
+        actual.setAplicativoId(request.getAplicativoId());
         actual.setNombre(nombre);
         actual.setDescripcion(request.getDescripcion() != null ? request.getDescripcion().trim() : null);
         actual.setActivo(Boolean.TRUE.equals(request.getActivo()));
@@ -61,6 +63,7 @@ public class CategoriaService {
     private CategoriaResponse toResponse(Categoria categoria) {
         return CategoriaResponse.builder()
                 .id(categoria.getId())
+                .aplicativoId(categoria.getAplicativoId())
                 .nombre(categoria.getNombre())
                 .descripcion(categoria.getDescripcion())
                 .activo(categoria.getActivo())

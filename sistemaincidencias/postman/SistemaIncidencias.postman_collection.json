@@ -730,7 +730,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"nombre\": \"Error de sistema\",\n    \"descripcion\": \"Fallos en módulos del sistema\",\n    \"activo\": true\n}",
+							"raw": "{\n    \"aplicativoId\": \"990e8400-e29b-41d4-a716-446655440005\",\n    \"nombre\": \"Error de sistema\",\n    \"descripcion\": \"Fallos en módulos del sistema\",\n    \"activo\": true\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -742,7 +742,7 @@
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "categorias"]
 						},
-						"description": "Crea una nueva categoría de incidencia.\n\nBody:\n- nombre (String, 1-100): nombre de la categoría\n- descripcion (String, max 500, opcional)\n- activo (Boolean, opcional, default true)"
+						"description": "Crea una nueva categoría de incidencia.\n\nBody:\n- aplicativoId (UUID, requerido): ID del aplicativo cliente al que pertenece\n- nombre (String, 1-100, requerido): nombre de la categoría\n- descripcion (String, max 500, opcional)\n- activo (Boolean, opcional, default true)"
 					},
 					"response": [
 						{
@@ -769,7 +769,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"nombre\": \"Error de sistema crítico\",\n    \"descripcion\": \"Fallos graves en módulos del sistema\",\n    \"activo\": true\n}",
+							"raw": "{\n    \"aplicativoId\": \"990e8400-e29b-41d4-a716-446655440005\",\n    \"nombre\": \"Error de sistema crítico\",\n    \"descripcion\": \"Fallos graves en módulos del sistema\",\n    \"activo\": true\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -781,7 +781,7 @@
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "categorias", "{{categoriaId}}"]
 						},
-						"description": "Actualiza una categoría existente.\n\nBody:\n- nombre (String, 1-100)\n- descripcion (String, max 500, opcional)\n- activo (Boolean, opcional, default true)"
+						"description": "Actualiza una categoría existente.\n\nBody:\n- aplicativoId (UUID, requerido): ID del aplicativo cliente al que pertenece\n- nombre (String, 1-100, requerido)\n- descripcion (String, max 500, opcional)\n- activo (Boolean, opcional, default true)"
 					}
 				}
 			]
