@@ -443,6 +443,16 @@ Priorizar pruebas para:
 - Cambios de estado.
 - Aprobacion y rechazo.
 
+## Coleccion Postman
+
+El proyecto mantiene una coleccion Postman en `postman/SistemaIncidencias.postman_collection.json` que documenta todos los endpoints REST existentes.
+
+Reglas:
+- Cada vez que se agregue un nuevo endpoint (controller, ruta o metodo HTTP), se debe actualizar la coleccion Postman reflejando la nueva ruta, sus parametros, body, headers y respuestas esperadas.
+- Cada vez que se modifique el path, los parametros, el body o el metodo HTTP de un endpoint existente, se debe actualizar la entrada correspondiente en la coleccion.
+- Cada vez que se elimine un endpoint, se debe eliminar la entrada correspondiente de la coleccion.
+- La coleccion debe mantenerse siempre sincronizada con el codigo real de los controllers.
+
 ## Estilo de codigo
 
 - Usar nombres en espanol si el resto del proyecto esta en espanol.
