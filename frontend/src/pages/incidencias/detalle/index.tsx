@@ -1,7 +1,4 @@
-import {
-  ArrowLeft,
-  Pencil,
-} from "lucide-react"
+import { ArrowLeft, Pencil } from "lucide-react"
 import { useNavigate, useParams } from "@tanstack/react-router"
 import { useEffect, useMemo, useState } from "react"
 
@@ -12,12 +9,20 @@ import {
 } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
 import { IncidenciaAdjuntosCard } from "@/pages/incidencias/detalle/components/incidencia-adjuntos-card"
 import { IncidenciaActividadCard } from "@/pages/incidencias/detalle/components/incidencia-actividad-card"
 import { IncidenciaComentariosCard } from "@/pages/incidencias/detalle/components/incidencia-comentarios-card"
 import { IncidenciaRevisionCard } from "@/pages/incidencias/detalle/components/incidencia-revision-card"
 import { IncidenciaSidebar } from "@/pages/incidencias/detalle/components/incidencia-sidebar"
+import { RechazarIncidenciaDialog } from "@/pages/incidencias/detalle/components/rechazar-incidencia-dialog"
 import { API_BASE_URL } from "@/lib/env"
 import { aplicativosService } from "@/services/aplicativos-service"
 import { categoriasService } from "@/services/categorias-service"
@@ -50,6 +55,9 @@ export function IncidenciaDetallePage() {
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [isActionSubmitting, setIsActionSubmitting] = useState(false)
+
+  const [rechazarAbierto, setRechazarAbierto] = useState(false)
+  const [rechazarError, setRechazarError] = useState<string | null>(null)
 
   const cargarDetalle = async () => {
     setIsLoading(true)
@@ -191,15 +199,29 @@ export function IncidenciaDetallePage() {
     }
   }
 
-  const handleRechazarSolicitud = async () => {
+  const abrirModalRechazo = () => {
+    setRechazarError(null)
+    setRechazarAbierto(true)
+  }
+
+  const cerrarModalRechazo = () => {
+    if (isActionSubmitting) return
+    setRechazarAbierto(false)
+    setRechazarError(null)
+  }
+
+  const confirmarRechazo = async (motivoRechazo: string) => {
     if (!detalle) return
     setIsActionSubmitting(true)
-    setActionError(null)
+    setRechazarError(null)
     try {
-      await incidentsService.aprobarRechazar(detalle.incidencia.id, "rechazar")
+      await incidentsService.aprobarRechazar(detalle.incidencia.id, "rechazar", {
+        motivoRechazo,
+      })
       await cargarDetalle()
+      setRechazarAbierto(false)
     } catch (err) {
-      setActionError(
+      setRechazarError(
         err instanceof Error
           ? err.message
           : "No se pudo rechazar la solicitud."
@@ -293,10 +315,11 @@ export function IncidenciaDetallePage() {
         <Button
           type="button"
           variant="ghost"
+          size="sm"
           className="w-fit text-slate-500"
           onClick={voltar}
         >
-          <ArrowLeft aria-hidden="true" className="size-4" />
+          <ArrowLeft aria-hidden="true" className="size-3.5" />
           Volver a incidencias
         </Button>
         <Alert variant="destructive">
@@ -352,7 +375,7 @@ export function IncidenciaDetallePage() {
                   </h1>
                 </div>
                 <Button type="button" variant="outline" size="sm">
-                  <Pencil data-icon="inline-start" />
+                  <Pencil data-icon="inline-start" className="size-3.5" />
                   Editar
                 </Button>
               </div>
@@ -372,21 +395,32 @@ export function IncidenciaDetallePage() {
             solicitante={solicitante}
             isSubmitting={isActionSubmitting}
             onAceptar={handleAceptarSolicitud}
-            onRechazar={handleRechazarSolicitud}
+            onRechazar={abrirModalRechazo}
           />
 
           {estadoAprobacionClave === "RECHAZADA" ? (
             <Card className="rounded-lg border-red-200 bg-red-50 shadow-sm">
-              <CardContent className="flex flex-col gap-1.5 p-3.5">
+              <CardContent className="flex flex-col gap-2 p-3.5">
                 <div className="flex items-center gap-2 text-red-700">
                   <span className="text-sm font-semibold">
                     Solicitud rechazada
                   </span>
                 </div>
-                <p className="text-sm text-red-700">
-                  Esta solicitud fue rechazada. La incidencia queda cerrada y
-                  no continuará su flujo operativo.
-                </p>
+                {incidencia.motivoRechazo ? (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-red-700">
+                      Motivo
+                    </span>
+                    <p className="rounded-md border border-red-200 bg-white/70 px-2.5 py-2 text-sm text-slate-800">
+                      {incidencia.motivoRechazo}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-red-700">
+                    Esta solicitud fue rechazada. La incidencia queda cerrada y
+                    no continuará su flujo operativo.
+                  </p>
+                )}
               </CardContent>
             </Card>
           ) : null}
@@ -457,6 +491,31 @@ export function IncidenciaDetallePage() {
           ) : null}
         </div>
       </div>
+
+      <Dialog
+        open={rechazarAbierto}
+        onOpenChange={(open) => {
+          if (!open) cerrarModalRechazo()
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rechazar solicitud</DialogTitle>
+            <DialogDescription>
+              Indica el motivo por el que se rechaza esta incidencia. El
+              solicitante podrá ver este mensaje.
+            </DialogDescription>
+          </DialogHeader>
+          <RechazarIncidenciaDialog
+            key={incidencia.id}
+            incidencia={incidencia}
+            isSubmitting={isActionSubmitting}
+            error={rechazarError}
+            onConfirm={confirmarRechazo}
+            onCancel={cerrarModalRechazo}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

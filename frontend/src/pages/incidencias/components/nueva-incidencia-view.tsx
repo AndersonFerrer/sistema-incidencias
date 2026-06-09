@@ -1,43 +1,43 @@
-import { ArrowLeft, Paperclip, X } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { ArrowLeft, Paperclip, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Spinner } from "@/components/ui/spinner"
-import { incidentsService } from "@/services/incidents-service"
-import type { AplicativoCliente } from "@/types/aplicativos"
-import type { Categoria } from "@/types/categorias"
-import type { Prioridad } from "@/types/incidencias"
-import type { Usuario } from "@/types/usuarios"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import { incidentsService } from "@/services/incidents-service";
+import type { AplicativoCliente } from "@/types/aplicativos";
+import type { Categoria } from "@/types/categorias";
+import type { Prioridad } from "@/types/incidencias";
+import type { Usuario } from "@/types/usuarios";
 
 type NuevaIncidenciaViewProps = {
-  aplicativos: AplicativoCliente[]
-  categorias: Categoria[]
-  usuarios: Usuario[]
-  isLoadingCatalogos: boolean
-  onBack: () => void
-  onCreated: () => void
-}
+  aplicativos: AplicativoCliente[];
+  categorias: Categoria[];
+  usuarios: Usuario[];
+  isLoadingCatalogos: boolean;
+  onBack: () => void;
+  onCreated: () => void;
+};
 
 const PRIORIDADES: { value: Prioridad; label: string }[] = [
   { value: "BAJA", label: "Baja" },
   { value: "MEDIA", label: "Media" },
   { value: "ALTA", label: "Alta" },
   { value: "CRITICA", label: "Crítica" },
-]
+];
 
-const AGENT_ROLE_CODES = ["AGENTE", "ADMINISTRADOR"]
+const AGENT_ROLE_CODES = ["AGENTE", "ADMINISTRADOR"];
 
 type FormState = {
-  titulo: string
-  descripcion: string
-  clienteId: string
-  categoriaId: string
-  prioridad: Prioridad
-  asignadoA: string
-}
+  titulo: string;
+  descripcion: string;
+  clienteId: string;
+  categoriaId: string;
+  prioridad: Prioridad;
+  asignadoA: string;
+};
 
 const FORM_INICIAL: FormState = {
   titulo: "",
@@ -46,7 +46,7 @@ const FORM_INICIAL: FormState = {
   categoriaId: "",
   prioridad: "MEDIA",
   asignadoA: "",
-}
+};
 
 export function NuevaIncidenciaView({
   aplicativos,
@@ -56,71 +56,71 @@ export function NuevaIncidenciaView({
   onBack,
   onCreated,
 }: NuevaIncidenciaViewProps) {
-  const [form, setForm] = useState<FormState>(FORM_INICIAL)
-  const [archivos, setArchivos] = useState<File[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [form, setForm] = useState<FormState>(FORM_INICIAL);
+  const [archivos, setArchivos] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
-  }
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
 
   const categoriasDelCliente = useMemo(() => {
-    if (!form.clienteId) return []
+    if (!form.clienteId) return [];
     return categorias.filter(
       (categoria) =>
         categoria.activo &&
         (categoria.aplicativoId
           ? categoria.aplicativoId === form.clienteId
-          : true)
-    )
-  }, [categorias, form.clienteId])
+          : true),
+    );
+  }, [categorias, form.clienteId]);
 
   useEffect(() => {
     if (
       form.categoriaId &&
       !categoriasDelCliente.some(
-        (categoria) => categoria.id === form.categoriaId
+        (categoria) => categoria.id === form.categoriaId,
       )
     ) {
-      setField("categoriaId", "")
+      setField("categoriaId", "");
     }
-  }, [categoriasDelCliente, form.categoriaId])
+  }, [categoriasDelCliente, form.categoriaId]);
 
   const usuariosAsignables = useMemo(
     () =>
       usuarios
         .filter((usuario) => usuario.activo)
         .filter((usuario) =>
-          AGENT_ROLE_CODES.includes(usuario.rol?.codigo ?? "")
+          AGENT_ROLE_CODES.includes(usuario.rol?.codigo ?? ""),
         ),
-    [usuarios]
-  )
+    [usuarios],
+  );
 
   const handleArchivos = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const list = event.target.files
-    if (!list || list.length === 0) return
-    setArchivos((prev) => [...prev, ...Array.from(list)])
-    event.target.value = ""
-  }
+    const list = event.target.files;
+
+    if (!list || list.length === 0) return;
+
+    event.target.value = "";
+  };
 
   const removerArchivo = (index: number) => {
-    setArchivos((prev) => prev.filter((_, idx) => idx !== index))
-  }
+    setArchivos((prev) => prev.filter((_, idx) => idx !== index));
+  };
 
   const puedeEnviar =
     form.titulo.trim().length > 0 &&
     form.descripcion.trim().length > 0 &&
     form.clienteId.length > 0 &&
     form.categoriaId.length > 0 &&
-    !isSubmitting
+    !isSubmitting;
 
   const enviar = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!puedeEnviar) return
+    event.preventDefault();
 
-    setIsSubmitting(true)
-    setError(null)
+    setIsSubmitting(true);
+    setError(null);
 
     try {
       await incidentsService.crear({
@@ -131,18 +131,16 @@ export function NuevaIncidenciaView({
         prioridad: form.prioridad,
         asignadoA: form.asignadoA || undefined,
         archivos: archivos.length > 0 ? archivos : undefined,
-      })
-      onCreated()
+      });
+      onCreated();
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "No se pudo crear la incidencia."
-      )
+        err instanceof Error ? err.message : "No se pudo crear la incidencia.",
+      );
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -318,9 +316,7 @@ export function NuevaIncidenciaView({
               <select
                 id="incidencia-asignado"
                 value={form.asignadoA}
-                onChange={(event) =>
-                  setField("asignadoA", event.target.value)
-                }
+                onChange={(event) => setField("asignadoA", event.target.value)}
                 className="h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 <option value="">Sin asignar</option>
@@ -424,5 +420,5 @@ export function NuevaIncidenciaView({
         </div>
       </form>
     </div>
-  )
+  );
 }

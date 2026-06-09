@@ -36,3 +36,9 @@
 2026-06-09 07:29:51.967 INFO  [http-nio-8080-exec-3] c.i.s.auth.service.AuthService - Login exitoso para usuario admin@sistema.com
 2026-06-09 07:54:57.852 INFO  [http-nio-8080-exec-7] c.i.s.auth.service.AuthService - Login exitoso para usuario admin@sistema.com
 2026-06-09 09:26:06.234 INFO  [http-nio-8080-exec-2] c.i.s.auth.service.AuthService - Login exitoso para usuario admin@sistema.com
+2026-06-09 10:08:01.536 INFO  [http-nio-8080-exec-2] c.i.s.auth.service.AuthService - Login exitoso para usuario admin@sistema.com
+2026-06-09 10:08:25.749 INFO  [http-nio-8080-exec-8] c.i.s.auth.service.AuthService - Login exitoso para usuario admin@sistema.com
+2026-06-09 10:16:31.524 ERROR [http-nio-8080-exec-6] c.i.s.s.e.GlobalExceptionHandler - Error no controlado en /favicon.ico
+org.springframework.web.servlet.resource.NoResourceFoundException: No static resource favicon.ico for request '/favicon.ico'.
+	at org.springframework.web.servlet.resource.ResourceHttpRequestHandler.handleRequest(ResourceHttpRequestHandler.java:526)
+2026-06-09 10:16:31.582 WARN  [http-nio-8080-exec-6] o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource favicon.ico for request '/favicon.ico'.]

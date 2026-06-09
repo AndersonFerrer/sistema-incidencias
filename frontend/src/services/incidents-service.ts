@@ -69,6 +69,11 @@ export const incidentsService = {
     if (input.asignadoA) {
       formData.append("asignadoA", input.asignadoA)
     }
+    console.log(
+      "[DEBUG service] crear() input.archivos:",
+      input.archivos?.length,
+      input.archivos?.map((f) => ({ name: f.name, size: f.size }))
+    )
     input.archivos?.forEach((archivo) => {
       formData.append("archivos", archivo)
     })
@@ -82,16 +87,16 @@ export const incidentsService = {
   aprobarRechazar(
     id: string,
     accion: "aprobar" | "rechazar",
-    nota?: string
+    input: { motivoRechazo?: string } = {}
   ) {
     const params = new URLSearchParams()
     params.set("accion", accion)
-    if (nota) {
-      params.set("nota", nota)
-    }
     return apiRequest<Incidencia>(
       `/api/incidencias/${id}/aprobacion?${params.toString()}`,
-      { method: "PATCH" }
+      {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      }
     )
   },
 
