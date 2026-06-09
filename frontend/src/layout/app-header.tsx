@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/auth-store";
 const routeTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/incidencias": "Incidencias",
+  "/clientes": "Clientes",
 };
 
 function getRouteTitle(pathname: string) {

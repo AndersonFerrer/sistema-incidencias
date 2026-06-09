@@ -3,6 +3,7 @@ import type {
   IncidenciasFiltros,
   Incidencia,
   Page,
+  Prioridad,
 } from "@/types/incidencias"
 
 function buildQuery(filtros: IncidenciasFiltros = {}): string {
@@ -29,11 +30,45 @@ function buildQuery(filtros: IncidenciasFiltros = {}): string {
   return query ? `?${query}` : ""
 }
 
+export type CrearIncidenciaInput = {
+  titulo: string
+  descripcion: string
+  clienteId: string
+  categoriaId: string
+  prioridad: Prioridad
+  usuarioExternoId?: string
+  asignadoA?: string
+  archivos?: File[]
+}
+
 export const incidentsService = {
   listar(filtros: IncidenciasFiltros = {}) {
     return apiRequest<Page<Incidencia>>(
       `/api/incidencias${buildQuery(filtros)}`,
       { method: "GET" }
     )
+  },
+
+  crear(input: CrearIncidenciaInput) {
+    const formData = new FormData()
+    formData.append("titulo", input.titulo)
+    formData.append("descripcion", input.descripcion)
+    formData.append("clienteId", input.clienteId)
+    formData.append("categoriaId", input.categoriaId)
+    formData.append("prioridad", input.prioridad)
+    if (input.usuarioExternoId) {
+      formData.append("usuarioExternoId", input.usuarioExternoId)
+    }
+    if (input.asignadoA) {
+      formData.append("asignadoA", input.asignadoA)
+    }
+    input.archivos?.forEach((archivo) => {
+      formData.append("archivos", archivo)
+    })
+
+    return apiRequest<Incidencia>("/api/incidencias", {
+      method: "POST",
+      body: formData,
+    })
   },
 }

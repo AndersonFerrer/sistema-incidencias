@@ -20,10 +20,12 @@ export async function apiRequest<T>(
   { headers, token, ...options }: RequestOptions = {}
 ) {
   const authToken = token ?? useAuthStore.getState().token
+  const isFormData =
+    typeof FormData !== "undefined" && options.body instanceof FormData
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       ...headers,
     },

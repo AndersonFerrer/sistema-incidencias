@@ -21,7 +21,7 @@ const navigation = [
 ];
 
 const configuration = [
-  { label: "Clientes", icon: Briefcase },
+  { label: "Clientes", icon: Briefcase, to: "/clientes" },
   { label: "Categorías", icon: Tags },
   { label: "Estados", icon: GitBranch },
 ];

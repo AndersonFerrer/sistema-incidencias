@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -9,16 +9,19 @@ import {
   type IncidenciasFiltrosValues,
 } from "@/pages/incidencias/components/incidencias-filters"
 import { IncidenciasTable } from "@/pages/incidencias/components/incidencias-table"
+import { NuevaIncidenciaView } from "@/pages/incidencias/components/nueva-incidencia-view"
 import { aplicativosService } from "@/services/aplicativos-service"
 import { categoriasService } from "@/services/categorias-service"
 import { estadosAprobacionService } from "@/services/estados-aprobacion-service"
 import { estadosProcesoService } from "@/services/estados-proceso-service"
 import { incidentsService } from "@/services/incidents-service"
+import { usuariosService } from "@/services/usuarios-service"
 import type { AplicativoCliente } from "@/types/aplicativos"
 import type { Categoria } from "@/types/categorias"
 import type { EstadoAprobacion } from "@/types/estados-aprobacion"
 import type { EstadoProceso } from "@/types/estados-proceso"
 import type { Incidencia } from "@/types/incidencias"
+import type { Usuario } from "@/types/usuarios"
 
 const FILTROS_INICIALES: IncidenciasFiltrosValues = {
   texto: "",
@@ -33,7 +36,11 @@ const FILTROS_INICIALES: IncidenciasFiltrosValues = {
 
 const PAGE_SIZE = 20
 
+type Vista = "listado" | "nueva"
+
 export function IncidenciasPage() {
+  const [vista, setVista] = useState<Vista>("listado")
+
   const [filtros, setFiltros] =
     useState<IncidenciasFiltrosValues>(FILTROS_INICIALES)
   const [page, setPage] = useState(0)
@@ -49,22 +56,28 @@ export function IncidenciasPage() {
   )
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [aplicativos, setAplicativos] = useState<AplicativoCliente[]>([])
+  const [usuarios, setUsuarios] = useState<Usuario[]>([])
+  const [isLoadingCatalogos, setIsLoadingCatalogos] = useState(false)
 
   useEffect(() => {
     let cancelled = false
 
     async function loadCatalogos() {
+      setIsLoadingCatalogos(true)
+
       try {
         const [
           procesoResponse,
           aprobacionResponse,
           categoriasResponse,
           aplicativosResponse,
+          usuariosResponse,
         ] = await Promise.all([
           estadosProcesoService.listar(),
           estadosAprobacionService.listar(),
           categoriasService.listar(),
           aplicativosService.listar(),
+          usuariosService.listar(),
         ])
 
         if (cancelled) return
@@ -73,6 +86,7 @@ export function IncidenciasPage() {
         setEstadosAprobacion(aprobacionResponse)
         setCategorias(categoriasResponse)
         setAplicativos(aplicativosResponse)
+        setUsuarios(usuariosResponse)
       } catch (err) {
         if (cancelled) return
         setError(
@@ -80,6 +94,10 @@ export function IncidenciasPage() {
             ? err.message
             : "No se pudieron cargar los catálogos."
         )
+      } finally {
+        if (!cancelled) {
+          setIsLoadingCatalogos(false)
+        }
       }
     }
 
@@ -90,7 +108,14 @@ export function IncidenciasPage() {
     }
   }, [])
 
+  const recargarListado = useCallback(() => {
+    setPage(0)
+    setVista("listado")
+  }, [])
+
   useEffect(() => {
+    if (vista !== "listado") return
+
     let cancelled = false
 
     async function loadIncidencias() {
@@ -136,13 +161,26 @@ export function IncidenciasPage() {
     return () => {
       cancelled = true
     }
-  }, [filtros, page])
+  }, [filtros, page, vista])
 
   const totalLabel = useMemo(() => {
     if (isLoading) return "Cargando incidencias..."
     if (error) return error
     return `${total} incidencias encontradas`
   }, [total, isLoading, error])
+
+  if (vista === "nueva") {
+    return (
+      <NuevaIncidenciaView
+        aplicativos={aplicativos}
+        categorias={categorias}
+        usuarios={usuarios}
+        isLoadingCatalogos={isLoadingCatalogos}
+        onBack={() => setVista("listado")}
+        onCreated={recargarListado}
+      />
+    )
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -153,7 +191,11 @@ export function IncidenciasPage() {
           </h1>
           <p className="text-sm text-slate-500">{totalLabel}</p>
         </div>
-        <Button size="lg" className="h-10 px-4">
+        <Button
+          size="lg"
+          className="h-10 px-4"
+          onClick={() => setVista("nueva")}
+        >
           <Plus data-icon="inline-start" />
           Nueva Incidencia
         </Button>
