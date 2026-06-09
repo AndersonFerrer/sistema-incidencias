@@ -685,3 +685,46 @@ Identify and stop the process that's listening on port 8081 or configure this ap
 2026-06-08 19:14:35.387 WARN  [http-nio-8080-exec-6] o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Resolved [com.integrador.sistemaincidencias.shared.exception.ReglaNegocioException: No existe estado de aprobacion SOLICITADA]
 2026-06-08 19:16:29.409 WARN  [http-nio-8080-exec-2] o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Resolved [com.integrador.sistemaincidencias.shared.exception.ReglaNegocioException: No existe estado de proceso PENDIENTE]
 2026-06-08 19:17:49.540 WARN  [http-nio-8080-exec-8] o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Resolved [com.integrador.sistemaincidencias.shared.exception.ReglaNegocioException: Ya existe un estado de aprobación con la clave indicada]
+2026-06-08 19:23:10.339 INFO  [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2026-06-08 19:23:10.354 INFO  [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2026-06-08 19:55:15.406 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - Starting SistemaincidenciasApplication using Java 21.0.10 with PID 33719 (/Users/andersonferrer/Documents/UTP/7MO CICLO/INTEGRADOR/PROYECTOFINAL/proyecto_integrador_2_avance/sistemaincidencias/target/classes started by andersonferrer in /Users/andersonferrer/Documents/UTP/7MO CICLO/INTEGRADOR/PROYECTOFINAL/proyecto_integrador_2_avance/sistemaincidencias)
+2026-06-08 19:55:15.408 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - No active profile set, falling back to 1 default profile: "default"
+2026-06-08 19:55:15.527 INFO  [background-preinit] o.h.validator.internal.util.Version - HV000001: Hibernate Validator 9.0.1.Final
+2026-06-08 19:55:16.037 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-06-08 19:55:16.038 INFO  [restartedMain] o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-06-08 19:55:16.038 INFO  [restartedMain] o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-06-08 19:55:16.418 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-06-08 19:55:16.430 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - Started SistemaincidenciasApplication in 1.274 seconds (process running for 1.684)
+2026-06-08 19:55:19.097 INFO  [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-06-08 19:58:23.105 INFO  [tomcat-shutdown] o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-8080"]
+2026-06-08 19:58:23.122 INFO  [Thread-1] o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-8080"]
+2026-06-08 19:58:23.197 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - Starting SistemaincidenciasApplication using Java 21.0.10 with PID 33719 (/Users/andersonferrer/Documents/UTP/7MO CICLO/INTEGRADOR/PROYECTOFINAL/proyecto_integrador_2_avance/sistemaincidencias/target/classes started by andersonferrer in /Users/andersonferrer/Documents/UTP/7MO CICLO/INTEGRADOR/PROYECTOFINAL/proyecto_integrador_2_avance/sistemaincidencias)
+2026-06-08 19:58:23.198 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - No active profile set, falling back to 1 default profile: "default"
+2026-06-08 19:58:23.379 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-06-08 19:58:23.380 INFO  [restartedMain] o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-06-08 19:58:23.380 INFO  [restartedMain] o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-06-08 19:58:23.484 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-06-08 19:58:23.487 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - Started SistemaincidenciasApplication in 0.312 seconds (process running for 188.739)
+2026-06-08 19:58:30.021 INFO  [tomcat-shutdown] o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-8080"]
+2026-06-08 19:58:30.028 INFO  [Thread-5] o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-8080"]
+2026-06-08 19:58:30.104 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - Starting SistemaincidenciasApplication using Java 21.0.10 with PID 33719 (/Users/andersonferrer/Documents/UTP/7MO CICLO/INTEGRADOR/PROYECTOFINAL/proyecto_integrador_2_avance/sistemaincidencias/target/classes started by andersonferrer in /Users/andersonferrer/Documents/UTP/7MO CICLO/INTEGRADOR/PROYECTOFINAL/proyecto_integrador_2_avance/sistemaincidencias)
+2026-06-08 19:58:30.104 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - No active profile set, falling back to 1 default profile: "default"
+2026-06-08 19:58:30.233 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-06-08 19:58:30.233 INFO  [restartedMain] o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-06-08 19:58:30.233 INFO  [restartedMain] o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-06-08 19:58:30.326 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-06-08 19:58:30.328 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - Started SistemaincidenciasApplication in 0.239 seconds (process running for 195.58)
+2026-06-08 19:58:40.918 INFO  [tomcat-shutdown] o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-8080"]
+2026-06-08 19:58:40.924 INFO  [Thread-9] o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-8080"]
+2026-06-08 19:58:41.067 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - Starting SistemaincidenciasApplication using Java 21.0.10 with PID 33719 (/Users/andersonferrer/Documents/UTP/7MO CICLO/INTEGRADOR/PROYECTOFINAL/proyecto_integrador_2_avance/sistemaincidencias/target/classes started by andersonferrer in /Users/andersonferrer/Documents/UTP/7MO CICLO/INTEGRADOR/PROYECTOFINAL/proyecto_integrador_2_avance/sistemaincidencias)
+2026-06-08 19:58:41.068 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - No active profile set, falling back to 1 default profile: "default"
+2026-06-08 19:58:41.304 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-06-08 19:58:41.304 INFO  [restartedMain] o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-06-08 19:58:41.304 INFO  [restartedMain] o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-06-08 19:58:41.410 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-06-08 19:58:41.412 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - Started SistemaincidenciasApplication in 0.377 seconds (process running for 206.664)
+2026-06-08 19:58:50.506 INFO  [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-06-08 19:58:50.657 INFO  [http-nio-8080-exec-2] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-06-08 19:58:50.794 INFO  [http-nio-8080-exec-2] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@64874df8
+2026-06-08 19:58:50.794 INFO  [http-nio-8080-exec-2] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-06-08 19:58:50.922 INFO  [http-nio-8080-exec-2] c.i.s.auth.service.AuthService - Login exitoso para usuario admin@sistema.com
