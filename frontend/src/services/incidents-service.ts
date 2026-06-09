@@ -1,5 +1,6 @@
 import { apiRequest } from "@/lib/http"
 import type {
+  IncidenciaDetalle,
   IncidenciasFiltros,
   Incidencia,
   Page,
@@ -49,6 +50,12 @@ export const incidentsService = {
     )
   },
 
+  obtenerDetalle(id: string) {
+    return apiRequest<IncidenciaDetalle>(`/api/incidencias/${id}`, {
+      method: "GET",
+    })
+  },
+
   crear(input: CrearIncidenciaInput) {
     const formData = new FormData()
     formData.append("titulo", input.titulo)
@@ -69,6 +76,42 @@ export const incidentsService = {
     return apiRequest<Incidencia>("/api/incidencias", {
       method: "POST",
       body: formData,
+    })
+  },
+
+  aprobarRechazar(
+    id: string,
+    accion: "aprobar" | "rechazar",
+    nota?: string
+  ) {
+    const params = new URLSearchParams()
+    params.set("accion", accion)
+    if (nota) {
+      params.set("nota", nota)
+    }
+    return apiRequest<Incidencia>(
+      `/api/incidencias/${id}/aprobacion?${params.toString()}`,
+      { method: "PATCH" }
+    )
+  },
+
+  cambiarEstado(
+    id: string,
+    input: { estadoProcesoId: string; nota?: string }
+  ) {
+    return apiRequest<Incidencia>(`/api/incidencias/${id}/estado`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    })
+  },
+
+  agregarComentario(
+    id: string,
+    input: { contenido: string; autorId?: string }
+  ) {
+    return apiRequest(`/api/incidencias/${id}/comentarios`, {
+      method: "POST",
+      body: JSON.stringify(input),
     })
   },
 }

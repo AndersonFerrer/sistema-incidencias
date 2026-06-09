@@ -203,42 +203,42 @@ export function CategoriasPage() {
   const modalAbierto = modal !== "cerrado"
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-950">
+    <div className="flex flex-col gap-3">
+      <header className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950">
             Categorías
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-xs text-slate-500">
             Clasifica las incidencias que reportan los aplicativos clientes.
           </p>
         </div>
-        <Button size="lg" className="h-10 px-4" onClick={abrirNuevo}>
-          <Plus data-icon="inline-start" />
+        <Button size="default" className="h-8 px-3" onClick={abrirNuevo}>
+          <Plus data-icon="inline-start" className="size-3.5" />
           Nueva Categoría
         </Button>
       </header>
 
-      <Card className="rounded-lg bg-white p-6 shadow-sm">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto]">
+      <Card className="rounded-lg bg-white p-3 shadow-sm">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto]">
           <div className="relative">
             <Search
               aria-hidden="true"
-              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+              className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-slate-400"
             />
             <Input
               type="search"
               placeholder="Buscar por nombre o descripción"
               value={busqueda}
               onChange={(event) => setBusqueda(event.target.value)}
-              className="h-10 pl-9"
+              className="h-8 pl-8 text-sm"
             />
           </div>
           <select
             aria-label="Filtrar por cliente"
             value={filtroAplicativo}
             onChange={(event) => setFiltroAplicativo(event.target.value)}
-            className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="h-8 w-full rounded-md border border-input bg-transparent px-2.5 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <option value="">Todos los clientes</option>
             {aplicativos.map((aplicativo) => (
@@ -250,7 +250,8 @@ export function CategoriasPage() {
           <Button
             type="button"
             variant="outline"
-            className="h-10"
+            size="sm"
+            className="h-8 px-3"
             onClick={limpiarFiltros}
             disabled={filtroAplicativoVacio}
           >
@@ -267,12 +268,12 @@ export function CategoriasPage() {
       ) : null}
 
       {isLoading ? (
-        <div className="flex items-center gap-2 text-sm text-slate-500">
-          <Spinner className="size-4" />
+        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+          <Spinner className="size-3.5" />
           Cargando categorías...
         </div>
       ) : categoriasFiltradas.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-200 bg-white py-16 text-center text-sm text-slate-500">
+        <div className="rounded-lg border border-dashed border-slate-200 bg-white py-10 text-center text-sm text-slate-500">
           {categorias.length === 0
             ? "Aún no hay categorías registradas."
             : "No se encontraron categorías con los filtros aplicados."}
@@ -283,25 +284,25 @@ export function CategoriasPage() {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="h-12 px-7 text-sm font-medium text-slate-500">
+                  <TableHead className="h-9 px-4 text-xs font-medium uppercase tracking-wide text-slate-500">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
+                      className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
                     >
                       Nombre
-                      <ArrowUpDown aria-hidden="true" className="size-3.5" />
+                      <ArrowUpDown aria-hidden="true" className="size-3" />
                     </button>
                   </TableHead>
-                  <TableHead className="h-12 text-sm font-medium text-slate-500">
+                  <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
                     Cliente
                   </TableHead>
-                  <TableHead className="h-12 text-sm font-medium text-slate-500">
+                  <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
                     Descripción
                   </TableHead>
-                  <TableHead className="h-12 text-sm font-medium text-slate-500">
+                  <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
                     Estado
                   </TableHead>
-                  <TableHead className="h-12 w-32 px-7 text-right text-sm font-medium text-slate-500">
+                  <TableHead className="h-9 w-24 px-4 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
                     <span className="sr-only">Acciones</span>
                   </TableHead>
                 </TableRow>
@@ -314,29 +315,29 @@ export function CategoriasPage() {
 
                   return (
                     <TableRow key={categoria.id}>
-                      <TableCell className="px-7 font-semibold text-slate-950">
+                      <TableCell className="px-4 py-2 font-medium text-slate-950">
                         {categoria.nombre}
                       </TableCell>
-                      <TableCell className="text-slate-600">
+                      <TableCell className="py-2 text-sm text-slate-600">
                         {aplicativo?.nombre ?? "Sin cliente"}
                       </TableCell>
-                      <TableCell className="max-w-md text-slate-500">
+                      <TableCell className="max-w-md py-2 text-sm text-slate-500">
                         {categoria.descripcion ? (
-                          <span className="line-clamp-2">
+                          <span className="line-clamp-1">
                             {categoria.descripcion}
                           </span>
                         ) : (
                           <span className="text-slate-400">—</span>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-2">
                         <CategoriaEstadoBadge activo={categoria.activo} />
                       </TableCell>
-                      <TableCell className="px-7">
-                        <div className="flex items-center justify-end gap-1">
+                      <TableCell className="px-4 py-2">
+                        <div className="flex items-center justify-end gap-0.5">
                           <Button
                             type="button"
-                            size="icon-sm"
+                            size="icon-xs"
                             variant="ghost"
                             onClick={() => abrirEdicion(categoria)}
                             aria-label={`Editar ${categoria.nombre}`}
@@ -346,7 +347,7 @@ export function CategoriasPage() {
                           </Button>
                           <Button
                             type="button"
-                            size="icon-sm"
+                            size="icon-xs"
                             variant="ghost"
                             onClick={() => abrirEliminar(categoria)}
                             aria-label={`Eliminar ${categoria.nombre}`}

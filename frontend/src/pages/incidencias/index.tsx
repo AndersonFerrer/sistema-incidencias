@@ -183,25 +183,25 @@ export function IncidenciasPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-950">
+    <div className="flex flex-col gap-3">
+      <header className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950">
             Incidencias
           </h1>
-          <p className="text-sm text-slate-500">{totalLabel}</p>
+          <p className="text-xs text-slate-500">{totalLabel}</p>
         </div>
         <Button
-          size="lg"
-          className="h-10 px-4"
+          size="default"
+          className="h-8 px-3"
           onClick={() => setVista("nueva")}
         >
-          <Plus data-icon="inline-start" />
+          <Plus data-icon="inline-start" className="size-3.5" />
           Nueva Incidencia
         </Button>
       </header>
 
-      <Card className="rounded-lg bg-white p-6 shadow-sm">
+      <Card className="rounded-lg bg-white p-3 shadow-sm">
         <IncidenciasFilters
           values={filtros}
           onChange={(values) => {
@@ -227,8 +227,8 @@ export function IncidenciasPage() {
       />
 
       {isLoading ? (
-        <div className="flex items-center gap-2 text-sm text-slate-500">
-          <Spinner className="size-4" />
+        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+          <Spinner className="size-3.5" />
           Actualizando resultados...
         </div>
       ) : null}

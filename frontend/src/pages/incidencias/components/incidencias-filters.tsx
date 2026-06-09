@@ -30,6 +30,9 @@ type IncidenciasFiltersProps = {
 
 const PRIORIDADES: Prioridad[] = ["BAJA", "MEDIA", "ALTA", "CRITICA"]
 
+const inputClass =
+  "h-8 w-full rounded-md border border-input bg-transparent px-2.5 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+
 export function IncidenciasFilters({
   values,
   onChange,
@@ -46,19 +49,19 @@ export function IncidenciasFilters({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_repeat(5,minmax(0,1fr))]">
+    <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_repeat(5,minmax(0,1fr))]">
         <div className="relative">
           <Search
             aria-hidden="true"
-            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-slate-400"
           />
           <Input
             type="search"
             placeholder="Buscar por título, descripción o ID"
             value={values.texto}
             onChange={(event) => set("texto", event.target.value)}
-            className="h-10 pl-9"
+            className="h-8 pl-8 text-sm"
           />
         </div>
 
@@ -66,7 +69,7 @@ export function IncidenciasFilters({
           aria-label="Estado de proceso"
           value={values.estadoProcesoId}
           onChange={(event) => set("estadoProcesoId", event.target.value)}
-          className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className={inputClass}
         >
           <option value="">Todos los estados</option>
           {estadosProceso.map((estado) => (
@@ -80,7 +83,7 @@ export function IncidenciasFilters({
           aria-label="Categoría"
           value={values.categoriaId}
           onChange={(event) => set("categoriaId", event.target.value)}
-          className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className={inputClass}
         >
           <option value="">Todas</option>
           {categorias.map((categoria) => (
@@ -96,7 +99,7 @@ export function IncidenciasFilters({
           onChange={(event) =>
             set("prioridad", event.target.value as Prioridad | "")
           }
-          className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className={inputClass}
         >
           <option value="">Todas</option>
           {PRIORIDADES.map((prioridad) => (
@@ -110,7 +113,7 @@ export function IncidenciasFilters({
           aria-label="Cliente"
           value={values.clienteId}
           onChange={(event) => set("clienteId", event.target.value)}
-          className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className={inputClass}
         >
           <option value="">Todos los clientes</option>
           {aplicativos.map((aplicativo) => (
@@ -124,7 +127,7 @@ export function IncidenciasFilters({
           aria-label="Estado de aprobación"
           value={values.estadoAprobacionId}
           onChange={(event) => set("estadoAprobacionId", event.target.value)}
-          className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className={inputClass}
         >
           <option value="">Todas</option>
           {estadosAprobacion.map((estado) => (
@@ -135,18 +138,18 @@ export function IncidenciasFilters({
         </select>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto]">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto]">
         <div className="relative">
           <Input
             type="date"
             aria-label="Fecha desde"
             value={values.desde}
             onChange={(event) => set("desde", event.target.value)}
-            className="h-10 pr-9"
+            className="h-8 pr-7 text-sm"
           />
           <Calendar
             aria-hidden="true"
-            className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute right-2 top-1/2 size-3.5 -translate-y-1/2 text-slate-400"
           />
         </div>
         <div className="relative">
@@ -155,17 +158,18 @@ export function IncidenciasFilters({
             aria-label="Fecha hasta"
             value={values.hasta}
             onChange={(event) => set("hasta", event.target.value)}
-            className="h-10 pr-9"
+            className="h-8 pr-7 text-sm"
           />
           <Calendar
             aria-hidden="true"
-            className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute right-2 top-1/2 size-3.5 -translate-y-1/2 text-slate-400"
           />
         </div>
         <Button
           type="button"
           variant="outline"
-          className="h-10"
+          size="sm"
+          className="h-8 px-3"
           onClick={() =>
             onChange({
               texto: "",

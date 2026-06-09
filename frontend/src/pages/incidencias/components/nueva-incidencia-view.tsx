@@ -145,21 +145,21 @@ export function NuevaIncidenciaView({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3">
+      <header className="flex flex-col gap-2">
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex w-fit items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
+          className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-slate-900"
         >
-          <ArrowLeft aria-hidden="true" className="size-4" />
+          <ArrowLeft aria-hidden="true" className="size-3.5" />
           Volver al listado
         </button>
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-950">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950">
             Nueva Incidencia
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-xs text-slate-500">
             Completa los datos para registrar una nueva incidencia en el
             sistema.
           </p>
@@ -173,10 +173,10 @@ export function NuevaIncidenciaView({
         </Alert>
       ) : null}
 
-      <form onSubmit={enviar} className="flex flex-col gap-6">
+      <form onSubmit={enviar} className="flex flex-col gap-3">
         <Card className="rounded-lg bg-white shadow-sm">
-          <CardContent className="flex flex-col gap-6 p-7">
-            <div className="flex flex-col gap-2">
+          <CardContent className="flex flex-col gap-3 p-4">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="incidencia-titulo"
                 className="text-sm font-medium text-slate-700"
@@ -190,10 +190,11 @@ export function NuevaIncidenciaView({
                 placeholder="Ej. No carga el sistema de ventas"
                 maxLength={200}
                 required
+                className="h-9"
               />
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="incidencia-descripcion"
                 className="text-sm font-medium text-slate-700"
@@ -207,17 +208,17 @@ export function NuevaIncidenciaView({
                   setField("descripcion", event.target.value)
                 }
                 placeholder="Detalla el problema, pasos para reproducirlo y el impacto observado."
-                rows={5}
+                rows={4}
                 required
-                className="w-full resize-y rounded-lg border border-input bg-transparent px-3 py-2 text-sm leading-relaxed outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="w-full resize-y rounded-md border border-input bg-transparent px-2.5 py-1.5 text-sm leading-snug outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               />
             </div>
           </CardContent>
         </Card>
 
         <Card className="rounded-lg bg-white shadow-sm">
-          <CardContent className="grid grid-cols-1 gap-6 p-7 md:grid-cols-2">
-            <div className="flex flex-col gap-2">
+          <CardContent className="grid grid-cols-1 gap-3 p-4 md:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="incidencia-cliente"
                 className="text-sm font-medium text-slate-700"
@@ -230,7 +231,7 @@ export function NuevaIncidenciaView({
                 onChange={(event) => setField("clienteId", event.target.value)}
                 required
                 disabled={isLoadingCatalogos}
-                className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+                className="h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
               >
                 <option value="">Selecciona un cliente</option>
                 {aplicativos
@@ -243,7 +244,7 @@ export function NuevaIncidenciaView({
               </select>
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="incidencia-categoria"
                 className="text-sm font-medium text-slate-700"
@@ -258,7 +259,7 @@ export function NuevaIncidenciaView({
                 }
                 required
                 disabled={!form.clienteId}
-                className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+                className="h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
               >
                 <option value="">
                   {form.clienteId
@@ -280,7 +281,7 @@ export function NuevaIncidenciaView({
               ) : null}
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="incidencia-prioridad"
                 className="text-sm font-medium text-slate-700"
@@ -294,7 +295,7 @@ export function NuevaIncidenciaView({
                   setField("prioridad", event.target.value as Prioridad)
                 }
                 required
-                className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 {PRIORIDADES.map((prioridad) => (
                   <option key={prioridad.value} value={prioridad.value}>
@@ -304,7 +305,7 @@ export function NuevaIncidenciaView({
               </select>
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="incidencia-asignado"
                 className="text-sm font-medium text-slate-700"
@@ -320,7 +321,7 @@ export function NuevaIncidenciaView({
                 onChange={(event) =>
                   setField("asignadoA", event.target.value)
                 }
-                className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 <option value="">Sin asignar</option>
                 {usuariosAsignables.map((usuario) => (
@@ -334,8 +335,8 @@ export function NuevaIncidenciaView({
         </Card>
 
         <Card className="rounded-lg bg-white shadow-sm">
-          <CardContent className="flex flex-col gap-4 p-7">
-            <div className="flex flex-col gap-1">
+          <CardContent className="flex flex-col gap-2.5 p-4">
+            <div className="flex flex-col gap-0.5">
               <span className="text-sm font-medium text-slate-700">
                 Archivos adjuntos
               </span>
@@ -347,9 +348,9 @@ export function NuevaIncidenciaView({
 
             <label
               htmlFor="incidencia-archivos"
-              className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100"
+              className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100"
             >
-              <Paperclip aria-hidden="true" className="size-4" />
+              <Paperclip aria-hidden="true" className="size-3.5" />
               Adjuntar archivos
               <input
                 id="incidencia-archivos"
@@ -361,31 +362,31 @@ export function NuevaIncidenciaView({
             </label>
 
             {archivos.length > 0 ? (
-              <ul className="flex flex-col gap-2">
+              <ul className="flex flex-col gap-1.5">
                 {archivos.map((archivo, index) => (
                   <li
                     key={`${archivo.name}-${index}`}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    className="flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-sm"
                   >
                     <div className="flex min-w-0 items-center gap-2">
                       <Paperclip
                         aria-hidden="true"
-                        className="size-4 shrink-0 text-slate-400"
+                        className="size-3.5 shrink-0 text-slate-400"
                       />
                       <span className="truncate text-slate-700">
                         {archivo.name}
                       </span>
-                      <span className="text-xs text-slate-400">
+                      <span className="text-[11px] text-slate-400">
                         {(archivo.size / 1024).toFixed(1)} KB
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => removerArchivo(index)}
-                      className="flex size-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-600"
+                      className="flex size-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-600"
                       aria-label={`Quitar ${archivo.name}`}
                     >
-                      <X aria-hidden="true" className="size-4" />
+                      <X aria-hidden="true" className="size-3.5" />
                     </button>
                   </li>
                 ))}
@@ -394,20 +395,27 @@ export function NuevaIncidenciaView({
           </CardContent>
         </Card>
 
-        <div className="flex flex-col-reverse items-stretch justify-end gap-3 sm:flex-row sm:items-center">
+        <div className="flex flex-col-reverse items-stretch justify-end gap-2 sm:flex-row sm:items-center">
           <Button
             type="button"
             variant="outline"
             onClick={onBack}
             disabled={isSubmitting}
+            size="sm"
+            className="h-8 px-3"
           >
             Cancelar
           </Button>
-          <Button type="submit" disabled={!puedeEnviar}>
+          <Button
+            type="submit"
+            disabled={!puedeEnviar}
+            size="sm"
+            className="h-8 px-3"
+          >
             {isSubmitting ? (
               <>
-                <Spinner className="size-4" />
-                Creando incidencia...
+                <Spinner className="size-3.5" />
+                Creando...
               </>
             ) : (
               "Crear incidencia"

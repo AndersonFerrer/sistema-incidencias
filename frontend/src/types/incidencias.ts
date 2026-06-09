@@ -38,3 +38,53 @@ export type IncidenciasFiltros = {
   page?: number
   size?: number
 }
+
+export type IncidenciaComentario = {
+  id: string
+  incidenciaId: string
+  autorId: string
+  contenido: string
+  creadoEn: string
+  actualizadoEn: string | null
+}
+
+export type IncidenciaAdjunto = {
+  id: string
+  incidenciaId: string
+  subidoPor: string
+  nombreArchivo: string
+  tipoMime: string
+  tamanoBytes: number
+  url: string
+  subidoEn: string
+}
+
+export type IncidenciaHistorialAccion =
+  | "CREADA"
+  | "ACTUALIZADA"
+  | "ESTADO_CAMBIADO"
+  | "APROBADA"
+  | "RECHAZADA"
+  | "ASIGNADA"
+  | "COMENTARIO_AGREGADO"
+  | "ADJUNTO_AGREGADO"
+  | "ADJUNTO_ELIMINADO"
+  | string
+
+export type IncidenciaHistorial = {
+  id: string
+  incidenciaId: string
+  usuarioId: string
+  accion: IncidenciaHistorialAccion
+  estadoProcesoAnteriorId: string | null
+  estadoProcesoNuevoId: string | null
+  nota: string | null
+  creadoEn: string
+}
+
+export type IncidenciaDetalle = {
+  incidencia: Incidencia
+  comentarios: IncidenciaComentario[]
+  adjuntos: IncidenciaAdjunto[]
+  historial: IncidenciaHistorial[]
+}

@@ -200,18 +200,18 @@ export function ClientesPage() {
   const modalAbierto = modal !== "cerrado"
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-950">
+    <div className="flex flex-col gap-3">
+      <header className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950">
             Clientes / Aplicaciones
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-xs text-slate-500">
             Aplicaciones externas que reportan incidencias a este sistema
           </p>
         </div>
-        <Button size="lg" className="h-10 px-4" onClick={abrirNuevo}>
-          <Plus data-icon="inline-start" />
+        <Button size="default" className="h-8 px-3" onClick={abrirNuevo}>
+          <Plus data-icon="inline-start" className="size-3.5" />
           Nuevo Cliente
         </Button>
       </header>
@@ -219,14 +219,14 @@ export function ClientesPage() {
       <div className="relative max-w-xl">
         <Search
           aria-hidden="true"
-          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-slate-400"
         />
         <Input
           type="search"
           placeholder="Buscar cliente..."
           value={busqueda}
           onChange={(event) => setBusqueda(event.target.value)}
-          className="h-10 pl-9"
+          className="h-8 pl-8 text-sm"
         />
       </div>
 
@@ -238,18 +238,18 @@ export function ClientesPage() {
       ) : null}
 
       {isLoading ? (
-        <div className="flex items-center gap-2 text-sm text-slate-500">
-          <Spinner className="size-4" />
+        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+          <Spinner className="size-3.5" />
           Cargando clientes...
         </div>
       ) : aplicativosFiltrados.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-200 bg-white py-16 text-center text-sm text-slate-500">
+        <div className="rounded-lg border border-dashed border-slate-200 bg-white py-10 text-center text-sm text-slate-500">
           {busqueda.trim()
             ? "No se encontraron clientes con ese criterio."
             : "Aún no hay clientes registrados."}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {aplicativosFiltrados.map((cliente) => (
             <ClienteCard
               key={cliente.id}

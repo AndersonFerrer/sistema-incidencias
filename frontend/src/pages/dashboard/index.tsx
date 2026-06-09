@@ -8,12 +8,12 @@ export function DashboardPage() {
   const displayName = user?.nombre ?? "Carlos Méndez"
 
   return (
-    <div className="flex flex-col gap-8">
-      <section className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-950">
+    <div className="flex flex-col gap-3">
+      <section className="flex flex-col gap-0.5">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-950">
           Dashboard
         </h1>
-        <p className="text-base text-slate-500">
+        <p className="text-xs text-slate-500">
           Bienvenido, {displayName}. Aquí tienes el resumen de incidencias.
         </p>
       </section>

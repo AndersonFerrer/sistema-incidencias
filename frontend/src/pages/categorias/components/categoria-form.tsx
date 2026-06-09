@@ -72,7 +72,7 @@ export function CategoriaForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-5"
+      className="flex flex-col gap-3"
       id="categoria-form"
     >
       {error ? (
@@ -82,7 +82,7 @@ export function CategoriaForm({
         </Alert>
       ) : null}
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1.5">
         <label
           htmlFor="categoria-aplicativo"
           className="text-sm font-medium text-slate-700"
@@ -95,7 +95,7 @@ export function CategoriaForm({
           onChange={(event) => setAplicativoId(event.target.value)}
           required
           disabled={aplicativosActivos.length === 0}
-          className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+          className="h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
         >
           <option value="">Selecciona un cliente</option>
           {aplicativosActivos.map((aplicativo) => (
@@ -111,7 +111,7 @@ export function CategoriaForm({
         ) : null}
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1.5">
         <label
           htmlFor="categoria-nombre"
           className="text-sm font-medium text-slate-700"
@@ -125,11 +125,11 @@ export function CategoriaForm({
           placeholder="Ej. Error de sistema"
           maxLength={100}
           required
-          className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1.5">
         <label
           htmlFor="categoria-descripcion"
           className="text-sm font-medium text-slate-700"
@@ -144,13 +144,13 @@ export function CategoriaForm({
           value={descripcion}
           onChange={(event) => setDescripcion(event.target.value)}
           placeholder="Describe brevemente el tipo de incidencias que agrupa esta categoría."
-          rows={3}
+          rows={2}
           maxLength={500}
-          className="w-full resize-y rounded-lg border border-input bg-transparent px-3 py-2 text-sm leading-relaxed outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="w-full resize-y rounded-md border border-input bg-transparent px-2.5 py-1.5 text-sm leading-snug outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <input
           id="categoria-activo"
           type="checkbox"
@@ -166,19 +166,26 @@ export function CategoriaForm({
         </label>
       </div>
 
-      <div className="flex flex-col-reverse items-stretch justify-end gap-2 pt-2 sm:flex-row sm:items-center">
+      <div className="flex flex-col-reverse items-stretch justify-end gap-2 pt-1 sm:flex-row sm:items-center">
         <Button
           type="button"
           variant="outline"
           onClick={onCancel}
           disabled={isSubmitting}
+          size="sm"
+          className="h-8 px-3"
         >
           Cancelar
         </Button>
-        <Button type="submit" disabled={!puedeEnviar}>
+        <Button
+          type="submit"
+          disabled={!puedeEnviar}
+          size="sm"
+          className="h-8 px-3"
+        >
           {isSubmitting ? (
             <>
-              <Spinner className="size-4" />
+              <Spinner className="size-3.5" />
               Guardando...
             </>
           ) : isEditing ? (

@@ -11,6 +11,7 @@ import { CategoriasPage } from "@/pages/categorias"
 import { ClientesPage } from "@/pages/clientes"
 import { DashboardPage } from "@/pages/dashboard"
 import { IncidenciasPage } from "@/pages/incidencias"
+import { IncidenciaDetallePage } from "@/pages/incidencias/detalle"
 import { LoginPage } from "@/pages/login"
 
 const rootRoute = createRootRoute({
@@ -42,9 +43,21 @@ const incidenciasRoute = createRoute({
   path: "/incidencias",
   component: () => (
     <AppLayout>
-      <IncidenciasPage />
+      <Outlet />
     </AppLayout>
   ),
+})
+
+const incidenciasIndexRoute = createRoute({
+  getParentRoute: () => incidenciasRoute,
+  path: "/",
+  component: () => <IncidenciasPage />,
+})
+
+const incidenciaDetalleRoute = createRoute({
+  getParentRoute: () => incidenciasRoute,
+  path: "/$id",
+  component: () => <IncidenciaDetallePage />,
 })
 
 const clientesRoute = createRoute({
@@ -70,7 +83,10 @@ const categoriasRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   loginRoute,
   dashboardRoute,
-  incidenciasRoute,
+  incidenciasRoute.addChildren([
+    incidenciasIndexRoute,
+    incidenciaDetalleRoute,
+  ]),
   clientesRoute,
   categoriasRoute,
 ])

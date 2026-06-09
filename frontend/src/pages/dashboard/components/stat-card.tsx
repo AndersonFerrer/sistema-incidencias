@@ -10,21 +10,21 @@ type StatCardProps = {
 
 export function StatCard({ label, value, icon: Icon, color }: StatCardProps) {
   return (
-    <Card className="h-32 rounded-lg bg-white shadow-sm">
-      <CardContent className="flex h-full items-center gap-5 px-7">
+    <Card className="rounded-lg bg-white shadow-sm">
+      <CardContent className="flex items-center gap-3 px-4 py-3">
         <div
           className={cn(
-            "flex size-12 items-center justify-center rounded-lg bg-slate-100",
+            "flex size-9 items-center justify-center rounded-md bg-slate-100",
             color
           )}
         >
-          <Icon aria-hidden="true" className="size-6" />
+          <Icon aria-hidden="true" className="size-4" />
         </div>
-        <div className="flex min-w-0 flex-col gap-1">
-          <p className="text-base font-medium leading-snug text-slate-500">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <p className="text-xs font-medium leading-snug text-slate-500">
             {label}
           </p>
-          <p className="text-3xl font-bold leading-none text-slate-950">
+          <p className="text-xl font-bold leading-none text-slate-950">
             {value}
           </p>
         </div>

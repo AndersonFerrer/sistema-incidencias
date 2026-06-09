@@ -45,7 +45,7 @@ export function ClienteForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-5"
+      className="flex flex-col gap-3"
       id="cliente-form"
     >
       {error ? (
@@ -55,7 +55,7 @@ export function ClienteForm({
         </Alert>
       ) : null}
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1.5">
         <label
           htmlFor="cliente-nombre"
           className="text-sm font-medium text-slate-700"
@@ -69,11 +69,11 @@ export function ClienteForm({
           placeholder="Ej. App Móvil Clientes"
           maxLength={100}
           required
-          className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <input
           id="cliente-activo"
           type="checkbox"
@@ -90,33 +90,40 @@ export function ClienteForm({
       </div>
 
       {isEditing && cliente?.apiKey ? (
-        <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className="flex flex-col gap-1 rounded-md border border-slate-200 bg-slate-50/60 p-2.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
             API Key actual
           </span>
-          <code className="truncate font-mono text-sm text-slate-700">
+          <code className="truncate font-mono text-xs text-slate-700">
             {cliente.apiKey}
           </code>
-          <p className="text-xs text-slate-500">
+          <p className="text-[11px] text-slate-500">
             La API key se regenera únicamente desde el botón de rotar en la
             tarjeta del cliente.
           </p>
         </div>
       ) : null}
 
-      <div className="flex flex-col-reverse items-stretch justify-end gap-2 pt-2 sm:flex-row sm:items-center">
+      <div className="flex flex-col-reverse items-stretch justify-end gap-2 pt-1 sm:flex-row sm:items-center">
         <Button
           type="button"
           variant="outline"
           onClick={onCancel}
           disabled={isSubmitting}
+          size="sm"
+          className="h-8 px-3"
         >
           Cancelar
         </Button>
-        <Button type="submit" disabled={!puedeEnviar}>
+        <Button
+          type="submit"
+          disabled={!puedeEnviar}
+          size="sm"
+          className="h-8 px-3"
+        >
           {isSubmitting ? (
             <>
-              <Spinner className="size-4" />
+              <Spinner className="size-3.5" />
               Guardando...
             </>
           ) : isEditing ? (

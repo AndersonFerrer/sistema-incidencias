@@ -1,4 +1,5 @@
 import { ArrowUpDown, ChevronLeft, ChevronRight, Trash2 } from "lucide-react"
+import { useNavigate } from "@tanstack/react-router"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -15,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { cn } from "@/lib/utils"
 import type { Categoria } from "@/types/categorias"
 import type { AplicativoCliente } from "@/types/aplicativos"
 import type { EstadoAprobacion } from "@/types/estados-aprobacion"
@@ -78,16 +80,21 @@ export function IncidenciasTable({
   estadosAprobacion,
   onPageChange,
 }: IncidenciasTableProps) {
+  const navigate = useNavigate()
   const totalPages = Math.max(1, Math.ceil(total / size))
   const start = total === 0 ? 0 : page * size + 1
   const end = Math.min(total, (page + 1) * size)
 
   const pageNumbers = Array.from({ length: totalPages }, (_, index) => index)
 
+  const irADetalle = (incidencia: Incidencia) => {
+    void navigate({ to: "/incidencias/$id", params: { id: incidencia.id } })
+  }
+
   return (
     <Card className="rounded-lg bg-white shadow-sm">
-      <CardHeader className="border-b px-7 py-5">
-        <CardTitle className="text-base font-semibold text-slate-950">
+      <CardHeader className="border-b px-5 py-3">
+        <CardTitle className="text-sm font-semibold text-slate-950">
           Listado de incidencias
         </CardTitle>
       </CardHeader>
@@ -95,70 +102,70 @@ export function IncidenciasTable({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="h-14 px-7 text-base font-medium text-slate-500">
+              <TableHead className="h-9 px-4 text-xs font-medium uppercase tracking-wide text-slate-500">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 text-base font-medium text-slate-500 transition-colors hover:text-slate-900"
+                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
                 >
                   ID
-                  <ArrowUpDown aria-hidden="true" className="size-3.5" />
+                  <ArrowUpDown aria-hidden="true" className="size-3" />
                 </button>
               </TableHead>
-              <TableHead className="h-14 text-base font-medium text-slate-500">
+              <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 text-base font-medium text-slate-500 transition-colors hover:text-slate-900"
+                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
                 >
                   Título
-                  <ArrowUpDown aria-hidden="true" className="size-3.5" />
+                  <ArrowUpDown aria-hidden="true" className="size-3" />
                 </button>
               </TableHead>
-              <TableHead className="h-14 text-base font-medium text-slate-500">
+              <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 text-base font-medium text-slate-500 transition-colors hover:text-slate-900"
+                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
                 >
                   Categoría
-                  <ArrowUpDown aria-hidden="true" className="size-3.5" />
+                  <ArrowUpDown aria-hidden="true" className="size-3" />
                 </button>
               </TableHead>
-              <TableHead className="h-14 text-base font-medium text-slate-500">
+              <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 text-base font-medium text-slate-500 transition-colors hover:text-slate-900"
+                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
                 >
                   Estado
-                  <ArrowUpDown aria-hidden="true" className="size-3.5" />
+                  <ArrowUpDown aria-hidden="true" className="size-3" />
                 </button>
               </TableHead>
-              <TableHead className="h-14 text-base font-medium text-slate-500">
+              <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 text-base font-medium text-slate-500 transition-colors hover:text-slate-900"
+                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
                 >
                   Prioridad
-                  <ArrowUpDown aria-hidden="true" className="size-3.5" />
+                  <ArrowUpDown aria-hidden="true" className="size-3" />
                 </button>
               </TableHead>
-              <TableHead className="h-14 text-base font-medium text-slate-500">
+              <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 text-base font-medium text-slate-500 transition-colors hover:text-slate-900"
+                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
                 >
                   Asignado
-                  <ArrowUpDown aria-hidden="true" className="size-3.5" />
+                  <ArrowUpDown aria-hidden="true" className="size-3" />
                 </button>
               </TableHead>
-              <TableHead className="h-14 text-base font-medium text-slate-500">
+              <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 text-base font-medium text-slate-500 transition-colors hover:text-slate-900"
+                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
                 >
                   Fecha
-                  <ArrowUpDown aria-hidden="true" className="size-3.5" />
+                  <ArrowUpDown aria-hidden="true" className="size-3" />
                 </button>
               </TableHead>
-              <TableHead className="h-14 w-16 px-7 text-right text-base font-medium text-slate-500">
+              <TableHead className="h-9 w-12 px-4 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
                 <span className="sr-only">Acciones</span>
               </TableHead>
             </TableRow>
@@ -168,7 +175,7 @@ export function IncidenciasTable({
               <TableRow className="hover:bg-transparent">
                 <TableCell
                   colSpan={8}
-                  className="px-7 py-10 text-center text-sm text-slate-500"
+                  className="px-4 py-8 text-center text-sm text-slate-500"
                 >
                   No se encontraron incidencias con los filtros actuales.
                 </TableCell>
@@ -187,48 +194,62 @@ export function IncidenciasTable({
                 )
 
                 return (
-                  <TableRow key={incidencia.id}>
-                    <TableCell className="px-7 font-mono text-sm text-slate-500">
+                  <TableRow
+                    key={incidencia.id}
+                    onClick={() => irADetalle(incidencia)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault()
+                        irADetalle(incidencia)
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Ver detalle de ${incidencia.codigo}`}
+                    className={cn("cursor-pointer")}
+                  >
+                    <TableCell className="px-4 py-2 font-mono text-xs text-slate-500">
                       {incidencia.codigo}
                     </TableCell>
-                    <TableCell className="font-semibold text-slate-950">
+                    <TableCell className="py-2 font-medium text-slate-950">
                       {incidencia.titulo}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-0.5">
+                    <TableCell className="py-2">
+                      <div className="flex flex-col gap-0">
                         <span className="text-sm font-medium text-slate-900">
                           {categoria.nombre}
                         </span>
                         {categoria.aplicativo ? (
-                          <span className="text-xs text-slate-500">
+                          <span className="text-[11px] text-slate-500">
                             {categoria.aplicativo}
                           </span>
                         ) : null}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2">
                       {estadoAprobacion ? (
                         <EstadoAprobacionBadge estado={estadoAprobacion} />
                       ) : (
                         <span className="text-sm text-slate-500">—</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2">
                       <PrioridadBadge prioridad={incidencia.prioridad} />
                     </TableCell>
-                    <TableCell className="text-slate-500">
+                    <TableCell className="py-2 text-sm text-slate-500">
                       {incidencia.asignadoA ? incidencia.asignadoA : "Sin asignar"}
                     </TableCell>
-                    <TableCell className="text-slate-500">
+                    <TableCell className="py-2 text-sm text-slate-500">
                       {formatDate(incidencia.creadoEn)}
                     </TableCell>
-                    <TableCell className="px-7 text-right">
+                    <TableCell className="px-4 py-2 text-right">
                       <Button
                         type="button"
-                        size="icon-sm"
+                        size="icon-xs"
                         variant="ghost"
                         aria-label={`Eliminar incidencia ${incidencia.codigo}`}
                         className="text-slate-400 hover:text-red-600"
+                        onClick={(event) => event.stopPropagation()}
                       >
                         <Trash2 aria-hidden="true" />
                       </Button>
@@ -241,14 +262,14 @@ export function IncidenciasTable({
         </Table>
       </CardContent>
 
-      <div className="flex flex-col items-center justify-between gap-3 border-t px-7 py-4 text-sm text-slate-500 md:flex-row">
+      <div className="flex flex-col items-center justify-between gap-2 border-t px-5 py-3 text-xs text-slate-500 md:flex-row">
         <p>
           Mostrando {start}-{end} de {total}
         </p>
         <div className="flex items-center gap-1">
           <Button
             type="button"
-            size="icon-sm"
+            size="icon-xs"
             variant="ghost"
             disabled={page === 0}
             onClick={() => onPageChange(Math.max(0, page - 1))}
@@ -263,8 +284,8 @@ export function IncidenciasTable({
               onClick={() => onPageChange(pageNumber)}
               className={
                 pageNumber === page
-                  ? "flex size-8 items-center justify-center rounded-lg bg-blue-600 text-sm font-semibold text-white"
-                  : "flex size-8 items-center justify-center rounded-lg text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100"
+                  ? "flex size-7 items-center justify-center rounded-md bg-blue-600 text-xs font-semibold text-white"
+                  : "flex size-7 items-center justify-center rounded-md text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
               }
             >
               {pageNumber + 1}
@@ -272,7 +293,7 @@ export function IncidenciasTable({
           ))}
           <Button
             type="button"
-            size="icon-sm"
+            size="icon-xs"
             variant="ghost"
             disabled={page >= totalPages - 1}
             onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))}

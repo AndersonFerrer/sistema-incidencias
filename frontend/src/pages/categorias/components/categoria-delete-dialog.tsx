@@ -36,11 +36,11 @@ export function CategoriaDeleteDialog({
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+    <div className="flex flex-col gap-3">
+      <div className="flex items-start gap-2.5 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
         <AlertTriangle
           aria-hidden="true"
-          className="mt-0.5 size-5 shrink-0 text-red-600"
+          className="mt-0.5 size-4 shrink-0 text-red-600"
         />
         <p>
           Esta acción no se puede deshacer. Si la categoría tiene incidencias
@@ -48,15 +48,15 @@ export function CategoriaDeleteDialog({
         </p>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <div className="rounded-md border border-slate-200 bg-slate-50/60 p-3">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
           Categoría a eliminar
         </p>
-        <p className="mt-1 text-base font-semibold text-slate-950">
+        <p className="mt-0.5 text-sm font-semibold text-slate-950">
           {categoria.nombre}
         </p>
         {categoria.descripcion ? (
-          <p className="mt-1 text-sm text-slate-600">{categoria.descripcion}</p>
+          <p className="mt-0.5 text-xs text-slate-600">{categoria.descripcion}</p>
         ) : null}
       </div>
 
@@ -73,6 +73,8 @@ export function CategoriaDeleteDialog({
           variant="outline"
           onClick={onCancel}
           disabled={isDeleting}
+          size="sm"
+          className="h-8 px-3"
         >
           Cancelar
         </Button>
@@ -81,10 +83,12 @@ export function CategoriaDeleteDialog({
           variant="destructive"
           onClick={onConfirm}
           disabled={isDeleting}
+          size="sm"
+          className="h-8 px-3"
         >
           {isDeleting ? (
             <>
-              <Spinner className="size-4" />
+              <Spinner className="size-3.5" />
               Eliminando...
             </>
           ) : (
