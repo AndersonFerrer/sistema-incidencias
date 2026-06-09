@@ -22,7 +22,7 @@ const navigation = [
 
 const configuration = [
   { label: "Clientes", icon: Briefcase, to: "/clientes" },
-  { label: "Categorías", icon: Tags },
+  { label: "Categorías", icon: Tags, to: "/categorias" },
   { label: "Estados", icon: GitBranch },
 ];
 

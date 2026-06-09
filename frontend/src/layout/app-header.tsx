@@ -9,6 +9,7 @@ const routeTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/incidencias": "Incidencias",
   "/clientes": "Clientes",
+  "/categorias": "Categorías",
 };
 
 function getRouteTitle(pathname: string) {
