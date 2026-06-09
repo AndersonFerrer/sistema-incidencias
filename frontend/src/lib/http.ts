@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "@/lib/env"
+import { useAuthStore } from "@/store/auth-store"
 
 type RequestOptions = RequestInit & {
   token?: string | null
@@ -18,11 +19,12 @@ export async function apiRequest<T>(
   path: string,
   { headers, token, ...options }: RequestOptions = {}
 ) {
+  const authToken = token ?? useAuthStore.getState().token
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       ...headers,
     },
   })

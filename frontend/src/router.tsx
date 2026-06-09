@@ -8,6 +8,7 @@ import {
 import { AppLayout } from "@/layout/app-layout"
 import { AuthLayout } from "@/layout/auth-layout"
 import { DashboardPage } from "@/pages/dashboard"
+import { IncidenciasPage } from "@/pages/incidencias"
 import { LoginPage } from "@/pages/login"
 
 const rootRoute = createRootRoute({
@@ -34,7 +35,21 @@ const dashboardRoute = createRoute({
   ),
 })
 
-const routeTree = rootRoute.addChildren([loginRoute, dashboardRoute])
+const incidenciasRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/incidencias",
+  component: () => (
+    <AppLayout>
+      <IncidenciasPage />
+    </AppLayout>
+  ),
+})
+
+const routeTree = rootRoute.addChildren([
+  loginRoute,
+  dashboardRoute,
+  incidenciasRoute,
+])
 
 export const router = createRouter({ routeTree })
 

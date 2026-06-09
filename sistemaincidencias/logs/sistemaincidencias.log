@@ -34,3 +34,4 @@
 2026-06-09 07:28:36.584 WARN  [http-nio-8080-exec-8] o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Resolved [com.integrador.sistemaincidencias.shared.exception.AutenticacionException: Credenciales invalidas]
 2026-06-09 07:28:36.602 WARN  [http-nio-8080-exec-10] o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Resolved [com.integrador.sistemaincidencias.shared.exception.AutenticacionException: Credenciales invalidas]
 2026-06-09 07:29:51.967 INFO  [http-nio-8080-exec-3] c.i.s.auth.service.AuthService - Login exitoso para usuario admin@sistema.com
+2026-06-09 07:54:57.852 INFO  [http-nio-8080-exec-7] c.i.s.auth.service.AuthService - Login exitoso para usuario admin@sistema.com

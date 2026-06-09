@@ -1,26 +1,41 @@
-import { LogOut, PanelLeft, Bell } from "lucide-react"
+import { LogOut, PanelLeft, Bell } from "lucide-react";
+import { useRouterState } from "@tanstack/react-router";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { useAuthStore } from "@/store/auth-store"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/store/auth-store";
+
+const routeTitles: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/incidencias": "Incidencias",
+};
+
+function getRouteTitle(pathname: string) {
+  return routeTitles[pathname] ?? "GestIncidencias";
+}
 
 export function AppHeader() {
-  const user = useAuthStore((state) => state.user)
-  const logout = useAuthStore((state) => state.logout)
-  const displayName = user?.nombre ?? "Carlos Méndez"
-  const role = user?.rol ?? "Admin"
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const displayName = user?.nombre ?? "Carlos Méndez";
+  const role = user?.rol ?? "Admin";
   const initials = displayName
     .split(" ")
     .map((part) => part[0])
     .join("")
     .slice(0, 2)
-    .toUpperCase()
+    .toUpperCase();
+
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+  const title = getRouteTitle(pathname);
 
   return (
-    <header className="fixed left-80 right-0 top-0 flex h-[70px] items-center justify-between border-b border-slate-200 bg-white px-7">
+    <header className="fixed left-64 right-0 top-0 flex h-[70px] items-center justify-between border-b border-slate-200 bg-white px-7">
       <div className="flex items-center gap-7">
         <PanelLeft aria-hidden="true" className="size-5 text-slate-800" />
-        <p className="text-sm font-semibold text-slate-900">Dashboard</p>
+        <p className="text-sm font-semibold text-slate-900">{title}</p>
       </div>
 
       <div className="flex items-center gap-5">
@@ -61,5 +76,5 @@ export function AppHeader() {
         </Button>
       </div>
     </header>
-  )
+  );
 }
