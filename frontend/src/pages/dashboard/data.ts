@@ -1,3 +1,11 @@
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Timer,
+  TrendingUp,
+} from "lucide-react"
+
 export type IncidentStatus =
   | "solicitada"
   | "aceptada"
@@ -172,3 +180,89 @@ export const priorityLabels: Record<IncidentPriority, string> = {
   media: "Media",
   alta: "Alta",
 }
+
+export const dashboardStats = [
+  {
+    label: "Total Incidencias",
+    value: incidents.length,
+    icon: AlertTriangle,
+    color: "text-blue-600",
+  },
+  {
+    label: "Solicitudes por revisar",
+    value: incidents.filter((incident) => incident.status === "solicitada")
+      .length,
+    icon: AlertTriangle,
+    color: "text-slate-900",
+  },
+  {
+    label: "Pendientes",
+    value: incidents.filter((incident) => incident.status === "pendiente")
+      .length,
+    icon: Clock,
+    color: "text-orange-500",
+  },
+  {
+    label: "En Proceso",
+    value: incidents.filter((incident) => incident.status === "en_proceso")
+      .length,
+    icon: TrendingUp,
+    color: "text-blue-600",
+  },
+  {
+    label: "Finalizadas",
+    value: incidents.filter((incident) => incident.status === "finalizada")
+      .length,
+    icon: CheckCircle2,
+    color: "text-green-600",
+  },
+  {
+    label: "Tiempo Prom. Resolución",
+    value: "2.1 días",
+    icon: Timer,
+    color: "text-slate-950",
+  },
+]
+
+export const chartColors = {
+  grid: "hsl(214 32% 91%)",
+  text: "hsl(220 13% 46%)",
+  blue: "hsl(217 91% 50%)",
+  blueDark: "hsl(217 91% 40%)",
+  green: "hsl(142 71% 45%)",
+  orange: "hsl(38 92% 50%)",
+  red: "hsl(0 72% 51%)",
+  slate: "hsl(220 14% 75%)",
+}
+
+const pieOrder: IncidentStatus[] = [
+  "solicitada",
+  "aceptada",
+  "pendiente",
+  "en_proceso",
+  "finalizada",
+  "rechazada",
+]
+
+export const pieColors = [
+  chartColors.slate,
+  chartColors.blue,
+  chartColors.orange,
+  chartColors.blueDark,
+  chartColors.green,
+  chartColors.red,
+]
+
+export const pieData = pieOrder
+  .map((status) => ({
+    name: statusLabels[status],
+    value: incidents.filter((incident) => incident.status === status).length,
+  }))
+  .filter((item) => item.value > 0)
+
+export const recentIncidents = [...incidents]
+  .sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  )
+  .slice(0, 5)

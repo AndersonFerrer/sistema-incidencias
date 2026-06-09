@@ -7,8 +7,8 @@ import {
 
 import { AppLayout } from "@/layout/app-layout"
 import { AuthLayout } from "@/layout/auth-layout"
-import { DashboardPage } from "@/pages/dashboard-page"
-import { LoginPage } from "@/pages/login-page"
+import { DashboardPage } from "@/pages/dashboard"
+import { LoginPage } from "@/pages/login"
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,

@@ -1,11 +1,11 @@
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 import {
   type IncidentPriority,
   type IncidentStatus,
   priorityLabels,
   statusLabels,
-} from "@/data/dashboard-data"
-import { cn } from "@/lib/utils"
+} from "@/pages/dashboard/data"
 
 const statusStyles: Record<IncidentStatus, string> = {
   solicitada: "border-slate-200 bg-slate-100 text-slate-700",

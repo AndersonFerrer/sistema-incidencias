@@ -1,0 +1,6 @@
+interface:
+  display_name: "GestIncidencias Frontend"
+  short_description: "Frontend structure for project views"
+  default_prompt: "Use $gestincidencias-frontend to create or modify a frontend page, component, route, store, or service."
+policy:
+  allow_implicit_invocation: true
