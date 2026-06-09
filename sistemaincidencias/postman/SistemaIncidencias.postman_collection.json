@@ -2,9 +2,9 @@
 	"info": {
 		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
 		"name": "Sistema Incidencias",
-		"description": "Colección de endpoints para el Sistema de Gestión de Incidencias.\n\nBase URL: http://localhost:8080\n\n## Autenticación\nLa mayoría de endpoints requieren header Authorization: Bearer {{token}}\nEl token se obtiene llamando a POST /api/auth/login o POST /api/auth/demo\n\n## Variables de colección\n- `baseUrl`: http://localhost:8080\n- `token`: JWT obtenido tras login\n- `usuarioId`: UUID del usuario para operaciones específicas\n- `rolId`: UUID del rol para operaciones específicas\n- `aplicativoId`: UUID del aplicativo\n- `categoriaId`: UUID de la categoría\n- `estadoAprobacionId`: UUID del estado de aprobación\n- `estadoProcesoId`: UUID del estado de proceso",
+		"description": "Colección de endpoints para el Sistema de Gestión de Incidencias.\n\nBase URL: http://localhost:8080\n\n## Autenticación\nLa mayoría de endpoints requieren header Authorization: Bearer {{token}}\nEl token se obtiene llamando a POST /api/auth/login o POST /api/auth/demo\n\n## Variables de colección\n- `baseUrl`: http://localhost:8080\n- `token`: JWT obtenido tras login\n- `usuarioId`: UUID del usuario para operaciones específicas\n- `rolId`: UUID del rol para operaciones específicas\n- `aplicativoId`: UUID del aplicativo\n- `categoriaId`: UUID de la categoría\n- `estadoAprobacionId`: UUID del estado de aprobación\n- `estadoProcesoId`: UUID del estado de proceso\n- `incidenciaId`: UUID de incidencia para pruebas\n- `agenteId`: UUID de agente asignado\n- `usuarioExternoId`: UUID de usuario externo reportante\n\n## Adjuntos en incidencias\nCrear incidencia, actualizar incidencia y subir adjuntos usan multipart/form-data cuando se van a enviar archivos. En actualización, si el campo archivos no se envía, los adjuntos existentes se conservan sin reemplazo.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"version": "1.1.0"
+		"version": "1.3.0"
 	},
 	"auth": {
 		"type": "bearer",
@@ -60,8 +60,14 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/auth/login",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "auth", "login"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
 						},
 						"description": "Autentica un usuario con email y password. Retorna JWT token, datos del usuario y fecha de expiración."
 					},
@@ -113,8 +119,14 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/auth/demo",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "auth", "demo"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"demo"
+							]
 						},
 						"description": "Login simplificado para desarrollo. Retorna JWT directamente sin validar credenciales. Body opcional: { \"rol\": \"ADMINISTRADOR\" | \"AGENTE\" | \"USUARIO\" }"
 					},
@@ -139,8 +151,14 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/auth/me",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "auth", "me"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"me"
+							]
 						},
 						"description": "Retorna la información del usuario autenticado según el token JWT enviado."
 					},
@@ -171,8 +189,13 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/usuarios?texto=&rol=&activo=&limit=20&offset=0",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "usuarios"],
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"usuarios"
+							],
 							"query": [
 								{
 									"key": "texto",
@@ -227,8 +250,14 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "usuarios", "{{usuarioId}}"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"usuarios",
+								"{{usuarioId}}"
+							]
 						},
 						"description": "Obtiene un usuario por su UUID."
 					}
@@ -258,8 +287,13 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/usuarios",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "usuarios"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"usuarios"
+							]
 						},
 						"description": "Crea un nuevo usuario.\n\nBody requerido:\n- nombre (String, 1-150): nombre completo\n- email (String, email válido, 1-150): debe ser único\n- password (String, 6-100): contraseña\n- rolCodigo (String, 1-50): código del rol existente\n- avatarUrl (String, max 500, opcional): URL del avatar\n- activo (Boolean, opcional, default true): estado del usuario"
 					},
@@ -297,8 +331,14 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "usuarios", "{{usuarioId}}"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"usuarios",
+								"{{usuarioId}}"
+							]
 						},
 						"description": "Actualiza datos de un usuario existente (no incluye password).\n\nBody requerido:\n- nombre (String, 1-150)\n- email (String, email válido, 1-150)\n- rolCodigo (String, 1-50)\n- avatarUrl (String, max 500, opcional)\n- activo (Boolean, opcional, default true)"
 					}
@@ -328,8 +368,15 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}/password",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "usuarios", "{{usuarioId}}", "password"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"usuarios",
+								"{{usuarioId}}",
+								"password"
+							]
 						},
 						"description": "Cambia la contraseña de un usuario.\n\nBody requerido:\n- password (String, 6-100): nueva contraseña\n\nRetorna 204 No Content en éxito."
 					}
@@ -346,8 +393,15 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}/activar",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "usuarios", "{{usuarioId}}", "activar"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"usuarios",
+								"{{usuarioId}}",
+								"activar"
+							]
 						},
 						"description": "Activa un usuario (establece activo = true). Sin body."
 					}
@@ -364,8 +418,15 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}/desactivar",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "usuarios", "{{usuarioId}}", "desactivar"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"usuarios",
+								"{{usuarioId}}",
+								"desactivar"
+							]
 						},
 						"description": "Desactiva un usuario (establece activo = false). Sin body."
 					}
@@ -388,8 +449,13 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/roles",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "roles"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"roles"
+							]
 						},
 						"description": "Lista todos los roles disponibles."
 					},
@@ -414,8 +480,14 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/roles/{{rolId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "roles", "{{rolId}}"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"roles",
+								"{{rolId}}"
+							]
 						},
 						"description": "Obtiene un rol por su UUID."
 					}
@@ -445,8 +517,13 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/roles",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "roles"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"roles"
+							]
 						},
 						"description": "Crea un nuevo rol.\n\nBody requerido:\n- codigo (String, 1-50): código único del rol\n- nombre (String, 1-100): nombre descriptivo\n- descripcion (String, max 255, opcional)\n- activo (Boolean, opcional, default true)"
 					},
@@ -484,8 +561,14 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/roles/{{rolId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "roles", "{{rolId}}"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"roles",
+								"{{rolId}}"
+							]
 						},
 						"description": "Actualiza un rol existente.\n\nBody requerido:\n- codigo (String, 1-50)\n- nombre (String, 1-100)\n- descripcion (String, max 255, opcional)\n- activo (Boolean, opcional, default true)"
 					}
@@ -502,8 +585,14 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/roles/{{rolId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "roles", "{{rolId}}"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"roles",
+								"{{rolId}}"
+							]
 						},
 						"description": "Elimina un rol. No debe tener usuarios asignados.\nRetorna 204 No Content en éxito."
 					}
@@ -526,8 +615,13 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/aplicativos",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "aplicativos"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"aplicativos"
+							]
 						},
 						"description": "Lista todos los aplicativos cliente registrados."
 					},
@@ -552,8 +646,14 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/aplicativos/{{aplicativoId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "aplicativos", "{{aplicativoId}}"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"aplicativos",
+								"{{aplicativoId}}"
+							]
 						},
 						"description": "Obtiene un aplicativo cliente por su UUID. No requiere token de administrador."
 					}
@@ -583,8 +683,13 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/aplicativos",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "aplicativos"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"aplicativos"
+							]
 						},
 						"description": "Crea un nuevo aplicativo cliente. La API key se genera automáticamente.\n\nBody requerido:\n- nombre (String, 1-100): nombre único del aplicativo\n- activo (Boolean, opcional, default true)"
 					},
@@ -622,8 +727,14 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/aplicativos/{{aplicativoId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "aplicativos", "{{aplicativoId}}"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"aplicativos",
+								"{{aplicativoId}}"
+							]
 						},
 						"description": "Actualiza un aplicativo cliente existente (no incluye API key).\n\nBody requerido:\n- nombre (String, 1-100): nombre único\n- activo (Boolean, opcional, default true)"
 					}
@@ -640,8 +751,15 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/aplicativos/{{aplicativoId}}/rotar-api-key",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "aplicativos", "{{aplicativoId}}", "rotar-api-key"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"aplicativos",
+								"{{aplicativoId}}",
+								"rotar-api-key"
+							]
 						},
 						"description": "Genera una nueva API key para el aplicativo. La key anterior deja de ser válida. Sin body."
 					}
@@ -658,8 +776,14 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/aplicativos/{{aplicativoId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "aplicativos", "{{aplicativoId}}"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"aplicativos",
+								"{{aplicativoId}}"
+							]
 						},
 						"description": "Elimina un aplicativo cliente por su UUID.\nRetorna 204 No Content en éxito."
 					}
@@ -682,8 +806,13 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/categorias",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "categorias"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"categorias"
+							]
 						},
 						"description": "Lista todas las categorías de incidencia."
 					},
@@ -708,8 +837,14 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/categorias/{{categoriaId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "categorias", "{{categoriaId}}"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"categorias",
+								"{{categoriaId}}"
+							]
 						},
 						"description": "Obtiene una categoría por su UUID."
 					}
@@ -739,8 +874,13 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/categorias",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "categorias"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"categorias"
+							]
 						},
 						"description": "Crea una nueva categoría de incidencia.\n\nBody:\n- aplicativoId (UUID, requerido): ID del aplicativo cliente al que pertenece\n- nombre (String, 1-100, requerido): nombre de la categoría\n- descripcion (String, max 500, opcional)\n- activo (Boolean, opcional, default true)"
 					},
@@ -778,8 +918,14 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/categorias/{{categoriaId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "categorias", "{{categoriaId}}"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"categorias",
+								"{{categoriaId}}"
+							]
 						},
 						"description": "Actualiza una categoría existente.\n\nBody:\n- aplicativoId (UUID, requerido): ID del aplicativo cliente al que pertenece\n- nombre (String, 1-100, requerido)\n- descripcion (String, max 500, opcional)\n- activo (Boolean, opcional, default true)"
 					}
@@ -802,8 +948,13 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/estados-aprobacion",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "estados-aprobacion"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"estados-aprobacion"
+							]
 						},
 						"description": "Lista todos los estados de aprobación."
 					},
@@ -828,8 +979,14 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/estados-aprobacion/{{estadoAprobacionId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "estados-aprobacion", "{{estadoAprobacionId}}"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"estados-aprobacion",
+								"{{estadoAprobacionId}}"
+							]
 						},
 						"description": "Obtiene un estado de aprobación por su UUID."
 					}
@@ -859,8 +1016,13 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/estados-aprobacion",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "estados-aprobacion"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"estados-aprobacion"
+							]
 						},
 						"description": "Crea un nuevo estado de aprobación.\n\nBody requerido:\n- clave (String, 1-50): código único del estado\n- etiqueta (String, 1-150): nombre descriptivo\n- activo (Boolean, opcional, default true)"
 					},
@@ -898,8 +1060,14 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/estados-aprobacion/{{estadoAprobacionId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "estados-aprobacion", "{{estadoAprobacionId}}"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"estados-aprobacion",
+								"{{estadoAprobacionId}}"
+							]
 						},
 						"description": "Actualiza un estado de aprobación existente.\n\nBody requerido:\n- clave (String, 1-50)\n- etiqueta (String, 1-150)\n- activo (Boolean, opcional, default true)"
 					}
@@ -922,8 +1090,13 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/estados-proceso",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "estados-proceso"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"estados-proceso"
+							]
 						},
 						"description": "Lista todos los estados de proceso operativo, ordenados por el campo orden."
 					},
@@ -948,8 +1121,14 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/estados-proceso/{{estadoProcesoId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "estados-proceso", "{{estadoProcesoId}}"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"estados-proceso",
+								"{{estadoProcesoId}}"
+							]
 						},
 						"description": "Obtiene un estado de proceso por su UUID."
 					}
@@ -979,8 +1158,13 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/estados-proceso",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "estados-proceso"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"estados-proceso"
+							]
 						},
 						"description": "Crea un nuevo estado de proceso.\n\nBody requerido:\n- clave (String, 1-50, solo mayúsculas/números/guiones bajos): código único\n- etiqueta (String, 1-100): nombre descriptivo\n- esTerminal (Boolean, requerido): true si es estado final\n- orden (Integer, >=1, requerido): orden en el flujo\n- activo (Boolean, opcional, default true)"
 					},
@@ -1018,10 +1202,521 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/estados-proceso/{{estadoProcesoId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "estados-proceso", "{{estadoProcesoId}}"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"estados-proceso",
+								"{{estadoProcesoId}}"
+							]
 						},
 						"description": "Actualiza un estado de proceso existente.\n\nBody requerido:\n- clave (String, 1-50)\n- etiqueta (String, 1-100)\n- esTerminal (Boolean, requerido)\n- orden (Integer, >=1, requerido)\n- activo (Boolean, opcional, default true)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Incidencias",
+			"description": "CRUD de incidencias, aprobación/rechazo, cambio de estado, comentarios y adjuntos. Requiere Authorization: Bearer {{token}}. Crear y actualizar incidencia soportan multipart/form-data con archivos. Ejecutar antes el script 004_incidencias_relaciones.sql.",
+			"item": [
+				{
+					"name": "Listar incidencias",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/incidencias?page=0&size=20",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"incidencias"
+							],
+							"query": [
+								{
+									"key": "texto",
+									"value": "",
+									"description": "Busca por código, título o descripción",
+									"disabled": true
+								},
+								{
+									"key": "clienteId",
+									"value": "{{aplicativoId}}",
+									"description": "Filtro por aplicativo cliente",
+									"disabled": true
+								},
+								{
+									"key": "estadoProcesoId",
+									"value": "{{estadoProcesoId}}",
+									"description": "Filtro por estado de proceso",
+									"disabled": true
+								},
+								{
+									"key": "estadoAprobacionId",
+									"value": "{{estadoAprobacionId}}",
+									"description": "Filtro por estado de aprobación",
+									"disabled": true
+								},
+								{
+									"key": "categoriaId",
+									"value": "{{categoriaId}}",
+									"description": "Filtro por categoría",
+									"disabled": true
+								},
+								{
+									"key": "asignadoA",
+									"value": "{{agenteId}}",
+									"description": "Filtro por agente asignado",
+									"disabled": true
+								},
+								{
+									"key": "prioridad",
+									"value": "ALTA",
+									"description": "BAJA, MEDIA, ALTA, CRITICA",
+									"disabled": true
+								},
+								{
+									"key": "desde",
+									"value": "2026-06-01",
+									"description": "Fecha desde yyyy-MM-dd",
+									"disabled": true
+								},
+								{
+									"key": "hasta",
+									"value": "2026-06-30",
+									"description": "Fecha hasta yyyy-MM-dd",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Página, inicia en 0"
+								},
+								{
+									"key": "size",
+									"value": "20",
+									"description": "Tamaño de página"
+								}
+							]
+						},
+						"description": "Lista incidencias con filtros opcionales y paginación."
+					}
+				},
+				{
+					"name": "Crear incidencia",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code >= 200 && pm.response.code < 300) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('incidenciaId', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "titulo",
+									"value": "No carga el sistema de ventas",
+									"type": "text",
+									"description": "Título de la incidencia"
+								},
+								{
+									"key": "descripcion",
+									"value": "El aplicativo queda en pantalla blanca al iniciar sesión.",
+									"type": "text",
+									"description": "Descripción detallada"
+								},
+								{
+									"key": "clienteId",
+									"value": "{{aplicativoId}}",
+									"type": "text",
+									"description": "UUID del aplicativo cliente"
+								},
+								{
+									"key": "categoriaId",
+									"value": "{{categoriaId}}",
+									"type": "text",
+									"description": "UUID de la categoría"
+								},
+								{
+									"key": "prioridad",
+									"value": "ALTA",
+									"type": "text",
+									"description": "BAJA, MEDIA, ALTA o CRITICA"
+								},
+								{
+									"key": "usuarioExternoId",
+									"value": "{{usuarioExternoId}}",
+									"type": "text",
+									"description": "UUID del usuario externo reportante (opcional)",
+									"disabled": true
+								},
+								{
+									"key": "asignadoA",
+									"value": "{{agenteId}}",
+									"type": "text",
+									"description": "UUID del agente asignado (opcional)",
+									"disabled": true
+								},
+								{
+									"key": "archivos",
+									"type": "file",
+									"src": [],
+									"description": "Adjuntos opcionales. Puedes repetir el campo archivos para enviar varios.",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/incidencias",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"incidencias"
+							]
+						},
+						"description": "Crea una incidencia usando multipart/form-data. Si se seleccionan archivos en el campo archivos, se guardan en uploads/incidencias/{incidenciaId} y se registran en la tabla adjuntos. Guarda el id retornado en {{incidenciaId}}."
+					}
+				},
+				{
+					"name": "Obtener detalle de incidencia",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/incidencias/{{incidenciaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"incidencias",
+								"{{incidenciaId}}"
+							]
+						},
+						"description": "Obtiene incidencia, comentarios, adjuntos e historial."
+					}
+				},
+				{
+					"name": "Actualizar incidencia",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "titulo",
+									"value": "No carga el sistema de ventas - actualizado",
+									"type": "text",
+									"description": "Título actualizado"
+								},
+								{
+									"key": "descripcion",
+									"value": "El aplicativo queda en pantalla blanca y muestra error en consola.",
+									"type": "text",
+									"description": "Descripción actualizada"
+								},
+								{
+									"key": "categoriaId",
+									"value": "{{categoriaId}}",
+									"type": "text",
+									"description": "UUID de la categoría"
+								},
+								{
+									"key": "prioridad",
+									"value": "CRITICA",
+									"type": "text",
+									"description": "BAJA, MEDIA, ALTA o CRITICA"
+								},
+								{
+									"key": "asignadoA",
+									"value": "{{agenteId}}",
+									"type": "text",
+									"description": "UUID del agente asignado (opcional)",
+									"disabled": true
+								},
+								{
+									"key": "archivos",
+									"type": "file",
+									"src": [],
+									"description": "Adjuntos nuevos opcionales. Si no se envía este campo, no se reemplazan ni eliminan adjuntos existentes.",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/incidencias/{{incidenciaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"incidencias",
+								"{{incidenciaId}}"
+							]
+						},
+						"description": "Actualiza datos de la incidencia usando multipart/form-data. Los adjuntos existentes se conservan; solo se agregan archivos nuevos cuando el campo archivos trae contenido."
+					}
+				},
+				{
+					"name": "Cambiar estado operativo",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"estadoProcesoId\": \"{{estadoProcesoId}}\",\n    \"nota\": \"Se inicia atención de la incidencia.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/incidencias/{{incidenciaId}}/estado",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"incidencias",
+								"{{incidenciaId}}",
+								"estado"
+							]
+						},
+						"description": "Cambia el estado de proceso. Debe respetar el orden configurado en estados_proceso."
+					}
+				},
+				{
+					"name": "Aprobar incidencia",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/incidencias/{{incidenciaId}}/aprobacion?accion=aprobar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"incidencias",
+								"{{incidenciaId}}",
+								"aprobacion"
+							],
+							"query": [
+								{
+									"key": "accion",
+									"value": "aprobar",
+									"description": "aprobar o rechazar"
+								}
+							]
+						},
+						"description": "Aprueba una incidencia y registra historial de aprobación."
+					}
+				},
+				{
+					"name": "Rechazar incidencia",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"motivoRechazo\": \"La solicitud no corresponde al alcance del soporte.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/incidencias/{{incidenciaId}}/aprobacion?accion=rechazar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"incidencias",
+								"{{incidenciaId}}",
+								"aprobacion"
+							],
+							"query": [
+								{
+									"key": "accion",
+									"value": "rechazar",
+									"description": "aprobar o rechazar"
+								}
+							]
+						},
+						"description": "Rechaza una incidencia, registra aprobación negativa e historial."
+					}
+				},
+				{
+					"name": "Agregar comentario",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"contenido\": \"Se revisaron logs del aplicativo y se detectó error de autenticación.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/incidencias/{{incidenciaId}}/comentarios",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"incidencias",
+								"{{incidenciaId}}",
+								"comentarios"
+							]
+						},
+						"description": "Agrega comentario a la incidencia y registra historial."
+					}
+				},
+				{
+					"name": "Subir adjuntos",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "archivos",
+									"type": "file",
+									"src": [],
+									"description": "Archivo(s) a subir. Repite el campo archivos para varios adjuntos."
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/incidencias/{{incidenciaId}}/adjuntos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"incidencias",
+								"{{incidenciaId}}",
+								"adjuntos"
+							]
+						},
+						"description": "Sube archivo(s) reales a la incidencia. Se guardan físicamente en uploads/incidencias/{incidenciaId} y se registran los metadatos en adjuntos."
+					}
+				},
+				{
+					"name": "Eliminar incidencia",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/incidencias/{{incidenciaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"incidencias",
+								"{{incidenciaId}}"
+							]
+						},
+						"description": "Elimina una incidencia por UUID. Usar con cuidado porque elimina datos dependientes por cascada."
 					}
 				}
 			]
@@ -1065,6 +1760,21 @@
 		},
 		{
 			"key": "estadoProcesoId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "incidenciaId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "agenteId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "usuarioExternoId",
 			"value": "",
 			"type": "string"
 		}
