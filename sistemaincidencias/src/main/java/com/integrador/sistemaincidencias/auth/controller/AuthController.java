@@ -27,12 +27,6 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request.getEmail(), request.getPassword()));
     }
 
-    @PostMapping("/demo")
-    public ResponseEntity<AuthResponse> loginDemo(@RequestBody(required = false) LoginDemoRequest request) {
-        String rol = request == null ? null : request.getRol();
-        return ResponseEntity.ok(authService.loginDemo(rol));
-    }
-
     @GetMapping("/me")
     public ResponseEntity<UsuarioSesionResponse> me(@RequestHeader("Authorization") String authorizationHeader) {
         return ResponseEntity.ok(authService.obtenerSesionActual(authorizationHeader));
