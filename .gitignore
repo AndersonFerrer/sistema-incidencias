@@ -2,3 +2,4 @@ proyecto/
 // elimiar cualquier carepta de node_modules
 node_modules/
 dist/
+sistemaincidencias/logs/
