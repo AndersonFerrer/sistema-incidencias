@@ -1,0 +1,4 @@
+# openspec/specs/.gitkeep
+# This directory holds current (baseline) specs.
+# Phase: sdd-init — empty by design. Delta specs land under
+# `openspec/changes/<id>/specs/` during a change cycle.
