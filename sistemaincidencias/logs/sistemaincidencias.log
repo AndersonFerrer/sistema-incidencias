@@ -1,17 +1,13 @@
-2026-06-10 15:37:46.836 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - Starting SistemaincidenciasApplication using Java 21.0.10 with PID 9401 (/Users/andersonferrer/Documents/UTP/7MO CICLO/INTEGRADOR/PROYECTOFINAL/proyecto_integrador_2_avance/sistemaincidencias/target/classes started by andersonferrer in /Users/andersonferrer/Documents/UTP/7MO CICLO/INTEGRADOR/PROYECTOFINAL/proyecto_integrador_2_avance/sistemaincidencias)
-2026-06-10 15:37:46.840 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - No active profile set, falling back to 1 default profile: "default"
-2026-06-10 15:37:46.950 INFO  [background-preinit] o.h.validator.internal.util.Version - HV000001: Hibernate Validator 9.0.1.Final
-2026-06-10 15:37:47.522 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
-2026-06-10 15:37:47.524 INFO  [restartedMain] o.a.catalina.core.StandardService - Starting service [Tomcat]
-2026-06-10 15:37:47.524 INFO  [restartedMain] o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.21]
-2026-06-10 15:37:48.139 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
-2026-06-10 15:37:48.164 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - Started SistemaincidenciasApplication in 1.572 seconds (process running for 2.072)
-2026-06-10 15:37:57.737 INFO  [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
-2026-06-10 15:37:57.861 INFO  [http-nio-8080-exec-2] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
-2026-06-10 15:37:57.959 INFO  [http-nio-8080-exec-2] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@5684e125
-2026-06-10 15:37:57.960 INFO  [http-nio-8080-exec-2] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
-2026-06-10 15:37:58.071 INFO  [http-nio-8080-exec-2] c.i.s.auth.service.AuthService - Login exitoso para usuario admin@sistema.com
-2026-06-10 15:40:20.110 INFO  [http-nio-8080-exec-3] c.i.s.auth.service.AuthService - Login exitoso para usuario admin@sistema.com
-2026-06-10 15:58:15.523 WARN  [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=14m17s392ms).
-2026-06-10 17:07:01.861 INFO  [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
-2026-06-10 17:07:01.872 INFO  [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2026-07-14 14:55:42.664 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - Starting SistemaincidenciasApplication using Java 22.0.2 with PID 16624 (/Users/andersonferrer/Documents/UTP/7MO CICLO/INTEGRADOR/PROYECTOFINAL/proyecto_integrador_2_avance/sistemaincidencias/target/classes started by andersonferrer in /Users/andersonferrer/Documents/UTP/7MO CICLO/INTEGRADOR/PROYECTOFINAL/proyecto_integrador_2_avance/sistemaincidencias)
+2026-07-14 14:55:42.668 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - No active profile set, falling back to 1 default profile: "default"
+2026-07-14 14:55:42.787 INFO  [background-preinit] o.h.validator.internal.util.Version - HV000001: Hibernate Validator 9.0.1.Final
+2026-07-14 14:55:43.406 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-07-14 14:55:43.407 INFO  [restartedMain] o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-07-14 14:55:43.407 INFO  [restartedMain] o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-07-14 14:55:43.901 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-07-14 14:55:43.914 INFO  [restartedMain] c.i.s.SistemaincidenciasApplication - Started SistemaincidenciasApplication in 1.61 seconds (process running for 2.255)
+2026-07-14 14:56:56.077 INFO  [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-07-14 14:56:56.217 INFO  [http-nio-8080-exec-2] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-07-14 14:56:56.381 INFO  [http-nio-8080-exec-2] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@190181d6
+2026-07-14 14:56:56.382 INFO  [http-nio-8080-exec-2] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-07-14 14:56:56.528 INFO  [http-nio-8080-exec-2] c.i.s.auth.service.AuthService - Login exitoso para usuario admin@sistema.com
