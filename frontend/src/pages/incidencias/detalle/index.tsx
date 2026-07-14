@@ -527,9 +527,8 @@ function siguienteEstadoProceso(
 ): EstadoProceso | null {
   if (actual.esTerminal) return null
   return (
-    estados
-      .filter((estado) => estado.activo && !estado.esTerminal)
-      .sort((a, b) => a.orden - b.orden)
-      .find((estado) => estado.orden > actual.orden) ?? null
+    estados.find(
+      (estado) => estado.activo && estado.orden === actual.orden + 1
+    ) ?? null
   )
 }
