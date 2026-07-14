@@ -146,3 +146,86 @@ Branch `feat/users-admin-page-pr1-foundation` is **local only**, NOT pushed to `
 ## Push status
 
 Branch `feat/users-admin-page-pr2-list-view` is **local only**, NOT pushed to `origin`. PR1's branch (`feat/users-admin-page-pr1-foundation`) is also still local — PR1 was opened via `gh` but the user has not confirmed push for PR2 yet. Orchestrator decision pending.
+---
+
+# Apply-progress — users-admin-page (Slice C+D, final slice / PR3)
+
+> Slice implemented: **C+D** (PR3 — modal dialogs + verification report)
+> Branch: `feat/users-admin-page-pr3-modals` (stacked on `feat/users-admin-page-pr2-list-view`, which is stacked on `feat/users-admin-page-pr1-foundation`)
+> Base for PR: `master` once PR2 merges
+> Push status: NOT pushed (orchestrator decision)
+
+## Commits made (newest first, PR3 only)
+
+| Hash | Message | Files | LOC |
+|------|---------|-------|-----|
+| `1faee17` | docs(usuarios): add manual smoke verification checklist | `openspec/changes/users-admin-page/verify-report.md` | +92 / -0 |
+| `e215847` | feat(usuarios): wire create/edit/password/toggle flows | `pages/usuarios/index.tsx` | +219 / -10 (net +209) |
+| `d4cffdf` | feat(usuarios): password change dialog | `components/usuario-password-dialog.tsx` | +223 / -0 |
+| `92c411d` | feat(usuarios): create+edit dialog with shadcn Field | `components/usuario-form-dialog.tsx` | +356 / -0 |
+
+**PR3 totals**: +890 / -10 = **+880 net LOC** across 4 files (2 new components + 1 modified page + 1 new markdown).
+
+**Branch totals** vs `master`: 14 commits ahead, +1788 / -13 = **+1775 net LOC** across 18 files (5 from PR1 + 5 from PR2 + 4 from PR3).
+
+## Files added in Slice C+D (3)
+
+| Path | LOC |
+|------|-----|
+| `frontend/src/pages/usuarios/components/usuario-form-dialog.tsx` | 356 |
+| `frontend/src/pages/usuarios/components/usuario-password-dialog.tsx` | 223 |
+| `openspec/changes/users-admin-page/verify-report.md` | 92 |
+
+## Files modified in Slice C+D (1)
+
+| Path | LOC delta (PR3 only) |
+|------|----------------------|
+| `frontend/src/pages/usuarios/index.tsx` | +219 / -10 (net +209) — wired 6 new handlers (handleNuevoUsuario, handleEdit, handleChangePassword, handleSaveUser, handleSubmitPassword, handleToggleActive) + Alert state (top-of-page inline Alert with 3s setTimeout auto-dismiss) + reloadKey bumped in fetch effect deps; removed `noop()` placeholders |
+
+## Verification (PR3)
+
+| Check | Result |
+|-------|--------|
+| `cd frontend && npm run lint` | PASS — 0 errors, 0 warnings |
+| `cd frontend && npm run build` | PASS — `tsc -b && vite build` exit 0; 874 kB chunk note is the pre-existing >500 kB informational present on master baseline (not a regression) |
+
+Manual smoke checklist: **deferred** to `openspec/changes/users-admin-page/verify-report.md`. No backend reachable from this CI environment.
+
+## Deviations from design / forecast
+
+1. **PR3 total +880 net LOC vs ~370 forecast for Slice C+D**. Drivers:
+   - **Dialogs are full-page stateful controlled components with own form state** (~580 LOC combined for the two dialogs vs ~300 forecast). Both dialogs hold internal validation state, expose Field-level invalid styling, use the modern `Field` / `FieldGroup` / `FieldLabel` / `FieldError` pattern (login-form precedent per spec NFR-1), and parse `ApiError.message` into a per-field error routed by simple keyword heuristics (email/contraseña/password/nombre/rol). They are also accessibility-complete (Dialog.Title + Dialog.Description per spec, individual `htmlFor` labels, `aria-invalid` on invalid inputs).
+   - **`index.tsx` delta +219 / -10 vs ~70 forecast for Task 13** — the wiring is more elaborate than the bare handler count because the page now hosts:
+     - `DialogMode` discriminated union state (`closed` | `create` | `edit;userId` | `password;userId`) — matches `pages/usuarios/types.ts` already exported.
+     - `ToastAlert` state + `toastTimerRef` + 3 s `setTimeout` auto-dismiss + cleanup on unmount.
+     - `reloadKey` bump in the fetch effect to guarantee a refetch after every successful mutation.
+     - `dialogTarget` derived via `useMemo` (looks up the user from the in-memory `usuarios` list by `dialogMode.userId`, since the task prompt allows "use row data if already complete" instead of fetching `obtener()`).
+     - 6 call `useCallback`-wrapped handlers, optimistic toggle with rollback in `handleToggleActive`.
+   - **Lucide icons added**: `Check` and `AlertTriangle` (the latter replaces the previously iconless destructive Alert). Both verified to exist in `lucide-react@1.17.0` (`grep "declare const Check\\b"` and `declare const AlertTriangle` in `node_modules/lucide-react/dist/lucide-react.d.ts`).
+
+2. **Client-side password minimum raised to 8 chars (vs backend `@Size(min=6,max=100)` and spec REQ-5 "shorter than 6")** — the prompt explicitly mandated `min 8 chars for password`. The client guard rejects earlier than the backend, which is a UX win (one less round-trip) and a documented deviation from spec. The backend `@Size(min=6,max=100)` still binds on the server side.
+
+3. **Both dialogs route backend error messages by simple keyword heuristic** — per the design §8 plan and the prompt's "use `payload.mensaje` and route to the right field" mandate. The dialogs parse `ApiError.message` (which already maps `payload.mensaje ?? payload.message` per `lib/http.ts:42-44`) and route by `lower.includes("email"|"correo"|"contraseña"|"password"|"nombre"|"rol")` — falling back to a top-of-form `FieldError` for anything unrecognized. This matches the design contract; the spec scenario "Backend password error" is satisfied.
+
+4. **`handleSaveUser` uses type assertions** (`as ActualizarUsuarioInput` / `as CrearUsuarioInput`) when dispatching to the service because TypeScript cannot narrow `CrearUsuarioInput | ActualizarUsuarioInput` from the discriminator alone (the discriminator is `mode`, which is owned by the dialog and not part of `input`). The narrower shape is enforced by the dialog itself (it builds the right shape based on its `mode` prop before calling `onSubmit(input)`); the assertion is safe and a single small `as` per branch is the cleanest approach without dragging a discriminator into `input` itself.
+
+5. **`UsuarioPasswordDialog` accepts `usuario: Usuario | null`** (prompt signature said `usuario: Usuario`, but the page passes `null` when the dialog is closed to keep the prop contract "total"). This is a 1-line relaxation that also keeps the `key` prop consistent across open/closed transitions. Behavior is unchanged.
+
+6. **No fetch to `usuariosService.obtener(id)` when opening edit mode** — per prompt's parenthetical "(or uses row data if already complete)". The table row carries the full `Usuario` (including `rol.codigo` and `activo`), which is all the form needs to prefill. If a backend update lands between page render and dialog open, the dialog may show stale data — recoverable by the user reopening from the refreshed list. Acceptable v1 trade-off.
+
+## Self-deactivation guard verified
+
+The PR2 self-guard wiring is unchanged by PR3 — it lives in `usuarios-table.tsx`. PR3 only adds the `handleToggleActive` page handler that the disabled button never reaches (since `disabled` on the button prevents the click from firing).
+
+## Branch chain state
+
+| PR | Branch | Commits ahead of `master` | LOC (+ / −) | Push status |
+|----|--------|---------------------------|-------------|-------------|
+| PR1 | `feat/users-admin-page-pr1-foundation` | 5 (subtract 0–4 to reach `master` directly) | +213 / -13 | Pushed (PR #2 opened) |
+| PR2 | `feat/users-admin-page-pr2-list-view` (base PR1) | 10 | +798 / -51 | **Pushed** (PR #3 opened against `master`, base = PR1) |
+| PR3 | `feat/users-admin-page-pr3-modals` (base PR2) | 14 | +1788 / -13 | **NOT pushed** — orchestrator will surface push decision after user confirms the diff |
+
+## Outstanding / future work
+
+**NONE for this change.** PR3 is the final slice of the chain. All four tasks (11, 12, 13, 14) are implemented. Verification (lint + build) is clean. The manual smoke checklist is captured in `verify-report.md` and awaits a maintainer with backend access.
+
