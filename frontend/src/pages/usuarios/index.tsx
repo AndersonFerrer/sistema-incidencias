@@ -125,7 +125,7 @@ export function UsuariosPage() {
     setCursor((prev) => ({ ...prev, offset: 0, hasMore: true }))
   }, [debouncedTexto, filters.rol, filters.activo])
 
-  // Fetch users whenever filters, cursor, or reloadKey change.
+// Fetch users whenever filters, cursor, or reloadKey change.
   useEffect(() => {
     const controller = new AbortController()
     setLoading(true)
@@ -161,12 +161,14 @@ export function UsuariosPage() {
         const message =
           err instanceof ApiError
             ? err.message
-            : "No se pudieron cargar los usuarios."
+            : err instanceof Error
+              ? err.message
+              : "No se pudieron cargar los usuarios."
         setErrorMsg(message)
         setLoading(false)
       })
     return () => controller.abort()
-  }, [debouncedTexto, filters.rol, filters.activo, cursor, reloadKey])
+  }, [debouncedTexto, filters.rol, filters.activo, cursor.limit, cursor.offset, reloadKey])
 
   const handleFiltersChange = useCallback(
     (next: Partial<FilterState>) => {
