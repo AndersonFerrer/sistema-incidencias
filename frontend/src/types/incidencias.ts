@@ -18,6 +18,26 @@ export type Incidencia = {
   resueltoEn: string | null
 }
 
+export type ActualizarIncidenciaInput = {
+  titulo: string
+  descripcion: string
+  categoriaId: string
+  prioridad: Prioridad
+  asignadoA?: string | null
+  archivos?: File[]
+}
+
+export type IncidenciaDialogMode =
+  | { kind: "closed" }
+  | { kind: "edit"; incidenciaId: string }
+  | { kind: "subir-adjuntos"; incidenciaId: string }
+  | { kind: "confirmar-eliminar"; incidenciaId: string }
+  | { kind: "rechazar"; incidenciaId: string }
+
+export const CLOSED_DIALOG: IncidenciaDialogMode = { kind: "closed" }
+
+export type EstadoProcesoClave = "PENDIENTE" | "EN_PROCESO" | "FINALIZADA"
+
 export type Page<T> = {
   contenido: T[]
   total: number
