@@ -17,13 +17,14 @@ export class ApiError extends Error {
 
 export async function apiRequest<T>(
   path: string,
-  { headers, token, ...options }: RequestOptions = {}
+  { headers, token, signal, ...options }: RequestOptions = {}
 ) {
   const authToken = token ?? useAuthStore.getState().token
   const isFormData =
     typeof FormData !== "undefined" && options.body instanceof FormData
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
+    signal,
     headers: {
       ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
