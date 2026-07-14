@@ -13,6 +13,7 @@ import { DashboardPage } from "@/pages/dashboard"
 import { IncidenciasPage } from "@/pages/incidencias"
 import { IncidenciaDetallePage } from "@/pages/incidencias/detalle"
 import { LoginPage } from "@/pages/login"
+import { UsuariosPage } from "@/pages/usuarios"
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -80,6 +81,16 @@ const categoriasRoute = createRoute({
   ),
 })
 
+const usuariosRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/usuarios",
+  component: () => (
+    <AppLayout>
+      <UsuariosPage />
+    </AppLayout>
+  ),
+})
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   dashboardRoute,
@@ -89,6 +100,7 @@ const routeTree = rootRoute.addChildren([
   ]),
   clientesRoute,
   categoriasRoute,
+  usuariosRoute,
 ])
 
 export const router = createRouter({ routeTree })

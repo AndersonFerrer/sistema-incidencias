@@ -16,7 +16,7 @@ import { useAuthStore } from "@/store/auth-store"
 const navigation = [
   { label: "Dashboard", icon: LayoutGrid, to: "/dashboard" },
   { label: "Incidencias", icon: AlertTriangle, to: "/incidencias" },
-  { label: "Usuarios", icon: Users },
+  { label: "Usuarios", icon: Users, to: "/usuarios" },
   { label: "Reportes", icon: BarChart3 },
 ]
 
