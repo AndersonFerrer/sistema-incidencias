@@ -1,5 +1,6 @@
 import { apiRequest } from "@/lib/http"
 import type {
+  ActualizarIncidenciaInput,
   IncidenciaDetalle,
   IncidenciasFiltros,
   Incidencia,
@@ -40,15 +41,6 @@ export type CrearIncidenciaInput = {
   prioridad: Prioridad
   usuarioExternoId?: string
   asignadoA?: string
-  archivos?: File[]
-}
-
-export type ActualizarIncidenciaInput = {
-  titulo: string
-  descripcion: string
-  categoriaId: string
-  prioridad: Prioridad
-  asignadoA?: string | null
   archivos?: File[]
 }
 
