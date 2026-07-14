@@ -1,13 +1,13 @@
-import { Plus } from "lucide-react"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
 import {
   IncidenciasFilters,
   type IncidenciasFiltrosValues,
 } from "@/pages/incidencias/components/incidencias-filters"
+import { IncidenciasHeader } from "@/pages/incidencias/components/incidencias-header"
+import { IncidenciasPagination } from "@/pages/incidencias/components/incidencias-pagination"
 import { IncidenciasTable } from "@/pages/incidencias/components/incidencias-table"
 import { NuevaIncidenciaView } from "@/pages/incidencias/components/nueva-incidencia-view"
 import { aplicativosService } from "@/services/aplicativos-service"
@@ -163,12 +163,6 @@ export function IncidenciasPage() {
     }
   }, [filtros, page, vista])
 
-  const totalLabel = useMemo(() => {
-    if (isLoading) return "Cargando incidencias..."
-    if (error) return error
-    return `${total} incidencias encontradas`
-  }, [total, isLoading, error])
-
   if (vista === "nueva") {
     return (
       <NuevaIncidenciaView
@@ -184,22 +178,12 @@ export function IncidenciasPage() {
 
   return (
     <div className="flex flex-col gap-3">
-      <header className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-0.5">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-950">
-            Incidencias
-          </h1>
-          <p className="text-xs text-slate-500">{totalLabel}</p>
-        </div>
-        <Button
-          size="default"
-          className="h-8 px-3"
-          onClick={() => setVista("nueva")}
-        >
-          <Plus data-icon="inline-start" className="size-3.5" />
-          Nueva Incidencia
-        </Button>
-      </header>
+      <IncidenciasHeader
+        totalShown={total}
+        onNueva={() => setVista("nueva")}
+        loading={isLoading}
+        errorMessage={error}
+      />
 
       <Card className="rounded-lg bg-white p-3 shadow-sm">
         <IncidenciasFilters
@@ -217,12 +201,15 @@ export function IncidenciasPage() {
 
       <IncidenciasTable
         incidencias={incidencias}
-        total={total}
-        page={page}
-        size={PAGE_SIZE}
         categorias={categorias}
         aplicativos={aplicativos}
         estadosAprobacion={estadosAprobacion}
+      />
+
+      <IncidenciasPagination
+        page={page}
+        limit={PAGE_SIZE}
+        count={total}
         onPageChange={setPage}
       />
 
