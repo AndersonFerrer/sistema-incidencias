@@ -3,6 +3,7 @@ import type {
   IncidenciaDetalle,
   IncidenciasFiltros,
   Incidencia,
+  IncidenciaAdjunto,
   Page,
   Prioridad,
 } from "@/types/incidencias"
@@ -42,17 +43,27 @@ export type CrearIncidenciaInput = {
   archivos?: File[]
 }
 
+export type ActualizarIncidenciaInput = {
+  titulo: string
+  descripcion: string
+  categoriaId: string
+  prioridad: Prioridad
+  asignadoA?: string | null
+  archivos?: File[]
+}
+
 export const incidentsService = {
-  listar(filtros: IncidenciasFiltros = {}) {
+  listar(filtros: IncidenciasFiltros = {}, signal?: AbortSignal) {
     return apiRequest<Page<Incidencia>>(
       `/api/incidencias${buildQuery(filtros)}`,
-      { method: "GET" }
+      { method: "GET", signal }
     )
   },
 
-  obtenerDetalle(id: string) {
+  obtenerDetalle(id: string, signal?: AbortSignal) {
     return apiRequest<IncidenciaDetalle>(`/api/incidencias/${id}`, {
       method: "GET",
+      signal,
     })
   },
 
@@ -76,6 +87,67 @@ export const incidentsService = {
     return apiRequest<Incidencia>("/api/incidencias", {
       method: "POST",
       body: formData,
+    })
+  },
+
+  actualizar(
+    id: string,
+    input: ActualizarIncidenciaInput,
+    signal?: AbortSignal
+  ) {
+    if (input.archivos && input.archivos.length > 0) {
+      const formData = new FormData()
+      formData.append("titulo", input.titulo)
+      formData.append("descripcion", input.descripcion)
+      formData.append("categoriaId", input.categoriaId)
+      formData.append("prioridad", input.prioridad)
+      if (input.asignadoA) {
+        formData.append("asignadoA", input.asignadoA)
+      }
+      input.archivos.forEach((archivo) => {
+        formData.append("archivos", archivo)
+      })
+
+      return apiRequest<Incidencia>(`/api/incidencias/${id}`, {
+        method: "PUT",
+        body: formData,
+        signal,
+      })
+    }
+
+    return apiRequest<Incidencia>(`/api/incidencias/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        titulo: input.titulo,
+        descripcion: input.descripcion,
+        categoriaId: input.categoriaId,
+        prioridad: input.prioridad,
+        asignadoA: input.asignadoA ?? null,
+      }),
+      signal,
+    })
+  },
+
+  subirAdjuntos(id: string, archivos: File[], signal?: AbortSignal) {
+    const formData = new FormData()
+    archivos.forEach((archivo) => {
+      formData.append("archivos", archivo)
+    })
+
+    return apiRequest<IncidenciaAdjunto[]>(
+      `/api/incidencias/${id}/adjuntos`,
+      {
+        method: "POST",
+        body: formData,
+        signal,
+      }
+    )
+  },
+
+  eliminar(id: string, signal?: AbortSignal) {
+    return apiRequest<void>(`/api/incidencias/${id}`, {
+      method: "DELETE",
+      signal,
     })
   },
 
