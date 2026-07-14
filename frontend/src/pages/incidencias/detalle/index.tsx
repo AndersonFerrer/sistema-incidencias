@@ -335,6 +335,8 @@ export function IncidenciaDetallePage() {
   const { incidencia, comentarios, adjuntos, historial } = detalle
   const estadoAprobacionClave = estadoAprobacion?.clave ?? ""
   const esFinalizada = estadoProceso?.esTerminal ?? false
+  const motivoRechazo =
+    historial.find((item) => item.accion === "RECHAZADA")?.nota ?? null
   const puedeAvanzarEstado =
     Boolean(estadoProceso) &&
     !esFinalizada &&
@@ -406,19 +408,18 @@ export function IncidenciaDetallePage() {
                     Solicitud rechazada
                   </span>
                 </div>
-                {incidencia.motivoRechazo ? (
+                {motivoRechazo ? (
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-semibold uppercase tracking-wide text-red-700">
                       Motivo
                     </span>
                     <p className="rounded-md border border-red-200 bg-white/70 px-2.5 py-2 text-sm text-slate-800">
-                      {incidencia.motivoRechazo}
+                      {motivoRechazo}
                     </p>
                   </div>
                 ) : (
                   <p className="text-sm text-red-700">
-                    Esta solicitud fue rechazada. La incidencia queda cerrada y
-                    no continuará su flujo operativo.
+                    Sin motivo registrado.
                   </p>
                 )}
               </CardContent>
