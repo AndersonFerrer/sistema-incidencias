@@ -44,15 +44,6 @@ export type CrearIncidenciaInput = {
   archivos?: File[]
 }
 
-export type ActualizarIncidenciaInput = {
-  titulo: string
-  descripcion: string
-  categoriaId: string
-  prioridad: Prioridad
-  asignadoA?: string | null
-  archivos?: File[]
-}
-
 export const incidentsService = {
   listar(filtros: IncidenciasFiltros = {}, signal?: AbortSignal) {
     return apiRequest<Page<Incidencia>>(
