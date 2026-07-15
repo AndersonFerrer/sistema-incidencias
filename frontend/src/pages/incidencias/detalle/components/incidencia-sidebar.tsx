@@ -1,12 +1,28 @@
-import { Calendar, type LucideIcon } from "lucide-react";
+import {
+  Building2,
+  CalendarCheck,
+  CalendarPlus,
+  Flag,
+  GitBranch,
+  ShieldCheck,
+  Tag,
+  User,
+  UserCircle,
+  type LucideIcon,
+} from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { EstadoAprobacionBadge } from "@/pages/incidencias/components/estado-badge";
+import { IncidenciaEstadoProcesoBadge } from "@/pages/incidencias/components/incidencia-estado-proceso-badge";
 import { PrioridadBadge } from "@/pages/incidencias/components/prioridad-badge";
 import type { AplicativoCliente } from "@/types/aplicativos";
 import type { Categoria } from "@/types/categorias";
 import type { EstadoAprobacion } from "@/types/estados-aprobacion";
-import type { Incidencia } from "@/types/incidencias";
+import type {
+  EstadoProcesoClave,
+  Incidencia,
+} from "@/types/incidencias";
+import type { EstadoProceso } from "@/types/estados-proceso";
 import type { Usuario } from "@/types/usuarios";
 
 const dateFormatter = new Intl.DateTimeFormat("es-PE", {
@@ -35,9 +51,18 @@ function formatDateTime(value: string) {
   return dateTimeFormatter.format(date);
 }
 
+type EstadoProcesoClaveNoVacia = Exclude<EstadoProcesoClave, string>;
+
+function isEstadoProcesoClave(
+  valor: string
+): valor is EstadoProcesoClaveNoVacia {
+  return valor === "PENDIENTE" || valor === "EN_PROCESO" || valor === "FINALIZADA";
+}
+
 type IncidenciaSidebarProps = {
   incidencia: Incidencia;
   estadoAprobacion: EstadoAprobacion | null;
+  estadoProceso: EstadoProceso | null;
   categoria: Categoria | null;
   aplicativo: AplicativoCliente | null;
   solicitante: Usuario | null;
@@ -89,15 +114,22 @@ function SidebarRow({
 export function IncidenciaSidebar({
   incidencia,
   estadoAprobacion,
+  estadoProceso,
   categoria,
   aplicativo,
   solicitante,
   asignado,
 }: IncidenciaSidebarProps) {
+  const estadoProcesoClave =
+    estadoProceso && isEstadoProcesoClave(estadoProceso.clave)
+      ? estadoProceso.clave
+      : null;
+  const estadoProcesoEtiqueta = estadoProceso?.etiqueta ?? null;
+
   return (
     <Card className="rounded-lg bg-white shadow-sm">
       <CardContent className="flex flex-col gap-2.5 p-3.5">
-        <SidebarRow label="Estado" icon={Calendar}>
+        <SidebarRow label="Estado (aprob.)" icon={ShieldCheck}>
           {estadoAprobacion ? (
             <EstadoAprobacionBadge estado={estadoAprobacion} />
           ) : (
@@ -105,17 +137,38 @@ export function IncidenciaSidebar({
           )}
         </SidebarRow>
 
-        <SidebarRow label="Prioridad" icon={Calendar}>
+        <SidebarRow label="Estado (proceso)" icon={GitBranch}>
+          {estadoProcesoClave ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <IncidenciaEstadoProcesoBadge clave={estadoProcesoClave} />
+              {estadoProcesoEtiqueta &&
+              estadoProcesoEtiqueta !==
+                ({
+                  PENDIENTE: "Pendiente",
+                  EN_PROCESO: "En proceso",
+                  FINALIZADA: "Finalizada",
+                }[estadoProcesoClave]) ? (
+                <span className="text-[11px] text-slate-500">
+                  {estadoProcesoEtiqueta}
+                </span>
+              ) : null}
+            </div>
+          ) : (
+            <span className="text-slate-500">—</span>
+          )}
+        </SidebarRow>
+
+        <SidebarRow label="Prioridad" icon={Flag}>
           <PrioridadBadge prioridad={incidencia.prioridad} />
         </SidebarRow>
 
-        <SidebarRow label="Categoría" icon={Calendar}>
+        <SidebarRow label="Categoría" icon={Tag}>
           <span className="truncate font-medium text-slate-900">
             {categoria?.nombre ?? "Sin categoría"}
           </span>
         </SidebarRow>
 
-        <SidebarRow label="Cliente" icon={Calendar}>
+        <SidebarRow label="Cliente" icon={Building2}>
           {aplicativo ? (
             <span className="truncate font-medium text-slate-900">
               {aplicativo.nombre}
@@ -125,7 +178,7 @@ export function IncidenciaSidebar({
           )}
         </SidebarRow>
 
-        <SidebarRow label="Responsable" icon={Calendar}>
+        <SidebarRow label="Responsable" icon={User}>
           {asignado ? (
             <PersonRow usuario={asignado} />
           ) : (
@@ -133,7 +186,7 @@ export function IncidenciaSidebar({
           )}
         </SidebarRow>
 
-        <SidebarRow label="Solicitante" icon={Calendar}>
+        <SidebarRow label="Solicitante" icon={UserCircle}>
           {solicitante ? (
             <PersonRow usuario={solicitante} />
           ) : (
@@ -141,12 +194,12 @@ export function IncidenciaSidebar({
           )}
         </SidebarRow>
 
-        <SidebarRow label="Creado" icon={Calendar}>
+        <SidebarRow label="Creado" icon={CalendarPlus}>
           {formatDate(incidencia.creadoEn)}
         </SidebarRow>
 
         {incidencia.resueltoEn ? (
-          <SidebarRow label="Resuelto" icon={Calendar}>
+          <SidebarRow label="Resuelto" icon={CalendarCheck}>
             {formatDateTime(incidencia.resueltoEn)}
           </SidebarRow>
         ) : null}

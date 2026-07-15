@@ -41,6 +41,7 @@ import { estadosAprobacionService } from "@/services/estados-aprobacion-service"
 import { estadosProcesoService } from "@/services/estados-proceso-service"
 import { incidentsService } from "@/services/incidents-service"
 import { usuariosService } from "@/services/usuarios-service"
+import { useAuthStore } from "@/store/auth-store"
 import type { AplicativoCliente } from "@/types/aplicativos"
 import type { Categoria } from "@/types/categorias"
 import type { EstadoAprobacion } from "@/types/estados-aprobacion"
@@ -64,6 +65,13 @@ export function IncidenciaDetallePage() {
   const navigate = useNavigate()
   const params = useParams({ strict: false }) as { id?: string }
   const id = params.id ?? ""
+
+  const currentUser = useAuthStore((state) => state.user)
+  const currentUserRol = currentUser?.rol ?? ""
+  const puedeEditar =
+    currentUserRol === "ADMINISTRADOR" || currentUserRol === "AGENTE"
+  const puedeEliminar = currentUserRol === "ADMINISTRADOR"
+  const puedeSubirAdjuntos = puedeEditar
 
   const [detalle, setDetalle] = useState<IncidenciaDetalle | null>(null)
   const [categorias, setCategorias] = useState<Categoria[]>([])
@@ -570,42 +578,48 @@ export function IncidenciaDetallePage() {
                   </h1>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 px-3"
-                    onClick={handleOpenSubirAdjuntos}
-                    disabled={isActionSubmitting}
-                  >
-                    <Upload
-                      data-icon="inline-start"
-                      className="size-3.5"
-                    />
-                    Subir adjuntos
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 px-3"
-                    onClick={handleOpenEdit}
-                    disabled={isActionSubmitting}
-                  >
-                    <Pencil data-icon="inline-start" className="size-3.5" />
-                    Editar
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="h-8 px-3"
-                    onClick={handleOpenEliminar}
-                    disabled={isActionSubmitting}
-                  >
-                    <Trash2 data-icon="inline-start" className="size-3.5" />
-                    Eliminar
-                  </Button>
+                  {puedeEditar ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3"
+                      onClick={handleOpenSubirAdjuntos}
+                      disabled={isActionSubmitting}
+                    >
+                      <Upload
+                        data-icon="inline-start"
+                        className="size-3.5"
+                      />
+                      Subir adjuntos
+                    </Button>
+                  ) : null}
+                  {puedeEditar ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3"
+                      onClick={handleOpenEdit}
+                      disabled={isActionSubmitting}
+                    >
+                      <Pencil data-icon="inline-start" className="size-3.5" />
+                      Editar
+                    </Button>
+                  ) : null}
+                  {puedeEliminar ? (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="h-8 px-3"
+                      onClick={handleOpenEliminar}
+                      disabled={isActionSubmitting}
+                    >
+                      <Trash2 data-icon="inline-start" className="size-3.5" />
+                      Eliminar
+                    </Button>
+                  ) : null}
                 </div>
               </div>
               <p className="text-sm leading-relaxed text-slate-600">
@@ -617,15 +631,19 @@ export function IncidenciaDetallePage() {
           <IncidenciaAdjuntosCard
             adjuntos={adjuntos}
             baseUrl={API_BASE_URL}
+            puedeSubir={puedeSubirAdjuntos}
+            onSubirAdjuntos={handleOpenSubirAdjuntos}
           />
 
-          <IncidenciaRevisionCard
-            estadoAprobacionClave={estadoAprobacionClave}
-            solicitante={solicitante}
-            isSubmitting={isActionSubmitting}
-            onAceptar={handleAceptarSolicitud}
-            onRechazar={abrirModalRechazo}
-          />
+          {puedeEditar ? (
+            <IncidenciaRevisionCard
+              estadoAprobacionClave={estadoAprobacionClave}
+              solicitante={solicitante}
+              isSubmitting={isActionSubmitting}
+              onAceptar={handleAceptarSolicitud}
+              onRechazar={abrirModalRechazo}
+            />
+          ) : null}
 
           {estadoAprobacionClave === "RECHAZADA" ? (
             <Card className="rounded-lg border-red-200 bg-red-50 shadow-sm">
@@ -663,6 +681,7 @@ export function IncidenciaDetallePage() {
           <IncidenciaActividadCard
             historial={historial}
             usuarios={usuarios}
+            estadosProceso={estadosProceso}
             solicitante={solicitante}
           />
         </div>
@@ -671,13 +690,14 @@ export function IncidenciaDetallePage() {
           <IncidenciaSidebar
             incidencia={incidencia}
             estadoAprobacion={estadoAprobacion}
+            estadoProceso={estadoProceso}
             categoria={categoria}
             aplicativo={aplicativo}
             solicitante={solicitante}
             asignado={asignado}
           />
 
-          {estadoAprobacionClave !== "RECHAZADA" ? (
+          {puedeEditar && estadoAprobacionClave !== "RECHAZADA" ? (
             <Card className="rounded-lg bg-white shadow-sm">
               <CardContent className="flex flex-col gap-1.5 p-3">
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
@@ -702,7 +722,7 @@ export function IncidenciaDetallePage() {
             </Card>
           ) : null}
 
-          {puedeAvanzarEstado ? (
+          {puedeEditar && puedeAvanzarEstado ? (
             <Button
               type="button"
               size="default"

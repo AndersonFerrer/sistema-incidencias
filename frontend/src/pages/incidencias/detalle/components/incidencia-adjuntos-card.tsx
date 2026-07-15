@@ -4,8 +4,10 @@ import {
   FileImage,
   FileText,
   Paperclip,
+  Plus,
 } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import type { IncidenciaAdjunto } from "@/types/incidencias"
@@ -34,16 +36,20 @@ function getAdjuntoIcon(tipoMime: string) {
 type IncidenciaAdjuntosCardProps = {
   adjuntos: IncidenciaAdjunto[]
   baseUrl?: string
+  /**
+   * Role gate for the "Añadir adjuntos" CTA. Only ADMINISTRADOR / AGENTE
+   * can upload additional adjuntos per the Slice D role matrix (Task 14).
+   */
+  puedeSubir?: boolean
+  onSubirAdjuntos?: () => void
 }
 
 export function IncidenciaAdjuntosCard({
   adjuntos,
   baseUrl,
+  puedeSubir = false,
+  onSubirAdjuntos,
 }: IncidenciaAdjuntosCardProps) {
-  if (adjuntos.length === 0) {
-    return null
-  }
-
   const resolveUrl = (url: string) => {
     if (baseUrl && url.startsWith("/")) {
       return `${baseUrl}${url}`
@@ -51,15 +57,44 @@ export function IncidenciaAdjuntosCard({
     return url
   }
 
+  const header = (
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-1.5">
+        <Paperclip aria-hidden="true" className="size-3.5 text-slate-500" />
+        <h2 className="text-sm font-semibold text-slate-950">
+          Adjuntos ({adjuntos.length})
+        </h2>
+      </div>
+      {puedeSubir && onSubirAdjuntos ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-7 px-2.5"
+          onClick={onSubirAdjuntos}
+        >
+          <Plus data-icon="inline-start" className="size-3.5" />
+          Añadir adjuntos
+        </Button>
+      ) : null}
+    </div>
+  )
+
+  // Hide the entire card when there are no adjuntos AND the current role
+  // can't upload — keeps the detail page quiet for USUARIO viewing.
+  if (adjuntos.length === 0) {
+    if (!puedeSubir) return null
+    return (
+      <Card className="rounded-lg bg-white shadow-sm">
+        <CardContent className="flex flex-col gap-2 p-3.5">{header}</CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card className="rounded-lg bg-white shadow-sm">
       <CardContent className="flex flex-col gap-2 p-3.5">
-        <div className="flex items-center gap-1.5">
-          <Paperclip aria-hidden="true" className="size-3.5 text-slate-500" />
-          <h2 className="text-sm font-semibold text-slate-950">
-            Adjuntos ({adjuntos.length})
-          </h2>
-        </div>
+        {header}
 
         <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
           {adjuntos.map((adjunto) => {
