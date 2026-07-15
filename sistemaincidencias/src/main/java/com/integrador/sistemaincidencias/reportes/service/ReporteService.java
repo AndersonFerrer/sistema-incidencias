@@ -11,6 +11,8 @@ import com.integrador.sistemaincidencias.reportes.dto.ReporteRequest;
 import com.integrador.sistemaincidencias.reportes.dto.ReporteResumenAgenteResponse;
 import com.integrador.sistemaincidencias.reportes.dto.ReporteResponse;
 import com.integrador.sistemaincidencias.reportes.dto.ReporteTendenciaResponse;
+import com.integrador.sistemaincidencias.reportes.exporter.ReporteExcelExporter;
+import com.integrador.sistemaincidencias.reportes.exporter.ReportePdfExporter;
 import com.integrador.sistemaincidencias.reportes.sql.ReporteFiltro;
 import com.integrador.sistemaincidencias.shared.exception.ReglaNegocioException;
 import com.integrador.sistemaincidencias.usuarios.model.Usuario;
@@ -63,6 +65,8 @@ public class ReporteService {
     private static final int DIAS_90D = 90;
 
     private final ReporteDao reporteDao;
+    private final ReportePdfExporter reportePdfExporter;
+    private final ReporteExcelExporter reporteExcelExporter;
 
     public ReporteResponse construir(Usuario actual, ReporteRequest request) {
         ReporteGranularidad granularidad = ReporteGranularidad.desde(request.getGranularidad());
@@ -128,16 +132,29 @@ public class ReporteService {
     }
 
     /**
-     * Placeholder del exportador PDF/XLSX. En PR1 siempre lanza
-     * {@link UnsupportedOperationException} para que el controller responda
-     * 501. La implementacion real (Apache PDFBox + POI {@code SXSSFWorkbook})
-     * llega en PR2 - ver design.md D6, D7 y tasks.md T6/T7/T8.
+     * Renderiza el reporte en PDF o XLSX reutilizando el mismo dataset que
+     * {@link #construir(Usuario, ReporteRequest)} (design.md D6).
+     *
+     * <p>El DAO no se consulta dos veces: dentro de un mismo HTTP request al
+     * endpoint {@code /api/reportes/exportar} solo se arma un
+     * {@link ReporteResponse} y se serializa segun el {@link ReporteFormato}
+     * solicitado. JSON nunca llega a esta ruta: se sirve por
+     * {@code GET /api/reportes}; intentar exportarlo aqui cae en 400 via
+     * {@link ReglaNegocioException}.</p>
+     *
+     * <p>Los exporters se inyectan como dependencias Spring; ninguno toca la
+     * base de datos ni recibe el {@link Usuario} ni los parametros crudos del
+     * request, garantizando que preview y descarga compartan exactamente los
+     * mismos datos.</p>
      */
     public byte[] exportar(Usuario actual, ReporteRequest request, ReporteFormato formato) {
-        // Mantenemos la firma y la validacion para que el cableado de PR2
-        // conserve el mismo punto de entrada. Lanzar aqui es intencional.
-        throw new UnsupportedOperationException(
-                "La exportacion PDF/XLSX se implementa en PR2 del change reportes-export");
+        ReporteResponse dataset = construir(actual, request);
+        return switch (formato) {
+            case PDF -> reportePdfExporter.exportar(dataset);
+            case XLSX -> reporteExcelExporter.exportar(dataset);
+            case JSON -> throw new ReglaNegocioException(
+                    "JSON se sirve por GET /api/reportes; use formato=pdf|xlsx en /exportar");
+        };
     }
 
     /**
