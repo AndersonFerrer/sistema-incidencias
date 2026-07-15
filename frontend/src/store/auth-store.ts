@@ -12,6 +12,11 @@ type AuthState = {
   error: string | null
   login: (credentials: LoginCredentials) => Promise<boolean>
   refreshSession: () => Promise<void>
+  syncProfile: (payload: {
+    nombre?: string
+    email?: string
+    avatarUrl?: string | null
+  }) => void
   logout: () => void
   clearError: () => void
 }
@@ -62,6 +67,31 @@ export const useAuthStore = create<AuthState>()(
 
         const user = await authService.me(token)
         set({ user })
+      },
+
+      /**
+       * Maps a `Usuario` payload (from `GET /api/usuarios/me` or
+       * `PUT /api/usuarios/me`) onto the persisted `AuthUser` shape without
+       * forcing a re-login. Role code is preserved — only `nombre`,
+       * `email`, and `avatarUrl` change.
+       */
+      syncProfile(payload: {
+        nombre?: string
+        email?: string
+        avatarUrl?: string | null
+      }) {
+        const current = get().user
+        if (!current) return
+        const next: AuthUser = {
+          ...current,
+          nombre: payload.nombre ?? current.nombre,
+          email: payload.email ?? current.email,
+          avatarUrl:
+            payload.avatarUrl === undefined
+              ? current.avatarUrl
+              : (payload.avatarUrl ?? null),
+        }
+        set({ user: next })
       },
 
       logout() {

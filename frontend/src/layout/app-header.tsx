@@ -14,6 +14,7 @@ const routeTitles: Record<string, string> = {
   "/clientes": "Clientes",
   "/categorias": "Categorías",
   "/notificaciones": "Notificaciones",
+  "/perfil": "Mi perfil",
 }
 
 function getRouteTitle(pathname: string) {

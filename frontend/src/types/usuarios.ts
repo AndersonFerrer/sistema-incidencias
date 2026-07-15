@@ -33,3 +33,21 @@ export type ActualizarUsuarioInput = {
 export type CambiarPasswordInput = {
   password: string
 }
+
+/**
+ * Self-service profile edit. Only `nombre` and `avatarUrl` are accepted by
+ * `PUT /api/usuarios/me`; email, rol and activo are intentionally immutable.
+ */
+export type ActualizarPerfilPropioInput = {
+  nombre: string
+  avatarUrl?: string | null
+}
+
+/**
+ * Self-service password change payload. `currentPassword` is verified server
+ * side before the new hash is written.
+ */
+export type CambiarPasswordPropiaInput = {
+  currentPassword: string
+  newPassword: string
+}

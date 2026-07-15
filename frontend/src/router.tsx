@@ -14,6 +14,7 @@ import { IncidenciasPage } from "@/pages/incidencias"
 import { IncidenciaDetallePage } from "@/pages/incidencias/detalle"
 import { LoginPage } from "@/pages/login"
 import { NotificacionesPage } from "@/pages/notificaciones"
+import { PerfilPage } from "@/pages/perfil"
 import { ReportesPage } from "@/pages/reportes"
 import { UsuariosPage } from "@/pages/usuarios"
 
@@ -113,6 +114,16 @@ const notificacionesRoute = createRoute({
   ),
 })
 
+const perfilRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/perfil",
+  component: () => (
+    <AppLayout>
+      <PerfilPage />
+    </AppLayout>
+  ),
+})
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   dashboardRoute,
@@ -125,6 +136,7 @@ const routeTree = rootRoute.addChildren([
   usuariosRoute,
   reportesRoute,
   notificacionesRoute,
+  perfilRoute,
 ])
 
 export const router = createRouter({ routeTree })
