@@ -1,5 +1,6 @@
 package com.integrador.sistemaincidencias.notificaciones.controller;
 
+import com.integrador.sistemaincidencias.notificaciones.dto.NotificacionBulkResponse;
 import com.integrador.sistemaincidencias.notificaciones.dto.NotificacionCountResponse;
 import com.integrador.sistemaincidencias.notificaciones.dto.NotificacionResponse;
 import com.integrador.sistemaincidencias.notificaciones.service.NotificacionService;
@@ -58,6 +59,17 @@ public class NotificacionController {
     private final NotificacionService notificacionService;
     private final PermisoAdministracionService permisoAdministracionService;
 
+    /**
+     * Tope maximo de {@code size} para el listado de notificaciones.
+     * El spec del change {@code notificaciones-realtime} fija 50 como
+     * cota superior para este endpoint, mientras que el helper
+     * compartido {@link PageRequest#of(Integer, Integer)} mantiene su
+     * default de 100 (compatible con los endpoints de incidencias).
+     * Se aplica el clamp aqui, en el controller, para no afectar al
+     * resto de modulos.
+     */
+    private static final int SIZE_MAXIMO = 50;
+
     @GetMapping
     public ResponseEntity<PageResult<NotificacionResponse>> listar(
             @RequestHeader("Authorization") String token,
@@ -66,8 +78,9 @@ public class NotificacionController {
             @RequestParam(name = "soloNoLeidas", required = false, defaultValue = "false") boolean soloNoLeidas
     ) {
         Usuario actual = permisoAdministracionService.validarAutenticado(token);
+        Integer sizeLimitado = size == null ? null : Math.min(size, SIZE_MAXIMO);
         PageResult<NotificacionResponse> respuesta = notificacionService.listar(
-                actual.getId(), PageRequest.of(page, size), soloNoLeidas);
+                actual.getId(), PageRequest.of(page, sizeLimitado), soloNoLeidas);
         return ResponseEntity.ok(respuesta);
     }
 
@@ -89,7 +102,7 @@ public class NotificacionController {
     }
 
     @PostMapping("/marcar-todas-leidas")
-    public ResponseEntity<NotificacionCountResponse> marcarTodasLeidas(
+    public ResponseEntity<NotificacionBulkResponse> marcarTodasLeidas(
             @RequestHeader("Authorization") String token
     ) {
         Usuario actual = permisoAdministracionService.validarAutenticado(token);

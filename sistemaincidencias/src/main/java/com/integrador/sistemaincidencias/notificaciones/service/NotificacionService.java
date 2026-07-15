@@ -1,6 +1,7 @@
 package com.integrador.sistemaincidencias.notificaciones.service;
 
 import com.integrador.sistemaincidencias.notificaciones.dao.NotificacionDao;
+import com.integrador.sistemaincidencias.notificaciones.dto.NotificacionBulkResponse;
 import com.integrador.sistemaincidencias.notificaciones.dto.NotificacionCountResponse;
 import com.integrador.sistemaincidencias.notificaciones.dto.NotificacionResponse;
 import com.integrador.sistemaincidencias.notificaciones.model.Notificacion;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Orquestador del modulo de notificaciones.
@@ -86,11 +88,19 @@ public class NotificacionService {
 
     /**
      * Marca todas las notificaciones del usuario. Idempotente.
+     *
+     * <p>Retorna {@link NotificacionBulkResponse} (forma
+     * {@code {"actualizadas": N}}) exigido por el spec
+     * ({@code /api/notificaciones/marcar-todas-leidas}). Se usa un
+     * DTO dedicado para no sobrecargar
+     * {@link NotificacionCountResponse}, cuya semantica
+     * ({@code {"total": N}}) sigue siendo la del badge del topbar
+     * (endpoint {@code /no-leidas/count}).</p>
      */
-    public NotificacionCountResponse marcarTodasLeidas(UUID usuarioId) {
+    public NotificacionBulkResponse marcarTodasLeidas(UUID usuarioId) {
         long actualizadas = notificacionDao.marcarTodasLeidas(
                 usuarioId, LocalDateTime.now());
-        return NotificacionCountResponse.builder().total(actualizadas).build();
+        return NotificacionBulkResponse.builder().actualizadas(actualizadas).build();
     }
 
     /**
@@ -139,7 +149,16 @@ public class NotificacionService {
      * asociar la notificacion al aplicativo cliente de origen
      * (no la usan los hooks de T6, pero el service la ofrece para no
      * tocar su firma si se anade en una iteracion posterior).
+     *
+     * <p>Anotada como {@link Transactional} (REQUIRED) para que la
+     * insercion participe en la transaccion abierta por el caller
+     * (hooks de {@code IncidenciaService}). Si la insercion falla,
+     * Spring propaga el rollback a la mutacion de incidencia y al
+     * historial registrados en la misma unidad de trabajo, evitando
+     * el escenario "fallo en insercion hace rollback completo" del
+     * spec quede en commit parcial.</p>
      */
+    @Transactional
     public Notificacion crear(
             UUID usuarioDestinoId,
             NotificacionTipo tipo,
