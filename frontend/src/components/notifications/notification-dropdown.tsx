@@ -215,7 +215,8 @@ export function NotificationDropdown({
                 <NotificationItem
                   item={item}
                   disabled={markingId === item.id}
-                  onClick={() => onItemClick(item)}
+                  onMarkRead={() => onItemClick(item)}
+                  onClose={() => setOpen(false)}
                 >
                   {inner}
                 </NotificationItem>
@@ -258,23 +259,30 @@ export function NotificationDropdown({
 function NotificationItem({
   item,
   disabled,
-  onClick,
+  onMarkRead,
+  onClose,
   children,
 }: {
   item: Notificacion
   disabled: boolean
-  onClick: () => void
+  onMarkRead: () => void
+  onClose: () => void
   children: React.ReactNode
 }) {
+  // Item con `incidenciaId`: click navega + marca como leida + cierra popover.
+  // Importante: NO usar `event.preventDefault()` aca — TanStack Router necesita
+  // el evento nativo para interceptar y navegar a `/incidencias/:id`. La
+  // marca-de-leida ocurre en background (fire-and-forget); no bloquea la UX.
   if (item.incidenciaId) {
     return (
       <Link
         to="/incidencias/$id"
         params={{ id: item.incidenciaId }}
-        onClick={(event) => {
-          event.preventDefault()
-          if (disabled || item.leido) return
-          onClick()
+        onClick={() => {
+          if (!disabled && !item.leido) {
+            onMarkRead()
+          }
+          onClose()
         }}
         className={cn(
           "relative flex cursor-pointer flex-col gap-1 px-4 py-3 transition-colors hover:bg-slate-50",
@@ -288,7 +296,12 @@ function NotificationItem({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => {
+        if (!disabled && !item.leido) {
+          onMarkRead()
+        }
+        onClose()
+      }}
       disabled={disabled}
       className={cn(
         "relative flex w-full cursor-pointer flex-col gap-1 px-4 py-3 text-left transition-colors hover:bg-slate-50 disabled:opacity-60",
