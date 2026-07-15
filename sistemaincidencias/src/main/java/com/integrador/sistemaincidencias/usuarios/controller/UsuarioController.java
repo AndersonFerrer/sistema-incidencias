@@ -1,6 +1,8 @@
 package com.integrador.sistemaincidencias.usuarios.controller;
 
+import com.integrador.sistemaincidencias.usuarios.dto.ActualizarPerfilRequest;
 import com.integrador.sistemaincidencias.usuarios.dto.ActualizarUsuarioRequest;
+import com.integrador.sistemaincidencias.usuarios.dto.CambiarPasswordPropiaRequest;
 import com.integrador.sistemaincidencias.usuarios.dto.CambiarPasswordRequest;
 import com.integrador.sistemaincidencias.usuarios.dto.CrearUsuarioRequest;
 import com.integrador.sistemaincidencias.usuarios.dto.UsuarioResponse;
@@ -11,6 +13,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,6 +42,34 @@ public class UsuarioController {
             @RequestParam(defaultValue = "0") int offset
     ) {
         return ResponseEntity.ok(usuarioService.listar(authorizationHeader, texto, rol, activo, limit, offset));
+    }
+
+    /**
+     * Self-profile endpoints (RF-33, change `perfil-self`). Static mappings so
+     * Spring never resolves them as `/{id}` UUIDs.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<UsuarioResponse> obtenerMiPerfil(
+            @RequestHeader("Authorization") String authorizationHeader
+    ) {
+        return ResponseEntity.ok(usuarioService.obtenerPerfil(authorizationHeader));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<UsuarioResponse> actualizarMiPerfil(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @Valid @RequestBody ActualizarPerfilRequest request
+    ) {
+        return ResponseEntity.ok(usuarioService.actualizarPerfil(authorizationHeader, request));
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<Void> cambiarMiPassword(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @Valid @RequestBody CambiarPasswordPropiaRequest request
+    ) {
+        usuarioService.cambiarPasswordPropia(authorizationHeader, request);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
@@ -97,5 +128,17 @@ public class UsuarioController {
             @PathVariable UUID id
     ) {
         return ResponseEntity.ok(usuarioService.cambiarActivo(authorizationHeader, id, false));
+    }
+
+    /**
+     * ADMIN-only soft delete (RF-33). Returns 204 on success.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable UUID id
+    ) {
+        usuarioService.eliminar(authorizationHeader, id);
+        return ResponseEntity.noContent().build();
     }
 }
