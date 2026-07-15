@@ -16,6 +16,7 @@ import type {
 } from "@/types/usuarios"
 
 import { Usuario403 } from "./components/usuario-403"
+import { UsuarioDeleteDialog } from "./components/usuario-delete-dialog"
 import { UsuarioFormDialog } from "./components/usuario-form-dialog"
 import { UsuarioPasswordDialog } from "./components/usuario-password-dialog"
 import { UsuariosFilters } from "./components/usuarios-filters"
@@ -212,6 +213,10 @@ export function UsuariosPage() {
     setDialogMode({ kind: "password", userId: user.id })
   }, [])
 
+  const handleDelete = useCallback((user: Usuario) => {
+    setDialogMode({ kind: "delete", userId: user.id })
+  }, [])
+
   const handleSaveUser = useCallback(
     async (input: CrearUsuarioInput | ActualizarUsuarioInput) => {
       const editingUserId =
@@ -320,6 +325,23 @@ export function UsuariosPage() {
     [showToast]
   )
 
+  const handleConfirmDelete = useCallback(
+    async (id: string) => {
+      await usuariosService.eliminar(id)
+      // 204: optimistically flip the row to inactive and surface success.
+      setUsuarios((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, activo: false } : item
+        )
+      )
+      showToast({
+        variant: "default",
+        message: "Usuario eliminado correctamente.",
+      })
+    },
+    [showToast]
+  )
+
   const currentUserIsAdmin = useMemo(
     () => currentUser?.rol === "ADMINISTRADOR",
     [currentUser]
@@ -340,6 +362,9 @@ export function UsuariosPage() {
 
   const passwordDialogKey =
     dialogMode.kind === "password" ? `pwd-${dialogMode.userId}` : "pwd-closed"
+
+  const deleteDialogKey =
+    dialogMode.kind === "delete" ? `del-${dialogMode.userId}` : "del-closed"
 
   if (forbidden) {
     return (
@@ -404,6 +429,7 @@ export function UsuariosPage() {
               onEdit={handleEdit}
               onChangePassword={handleChangePassword}
               onToggleActive={handleToggleActive}
+              onDelete={handleDelete}
             />
             <UsuariosPagination
               cursor={cursor}
@@ -435,6 +461,14 @@ export function UsuariosPage() {
         usuario={dialogMode.kind === "password" ? dialogTarget : null}
         onClose={handleCloseDialog}
         onSubmit={handleSubmitPassword}
+      />
+
+      <UsuarioDeleteDialog
+        key={deleteDialogKey}
+        open={dialogMode.kind === "delete"}
+        usuario={dialogMode.kind === "delete" ? dialogTarget : null}
+        onClose={handleCloseDialog}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   )

@@ -15,3 +15,4 @@ export type DialogMode =
   | { kind: "create" }
   | { kind: "edit"; userId: string }
   | { kind: "password"; userId: string }
+  | { kind: "delete"; userId: string }

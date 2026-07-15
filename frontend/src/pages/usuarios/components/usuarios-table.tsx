@@ -3,6 +3,7 @@ import {
   Pencil,
   Power,
   PowerOff,
+  Trash2,
 } from "lucide-react"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -26,10 +27,13 @@ interface UsuariosTableProps {
   onEdit: (u: Usuario) => void
   onChangePassword: (u: Usuario) => void
   onToggleActive: (u: Usuario) => void
+  onDelete: (u: Usuario) => void
 }
 
 const SELF_GUARD_TITLE =
   "No puedes desactivar tu propio usuario administrador"
+const DELETE_SELF_TITLE =
+  "No puedes eliminar tu propio usuario administrador"
 const HEAD_CLASS =
   "h-9 text-xs font-medium uppercase tracking-wide text-slate-500"
 const ICON_BUTTON_CLASS = "text-slate-500 hover:text-slate-900"
@@ -55,6 +59,7 @@ export function UsuariosTable({
   onEdit,
   onChangePassword,
   onToggleActive,
+  onDelete,
 }: UsuariosTableProps) {
   if (usuarios.length === 0) {
     return (
@@ -75,7 +80,7 @@ export function UsuariosTable({
           <TableHead className={HEAD_CLASS}>Rol</TableHead>
           <TableHead className={HEAD_CLASS}>Cliente</TableHead>
           <TableHead className={HEAD_CLASS}>Estado</TableHead>
-          <TableHead className={`${HEAD_CLASS} w-32 px-4 text-right`}>
+          <TableHead className={`${HEAD_CLASS} w-40 px-4 text-right`}>
             <span className="sr-only">Acciones</span>
           </TableHead>
         </TableRow>
@@ -86,6 +91,7 @@ export function UsuariosTable({
             usuario.id === currentUserId &&
             currentUserIsAdmin &&
             usuario.activo
+          const deleteDisabled = !currentUserIsAdmin || usuario.id === currentUserId
           const ToggleIcon = usuario.activo ? Power : PowerOff
           const toggleLabel = usuario.activo
             ? `Desactivar a ${usuario.nombre}`
@@ -165,6 +171,19 @@ export function UsuariosTable({
                     }
                   >
                     <ToggleIcon aria-hidden="true" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon-xs"
+                    variant="ghost"
+                    onClick={() => onDelete(usuario)}
+                    disabled={deleteDisabled}
+                    title={deleteDisabled ? DELETE_SELF_TITLE : undefined}
+                    aria-label={`Eliminar a ${usuario.nombre}`}
+                    aria-disabled={deleteDisabled || undefined}
+                    className="text-slate-500 hover:text-red-600 disabled:text-slate-300"
+                  >
+                    <Trash2 aria-hidden="true" />
                   </Button>
                 </div>
               </TableCell>
