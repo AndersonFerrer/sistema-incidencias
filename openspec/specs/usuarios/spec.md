@@ -1,21 +1,27 @@
-# Capability Spec: `usuarios` — admin user-management page
+# Capability Spec: `usuarios` — admin user-management + self-service + soft delete
 
 **Capability**: `usuarios`
 **Project**: sistema-incidencias
-**Scope**: Frontend only (React + Vite + TS). Backend `UsuarioController` and `RolController` are already implemented and stay untouched. Postman collection stays untouched.
+**Scope**: Backend (Spring Boot 4 + native SQL via DAO) + frontend (React + Vite + TS). Postman collection is the source of truth for endpoint contracts.
 
-This capability spec is the synced baseline for the `usuarios` capability after the `users-admin-page` change (sdd-archived). It defines the admin user-management page that consumes all 7 admin endpoints of `UsuarioController` plus `GET /api/roles`.
+This capability spec is the synced baseline for the `usuarios` capability after two archived changes:
 
-> Drift notes applied during archive (vs the original delta spec) — see `openspec/changes/archive/users-admin-page/archive-report.md`:
+- `users-admin-page` (admin user-management UI consuming all 7 pre-existing admin endpoints + `GET /api/roles`).
+- `perfil-self` (RF-33 self-service: `GET /api/usuarios/me`, `PUT /api/usuarios/me`, `PUT /api/usuarios/me/password`, plus RF-33 admin-only `DELETE /api/usuarios/{id}` soft delete; frontend `/perfil` page with three tabs).
+
+The combined baseline covers 11 admin endpoints of `UsuarioController`, 3 self-service endpoints, 1 admin-only DELETE endpoint, and `GET /api/roles`.
+
+> Drift notes applied during archive (vs the original delta specs) — see `openspec/changes/archive/users-admin-page/archive-report.md` and `openspec/changes/archive/perfil-self/archive-report.md`:
 >
-> - **S1 (REQ-5)**: client-side password minimum updated from 6 to 8 characters to match implementation. The backend `@Size(min=6, max=100)` constraint is unchanged; the frontend is intentionally stricter for UX consistency with the create form.
-> - **S2 (REQ-1)**: empty-state copy updated to "No se encontraron usuarios con los filtros aplicados." (covers both unfiltered and filtered empty cases, matching the categorias-page precedent).
-> - **S3 (REQ-1)**: inactive-only filter described as a 3-option native `<select>` ("Todos / Solo activos / Solo inactivos") instead of a `Switch` primitive. The request parameters are unchanged.
-> - **NFR-3**: left as-is. The pre-existing English "Admin" default in `app-sidebar.tsx:88` is out of scope for this change.
+> - **S1 (REQ-5, users-admin-page)**: client-side password minimum updated from 6 to 8 characters to match implementation. The backend `@Size(min=6, max=100)` constraint is unchanged; the frontend is intentionally stricter for UX consistency with the create form.
+> - **S2 (REQ-1, users-admin-page)**: empty-state copy updated to "No se encontraron usuarios con los filtros aplicados." (covers both unfiltered and filtered empty cases, matching the categorias-page precedent).
+> - **S3 (REQ-1, users-admin-page)**: inactive-only filter described as a 3-option native `<select>` ("Todos / Solo activos / Solo inactivos") instead of a `Switch` primitive. The request parameters are unchanged.
+> - **NFR-3**: left as-is. The pre-existing English "Admin" default in `app-sidebar.tsx` is out of scope.
+> - **S4 (perfil-self)**: confirmation dialog requires the admin to type `ELIMINAR` (case-insensitive) instead of a simple button click — preserves the explicit-confirmation intent of the spec while adding a typing step.
 
 ## Purpose
 
-The system shall provide authenticated administrators with a UI to manage internal users — list with filters and pagination, create, edit, reset another user's password, and toggle active state — through the existing backend REST API. The page shall consume all 7 admin endpoints of `UsuarioController` plus `GET /api/roles` for the role dropdown.
+The system shall provide authenticated administrators with a UI to manage internal users — list with filters and pagination, create, edit, reset another user's password, toggle active state, and soft-delete another user — through the existing backend REST API. The system shall additionally provide every authenticated user (any active role) with a private `/perfil` page where they can read and update their own name and avatar URL, change their own password by verifying the current one, and (for administrators only) link to the user-management page for destructive operations. The page shall consume all 11 admin endpoints of `UsuarioController` (including the new `DELETE /api/usuarios/{id}`), the 3 self-service endpoints under `/api/usuarios/me`, and `GET /api/roles` for the role dropdown.
 
 ## Requirements
 
@@ -264,19 +270,172 @@ Every request to the backend shall be issued through `src/lib/http.ts`, which al
 #### Scenario: Centralized HTTP layer
 - THE SYSTEM shall not call `fetch` or `axios` directly from page code. All HTTP calls shall flow through `src/lib/http.ts` via the service wrappers in `frontend/src/services/usuarios-service.ts` and `frontend/src/services/roles-service.ts`.
 
+### Requirement: Consult own profile
+
+The system **MUST** expose `GET /api/usuarios/me` and derive the target exclusively from the authenticated token.
+
+#### Scenario: Cualquier rol consulta su perfil
+- WHEN an active ADMINISTRADOR, AGENTE, or USUARIO requests `GET /api/usuarios/me` with a valid token
+- THEN THE SYSTEM shall return 200 with that user's `UsuarioResponse` (no `passwordHash` field exposed).
+
+#### Scenario: Solicitud no autenticada
+- WHEN a missing, malformed, or invalid token is supplied
+- THEN THE SYSTEM shall return 401 with no profile data.
+
+#### Scenario: El cliente no elige el usuario
+- WHEN user A is authenticated and supplies an unrelated identifier in the request
+- THEN THE SYSTEM shall resolve and affect only user A (the `/me` path does not accept an `id` parameter).
+
+### Requirement: Update own profile (name + avatar)
+
+The system **MUST** allow only `nombre` and optional `avatarUrl` through `PUT /api/usuarios/me`; email, role, and active state **MUST NOT** be self-editable.
+
+#### Scenario: Actualización válida
+- WHEN an authenticated user submits a valid `nombre` and HTTPS `avatarUrl`
+- THEN THE SYSTEM shall return 200 with the updated `UsuarioResponse`.
+
+#### Scenario: Quitar avatar
+- WHEN `avatarUrl` is null, blank, or omitted in a valid update
+- THEN THE SYSTEM shall clear the stored avatar (set to null) while leaving the name intact.
+
+#### Scenario: Datos inválidos
+- WHEN a blank name, a name over 150 characters, or an invalid (non-HTTPS) avatar URL is submitted
+- THEN THE SYSTEM shall return 400 with validation details and persist no change.
+
+#### Scenario: Campos protegidos ignorados
+- WHEN the request body includes extra fields such as `email`, `rol`, `activo`, or another user's id
+- THEN THE SYSTEM shall ignore them (the DTO has only `nombre` and `avatarUrl`; the DAO `actualizarPerfil` writes only those two columns).
+
+### Requirement: Change own password
+
+The system **MUST** expose `PUT /api/usuarios/me/password`, require both `currentPassword` and `newPassword`, verify the current one with `PasswordEncoder.matches`, then store `passwordEncoder.encode(newPassword)`. The new password **MUST** be at least 8 characters.
+
+#### Scenario: Cambio correcto
+- WHEN `currentPassword` matches the stored hash and `newPassword` is valid
+- THEN THE SYSTEM shall return 204 and persist only a hash of the new password.
+
+#### Scenario: Contraseña actual incorrecta
+- WHEN `currentPassword` does not match
+- THEN THE SYSTEM shall return 400 with the message "La contraseña actual no coincide" and shall NOT touch the stored hash.
+
+#### Scenario: Nueva contraseña corta
+- WHEN `newPassword` has fewer than 8 characters
+- THEN THE SYSTEM shall return 400 with validation details and shall NOT touch the stored hash.
+
+#### Scenario: Campos requeridos ausentes
+- WHEN either password field is blank or absent
+- THEN THE SYSTEM shall return 400 with validation details.
+
+#### Scenario: Nueva credencial efectiva
+- WHEN login is attempted with the old and then the new password after a successful change
+- THEN THE SYSTEM shall reject the old password and accept the new one.
+
+### Requirement: Soft-delete user (admin only)
+
+The system **MUST** expose admin-only `DELETE /api/usuarios/{id}`, set `activo=false`, and **MUST NOT** physically remove the row.
+
+#### Scenario: Administrador elimina a otro usuario
+- WHEN an authenticated ADMINISTRADOR targets another active user's id
+- THEN THE SYSTEM shall return 204 and mark the target `activo=false` (no physical delete).
+
+#### Scenario: Registro y referencias preservados
+- WHEN a user is soft-deleted
+- THEN THE SYSTEM shall keep the row visible to administrators (marked inactive) and shall deny login attempts for that user.
+
+#### Scenario: Rol no administrador
+- WHEN an AGENTE or USUARIO targets any user id
+- THEN THE SYSTEM shall return 403 with no state change.
+
+#### Scenario: Administrador intenta eliminarse
+- WHEN the authenticated ADMINISTRADOR targets their own id
+- THEN THE SYSTEM shall return 400 with the message "No puedes eliminar tu propio usuario administrador" and shall NOT change state.
+
+#### Scenario: Usuario inexistente
+- WHEN the target id does not exist
+- THEN THE SYSTEM shall return 404 with no state change.
+
+### Requirement: Self-service scope is uniform across roles
+
+The self-service API (`/api/usuarios/me` family) **MUST** be available equally to every authenticated role and **MUST NOT** grant cross-user access.
+
+#### Scenario: Paridad entre roles
+- WHEN one active user of each supported role (ADMINISTRADOR, AGENTE, USUARIO) reads, edits, or changes their own password
+- THEN THE SYSTEM shall respond identically for each role.
+
+#### Scenario: Privilegio admin no altera `/me`
+- WHEN an ADMINISTRADOR calls any `/me` endpoint while supplying another user's data
+- THEN THE SYSTEM shall read or change only the administrator's own profile.
+
+### Requirement: Private `/perfil` page
+
+The frontend **MUST** register `/perfil` inside `AppLayout` (which applies `PrivateRoute`) and load the profile via `usuariosService.obtenerMiPerfil()`.
+
+#### Scenario: Navegación autenticada
+- WHEN an authenticated user navigates to `/perfil`
+- THEN THE SYSTEM shall request `GET /api/usuarios/me` and render the returned profile with role-aware tabs.
+
+#### Scenario: Secciones según rol
+- WHEN the profile is loaded
+- THEN THE SYSTEM shall show the "Información" and "Contraseña" tabs to every role, and additionally the "Zona de riesgo" tab only to ADMINISTRADOR. The danger-zone tab links to `/usuarios`; it does NOT offer a self-delete button.
+
+### Requirement: Profile information form
+
+The profile information form **MUST** render email as readonly and submit only `nombre` and `avatarUrl`.
+
+#### Scenario: Campos visibles
+- WHEN profile data loads successfully
+- THEN THE SYSTEM shall render `nombre` and `avatarUrl` as editable inputs and `email` and `rol` as readonly fields with a description explaining that email is administratively controlled.
+
+#### Scenario: Sincronización global
+- WHEN the backend confirms a profile update with HTTP 200
+- THEN THE SYSTEM shall update the in-memory profile, persist the new name/avatar to the auth store, and propagate the change to the header and sidebar without changing the role or token.
+
+#### Scenario: Error de actualización
+- WHEN the backend rejects or fails to process the update
+- THEN THE SYSTEM shall display the error in an inline alert and preserve the entered values (no reset, no navigation away).
+
+### Requirement: Own-password form
+
+The password form **MUST** collect current, new, and confirmation values and validate them client-side before calling the API.
+
+#### Scenario: Validación cliente
+- WHEN the new and confirmation values differ, OR the new value is shorter than 8 characters
+- THEN THE SYSTEM shall display inline validation messages and MUST NOT call the backend.
+
+#### Scenario: Envío exitoso
+- WHEN all three values are valid and the API returns 204
+- THEN THE SYSTEM shall clear all three fields and display a success message.
+
+### Requirement: Admin delete confirmation
+
+The `/usuarios` page **MUST** expose deletion only to administrators and require the operator to type the literal `ELIMINAR` (case-insensitive) in the confirmation dialog before issuing `DELETE /api/usuarios/{id}`.
+
+#### Scenario: Cancelar confirmación
+- WHEN an administrator opens the delete dialog for another user and cancels it
+- THEN THE SYSTEM shall not issue any DELETE request and the row state shall remain unchanged.
+
+#### Scenario: Confirmar eliminación
+- WHEN an administrator types `ELIMINAR` and confirms the named target
+- THEN THE SYSTEM shall issue `DELETE /api/usuarios/{id}`, optimistically mark the row inactive on a 204 response, refetch the list, and show success feedback. The Trash2 action MUST be disabled for non-admin users and for the row representing the currently authenticated administrator.
+
 ## Out of scope (explicit non-requirements)
 
-The following are **explicitly NOT** required by this delta. Any implementation work for these belongs to a separate change.
+The following are **explicitly NOT** required by this combined baseline. Any implementation work for these belongs to a separate change.
 
-- **Delete user**: backend exposes no `DELETE /api/usuarios/{id}` endpoint; no delete action is rendered in v1.
-- **Avatar upload**: backend accepts only an `avatarUrl` string field; no multipart upload endpoint exists.
-- **Self password change**: this page manages other users only. The "My profile" / change-own-password feature is a separate change.
+- **Avatar binary upload**: backend accepts only an `avatarUrl` string field; no multipart upload endpoint exists.
+- **Self email change**: only `nombre` and `avatarUrl` are self-editable; email changes remain administrative operations.
+- **Self-deactivation / self-delete**: an authenticated administrator cannot soft-delete their own row.
+- **Hard delete**: `DELETE /api/usuarios/{id}` sets `activo=false` only; the row is never physically removed.
+- **Password recovery / 2FA / OAuth**: not in scope.
+- **Immediate JWT revocation on soft delete**: the existing auth filter validates JWT claims without an active-user lookup; soft-deleted users cannot log in for new sessions but active tokens remain valid until expiry.
 - **Roles CRUD UI**: only `GET /api/roles` is consumed (for the dropdown). The 5 endpoints of `RolController` (listar, obtener, crear, actualizar, eliminar) are a separate change.
 - **UsuarioExterno / "Solicitante" external users**: backend has no controller for `UsuarioExterno`; external users cannot be listed in v1.
 
 ## Acceptance criteria
 
-- All scenarios under the 12 functional requirements and the 6 non-functional requirements pass.
-- `npm run lint` passes with zero errors.
-- `npm run build` passes with zero errors.
-- Manual smoke walkthrough against the running backend passes per `Verification` scenarios.
+- All scenarios under the 21 functional requirements and the 6 non-functional requirements pass.
+- `./mvnw compile -q` and `./mvnw test -q` pass with zero failures.
+- `npm run lint` passes with zero errors (pre-existing master errors in `incidencias/*` are tolerated).
+- `npm run build` passes with zero errors (pre-existing master errors in `incidencias/*` are tolerated).
+- `UsuarioServiceSelfTest` covers every backend service-level rule for self-profile, own-password change, and admin soft delete (9 focused unit tests, all passing).
+- Manual smoke walkthrough against the running backend passes per `Verification` scenarios for the admin user-management page, the `/perfil` page (three roles), and the admin delete confirmation dialog.
