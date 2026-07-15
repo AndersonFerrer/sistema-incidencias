@@ -11,6 +11,7 @@ type AuthState = {
   isLoading: boolean
   error: string | null
   login: (credentials: LoginCredentials) => Promise<boolean>
+  loginDemo: () => Promise<boolean>
   refreshSession: () => Promise<void>
   syncProfile: (payload: {
     nombre?: string
@@ -52,6 +53,34 @@ export const useAuthStore = create<AuthState>()(
               error instanceof Error
                 ? error.message
                 : "No se pudo iniciar sesión.",
+          })
+
+          return false
+        }
+      },
+
+      async loginDemo() {
+        set({ isLoading: true, error: null })
+
+        try {
+          const response = await authService.loginDemo()
+
+          set({
+            token: response.token,
+            expiresAt: response.expiraEn ?? null,
+            user: response.usuario,
+            isLoading: false,
+            error: null,
+          })
+
+          return true
+        } catch (error) {
+          set({
+            isLoading: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "No se pudo iniciar sesión demo.",
           })
 
           return false
