@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
 		"name": "Sistema Incidencias",
-		"description": "Colección de endpoints para el Sistema de Gestión de Incidencias.\n\nBase URL: http://localhost:8080\n\n## Autenticación\nLa mayoría de endpoints requieren header Authorization: Bearer {{token}}\nEl token se obtiene llamando a POST /api/auth/login o POST /api/auth/demo\n\n## Variables de colección\n- `baseUrl`: http://localhost:8080\n- `token`: JWT obtenido tras login\n- `usuarioId`: UUID del usuario para operaciones específicas\n- `rolId`: UUID del rol para operaciones específicas\n- `aplicativoId`: UUID del aplicativo\n- `categoriaId`: UUID de la categoría\n- `estadoAprobacionId`: UUID del estado de aprobación\n- `estadoProcesoId`: UUID del estado de proceso\n- `incidenciaId`: UUID de incidencia para pruebas\n- `agenteId`: UUID de agente asignado\n- `usuarioExternoId`: UUID de usuario externo reportante\n\n## Adjuntos en incidencias\nCrear incidencia, actualizar incidencia y subir adjuntos usan multipart/form-data cuando se van a enviar archivos. En actualización, si el campo archivos no se envía, los adjuntos existentes se conservan sin reemplazo.\n\n## Perfil propio y eliminación lógica (change E)\n- `GET /api/usuarios/me`: devuelve el perfil del usuario autenticado.\n- `PUT /api/usuarios/me`: actualiza solo `nombre` y `avatarUrl`.\n- `PUT /api/usuarios/me/password`: cambia la propia contraseña verificando la actual.\n- `DELETE /api/usuarios/{id}`: soft delete (`activo=false`), solo ADMINISTRADOR y nunca sobre sí mismo.",
+		"description": "Colección de endpoints para el Sistema de Gestión de Incidencias.\n\nBase URL: http://localhost:8080\n\n## Autenticación\nLa mayoría de endpoints requieren header Authorization: Bearer {{token}}\nEl token se obtiene llamando a POST /api/auth/login o POST /api/auth/demo\n\n## Variables de colección\n- `baseUrl`: http://localhost:8080\n- `token`: JWT obtenido tras login\n- `usuarioId`: UUID del usuario para operaciones específicas\n- `rolId`: UUID del rol para operaciones específicas\n- `aplicativoId`: UUID del aplicativo\n- `categoriaId`: UUID de la categoría\n- `estadoAprobacionId`: UUID del estado de aprobación\n- `estadoProcesoId`: UUID del estado de proceso\n- `incidenciaId`: UUID de incidencia para pruebas\n- `agenteId`: UUID de agente asignado\n- `usuarioExternoId`: UUID de usuario externo reportante\n\n## Adjuntos en incidencias\nCrear incidencia, actualizar incidencia y subir adjuntos usan multipart/form-data cuando se van a enviar archivos. En actualización, si el campo archivos no se envía, los adjuntos existentes se conservan sin reemplazo.\n\n## Perfil propio y eliminación lógica (change E)\n- `GET /api/usuarios/me`: devuelve el perfil del usuario autenticado.\n- `PUT /api/usuarios/me`: actualiza solo `nombre` y `avatarUrl`.\n- `PUT /api/usuarios/me/password`: cambia la propia contraseña verificando la actual.\n- `DELETE /api/usuarios/{id}`: soft delete (`activo=false`), solo ADMINISTRADOR y nunca sobre sí mismo.\n\n## Demo login (change F)\n- `POST /api/auth/demo`: sin credenciales, resuelve siempre el seed demo@sistema.com (password demo123, rol ADMINISTRADOR). Si el seed falta o el usuario está inactivo devuelve 401. Body opcional por compatibilidad pero ignorado.\n\n## Soft delete de catálogos (change F)\n- `DELETE /api/categorias/{id}`: soft delete (`activo=false`), solo ADMINISTRADOR.\n- `DELETE /api/aplicativos/{id}`: soft delete (`activo=false`), solo ADMINISTRADOR.\n- `DELETE /api/estados-proceso/{id}`: soft delete (`activo=false`), solo ADMINISTRADOR.\n- `DELETE /api/estados-aprobacion/{id}`: soft delete (`activo=false`), solo ADMINISTRADOR.\n- Todos los `LISTAR` (`GET /api/categorias`, `/api/aplicativos`, `/api/estados-proceso`, `/api/estados-aprobacion`) devuelven solo filas con `activo=true`. Las filas desactivadas conservan sus FK desde `incidencias`.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"version": "1.4.0"
 	},
@@ -102,15 +102,10 @@
 							"type": "noauth"
 						},
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"rol\": \"ADMINISTRADOR\"\n}",
+							"raw": "",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -128,14 +123,20 @@
 								"demo"
 							]
 						},
-						"description": "Login simplificado para desarrollo. Retorna JWT directamente sin validar credenciales. Body opcional: { \"rol\": \"ADMINISTRADOR\" | \"AGENTE\" | \"USUARIO\" }"
+						"description": "Login demo sin credenciales. Resuelve siempre el usuario seed demo@sistema.com (password demo123, rol ADMINISTRADOR). Body opcional y actualmente ignorado — antes aceptaba { \"rol\": \"ADMINISTRADOR\"|\"AGENTE\"|\"USUARIO\" }, ahora ese campo se mantiene solo por compatibilidad."
 					},
 					"response": [
 						{
 							"name": "Login Demo exitoso (200)",
 							"status": "OK",
 							"code": 200,
-							"body": "{\n    \"token\": \"eyJhbGciOiJIUzI1NiJ9...\",\n    \"tipo\": \"Bearer\",\n    \"expiraEn\": \"2026-06-10T14:30:00\",\n    \"usuario\": {\n        \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n        \"nombre\": \"Admin Demo\",\n        \"email\": \"admin@sistema.com\",\n        \"rol\": \"ADMINISTRADOR\",\n        \"avatarUrl\": null\n    }\n}"
+							"body": "{\n    \"token\": \"eyJhbGciOiJIUzI1NiJ9...\",\n    \"tipo\": \"Bearer\",\n    \"expiraEn\": \"2026-07-15T16:30:00\",\n    \"usuario\": {\n        \"id\": \"00000000-0000-0000-0000-000000000104\",\n        \"nombre\": \"Administrador Demo\",\n        \"email\": \"demo@sistema.com\",\n        \"rol\": \"ADMINISTRADOR\",\n        \"avatarUrl\": null\n    }\n}"
+						},
+						{
+							"name": "Demo ausente o inactivo (401)",
+							"status": "Unauthorized",
+							"code": 401,
+							"body": "{\n    \"fecha\": \"2026-07-15T16:30:00\",\n    \"estado\": 401,\n    \"error\": \"Unauthorized\",\n    \"mensaje\": \"No existe usuario demo activo registrado\",\n    \"ruta\": \"/api/auth/demo\"\n}"
 						}
 					]
 				},
@@ -1014,7 +1015,7 @@
 								"{{aplicativoId}}"
 							]
 						},
-						"description": "Elimina un aplicativo cliente por su UUID.\nRetorna 204 No Content en éxito."
+						"description": "Soft delete de un aplicativo cliente por su UUID. Marca activo=false sin eliminar la fila, preservando las FK desde incidencias.\nRetorna 204 No Content en éxito. 403 si el usuario no es ADMINISTRADOR."
 					}
 				}
 			]
@@ -1158,6 +1159,30 @@
 						},
 						"description": "Actualiza una categoría existente.\n\nBody:\n- aplicativoId (UUID, requerido): ID del aplicativo cliente al que pertenece\n- nombre (String, 1-100, requerido)\n- descripcion (String, max 500, opcional)\n- activo (Boolean, opcional, default true)"
 					}
+				},
+				{
+					"name": "Eliminar categoría",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/categorias/{{categoriaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"categorias",
+								"{{categoriaId}}"
+							]
+						},
+						"description": "Soft delete de una categoría por su UUID. Marca activo=false sin eliminar la fila, preservando las FK desde incidencias.\nRetorna 204 No Content en éxito. 403 si el usuario no es ADMINISTRADOR."
+					}
 				}
 			]
 		},
@@ -1300,6 +1325,30 @@
 						},
 						"description": "Actualiza un estado de aprobación existente.\n\nBody requerido:\n- clave (String, 1-50)\n- etiqueta (String, 1-150)\n- activo (Boolean, opcional, default true)"
 					}
+				},
+				{
+					"name": "Eliminar estado de aprobación",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/estados-aprobacion/{{estadoAprobacionId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"estados-aprobacion",
+								"{{estadoAprobacionId}}"
+							]
+						},
+						"description": "Soft delete de un estado de aprobación por su UUID. Marca activo=false sin eliminar la fila, preservando las FK desde incidencias.\nRetorna 204 No Content en éxito. 403 si el usuario no es ADMINISTRADOR."
+					}
 				}
 			]
 		},
@@ -1441,6 +1490,30 @@
 							]
 						},
 						"description": "Actualiza un estado de proceso existente.\n\nBody requerido:\n- clave (String, 1-50)\n- etiqueta (String, 1-100)\n- esTerminal (Boolean, requerido)\n- orden (Integer, >=1, requerido)\n- activo (Boolean, opcional, default true)"
+					}
+				},
+				{
+					"name": "Eliminar estado de proceso",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/estados-proceso/{{estadoProcesoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"estados-proceso",
+								"{{estadoProcesoId}}"
+							]
+						},
+						"description": "Soft delete de un estado de proceso por su UUID. Marca activo=false sin eliminar la fila, preservando las FK desde incidencias.\nRetorna 204 No Content en éxito. 403 si el usuario no es ADMINISTRADOR."
 					}
 				}
 			]
