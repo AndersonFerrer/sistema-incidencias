@@ -166,19 +166,29 @@ export const trendData = [
   { week: "28 mar", creadas: 8, resueltas: 0 },
 ]
 
-export const statusLabels: Record<IncidentStatus, string> = {
+export const statusLabels: Record<string, string> = {
   solicitada: "Solicitada",
   aceptada: "Aceptada",
   pendiente: "Pendiente",
   en_proceso: "En Proceso",
   finalizada: "Finalizada",
   rechazada: "Rechazada",
+  SOLICITADA: "Solicitada",
+  APROBADA: "Aprobada",
+  RECHAZADA: "Rechazada",
+  PENDIENTE: "Pendiente",
+  EN_PROCESO: "En Proceso",
+  FINALIZADA: "Finalizada",
 }
 
-export const priorityLabels: Record<IncidentPriority, string> = {
+export const priorityLabels: Record<string, string> = {
   baja: "Baja",
   media: "Media",
   alta: "Alta",
+  BAJA: "Baja",
+  MEDIA: "Media",
+  ALTA: "Alta",
+  CRITICA: "Crítica",
 }
 
 export const dashboardStats = [

@@ -16,9 +16,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { recentIncidents } from "@/pages/dashboard/data"
+import type { IncidenciaResumen } from "@/services/dashboard-service"
 
-export function RecentIncidentsTable() {
+type RecentIncidentsTableProps = {
+  recientes: IncidenciaResumen[]
+}
+
+/**
+ * Tabla de las 5 (o menos) incidencias mas recientes segun el backend
+ * (RF-10). Mapea cada `IncidenciaResumen` a una fila con badges
+ * derivados del codigo canónico del backend.
+ */
+export function RecentIncidentsTable({ recientes }: RecentIncidentsTableProps) {
   return (
     <Card className="rounded-lg bg-white shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between border-b px-4 py-2.5">
@@ -52,25 +61,36 @@ export function RecentIncidentsTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recentIncidents.map((incident) => (
-              <TableRow key={incident.id}>
-                <TableCell className="px-4 py-2 font-mono text-xs text-slate-500">
-                  {incident.id}
-                </TableCell>
-                <TableCell className="py-2 font-medium text-slate-950">
-                  {incident.title}
-                </TableCell>
-                <TableCell className="py-2">
-                  <StatusBadge status={incident.status} />
-                </TableCell>
-                <TableCell className="py-2">
-                  <PriorityBadge priority={incident.priority} />
-                </TableCell>
-                <TableCell className="py-2 text-sm text-slate-500">
-                  {incident.assignedTo ?? "Sin asignar"}
+            {recientes.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  className="px-4 py-6 text-center text-sm text-slate-500"
+                  colSpan={5}
+                >
+                  Sin incidencias en el rango seleccionado.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              recientes.map((incidencia) => (
+                <TableRow key={incidencia.id}>
+                  <TableCell className="px-4 py-2 font-mono text-xs text-slate-500">
+                    {incidencia.codigo}
+                  </TableCell>
+                  <TableCell className="py-2 font-medium text-slate-950">
+                    {incidencia.titulo}
+                  </TableCell>
+                  <TableCell className="py-2">
+                    <StatusBadge status={incidencia.estadoProcesoCodigo} />
+                  </TableCell>
+                  <TableCell className="py-2">
+                    <PriorityBadge priority={incidencia.prioridad} />
+                  </TableCell>
+                  <TableCell className="py-2 text-sm text-slate-500">
+                    {incidencia.asignadoA ? incidencia.asignadoA : "Sin asignar"}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </CardContent>
