@@ -42,6 +42,13 @@ public final class UsuarioSql {
             LIMIT 1
             """;
 
+    public static final String BUSCAR_DEMO_POR_EMAIL = CAMPOS_BASE + """
+            WHERE u.activo = true
+              AND r.activo = true
+              AND lower(u.email) = lower(?)
+            LIMIT 1
+            """;
+
     public static final String LISTAR_ASIGNABLES = CAMPOS_BASE + """
             WHERE u.activo = true
               AND r.activo = true
