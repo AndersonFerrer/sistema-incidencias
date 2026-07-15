@@ -53,6 +53,11 @@ public class EstadoAprobacionService {
         return toResponse(estadoAprobacionDao.actualizar(actual));
     }
 
+    public void eliminar(UUID id) {
+        buscar(id);
+        estadoAprobacionDao.cambiarActivo(id, false);
+    }
+
     private EstadoAprobacion buscar(UUID id) {
         return estadoAprobacionDao.buscarPorId(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Estado de aprobación no encontrado"));

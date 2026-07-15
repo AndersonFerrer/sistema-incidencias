@@ -57,6 +57,11 @@ public class EstadoProcesoService {
         return toResponse(estadoProcesoDao.actualizar(actual));
     }
 
+    public void eliminar(UUID id) {
+        buscar(id);
+        estadoProcesoDao.cambiarActivo(id, false);
+    }
+
     private EstadoProceso buscar(UUID id) {
         return estadoProcesoDao.buscarPorId(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Estado de proceso no encontrado"));

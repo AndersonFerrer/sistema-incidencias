@@ -88,4 +88,15 @@ public class EstadoAprobacionDao {
             throw new AccesoDatosException("Error al actualizar estado de aprobación", exception);
         }
     }
+
+    public void cambiarActivo(UUID id, boolean activo) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(EstadoAprobacionSql.DESACTIVAR)) {
+            statement.setBoolean(1, activo);
+            statement.setObject(2, id);
+            statement.executeUpdate();
+        } catch (SQLException exception) {
+            throw new AccesoDatosException("Error al cambiar estado de aprobación", exception);
+        }
+    }
 }

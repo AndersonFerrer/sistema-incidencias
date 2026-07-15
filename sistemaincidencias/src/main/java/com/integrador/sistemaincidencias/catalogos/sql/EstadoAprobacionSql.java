@@ -8,6 +8,7 @@ public final class EstadoAprobacionSql {
     public static final String LISTAR = """
             SELECT id, clave, etiqueta, activo
             FROM estados_aprobacion
+            WHERE activo = true
             ORDER BY clave ASC
             """;
 
@@ -33,6 +34,12 @@ public final class EstadoAprobacionSql {
     public static final String ACTUALIZAR = """
             UPDATE estados_aprobacion
             SET clave = ?, etiqueta = ?, activo = ?
+            WHERE id = ?
+            """;
+
+    public static final String DESACTIVAR = """
+            UPDATE estados_aprobacion
+            SET activo = ?
             WHERE id = ?
             """;
 }

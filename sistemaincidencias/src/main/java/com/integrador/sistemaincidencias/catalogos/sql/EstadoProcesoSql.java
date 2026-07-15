@@ -8,6 +8,7 @@ public final class EstadoProcesoSql {
     public static final String LISTAR = """
             SELECT id, clave, etiqueta, es_terminal, orden, activo
             FROM estados_proceso
+            WHERE activo = true
             ORDER BY orden ASC
             """;
 
@@ -33,6 +34,12 @@ public final class EstadoProcesoSql {
     public static final String ACTUALIZAR = """
             UPDATE estados_proceso
             SET clave = ?, etiqueta = ?, es_terminal = ?, orden = ?, activo = ?
+            WHERE id = ?
+            """;
+
+    public static final String DESACTIVAR = """
+            UPDATE estados_proceso
+            SET activo = ?
             WHERE id = ?
             """;
 }
