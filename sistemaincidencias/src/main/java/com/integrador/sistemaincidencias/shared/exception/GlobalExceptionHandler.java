@@ -61,6 +61,17 @@ public class GlobalExceptionHandler {
         return construirRespuesta(HttpStatus.BAD_REQUEST, exception.getMessage(), request, List.of());
     }
 
+    @ExceptionHandler(UnsupportedOperationException.class)
+    public ResponseEntity<ErrorResponse> manejarNoImplementado(
+            UnsupportedOperationException exception,
+            HttpServletRequest request
+    ) {
+        // Se usa como placeholder entre PRs de un mismo change (ej. exportador
+        // PDF/XLSX del modulo reportes que llega en PR2). Cualquier otro uso
+        // accidental termina aqui y devuelve 501 explicito, no 500.
+        return construirRespuesta(HttpStatus.NOT_IMPLEMENTED, exception.getMessage(), request, List.of());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> manejarValidacion(
             MethodArgumentNotValidException exception,
