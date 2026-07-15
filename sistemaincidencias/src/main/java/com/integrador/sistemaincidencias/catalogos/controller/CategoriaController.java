@@ -31,7 +31,7 @@ public class CategoriaController {
     public ResponseEntity<List<CategoriaResponse>> listar(
             @RequestHeader("Authorization") String token
     ) {
-        permisoAdministracionService.validarAdministrador(token);
+        permisoAdministracionService.validarAutenticado(token);
         return ResponseEntity.ok(categoriaService.listar());
     }
 

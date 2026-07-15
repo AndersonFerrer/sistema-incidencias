@@ -31,7 +31,7 @@ public class EstadoProcesoController {
     public ResponseEntity<List<EstadoProcesoResponse>> listar(
             @RequestHeader("Authorization") String token
     ) {
-        permisoAdministracionService.validarAdministrador(token);
+        permisoAdministracionService.validarAutenticado(token);
         return ResponseEntity.ok(estadoProcesoService.listar());
     }
 
