@@ -1,7 +1,9 @@
 import { apiRequest } from "@/lib/http"
 import type {
+  ActualizarPerfilPropioInput,
   ActualizarUsuarioInput,
   CambiarPasswordInput,
+  CambiarPasswordPropiaInput,
   CrearUsuarioInput,
   Usuario,
 } from "@/types/usuarios"
@@ -78,6 +80,37 @@ export const usuariosService = {
   desactivar(id: string): Promise<Usuario> {
     return apiRequest<Usuario>(`/api/usuarios/${id}/desactivar`, {
       method: "PATCH",
+    })
+  },
+
+  eliminar(id: string): Promise<void> {
+    return apiRequest<void>(`/api/usuarios/${id}`, {
+      method: "DELETE",
+    })
+  },
+
+  /**
+   * Self-service wrappers (RF-33, change `perfil-self`). The target is always
+   * the authenticated user — there is no `id` parameter.
+   */
+  obtenerMiPerfil(signal?: AbortSignal): Promise<Usuario> {
+    return apiRequest<Usuario>("/api/usuarios/me", {
+      method: "GET",
+      signal,
+    })
+  },
+
+  actualizarMiPerfil(input: ActualizarPerfilPropioInput): Promise<Usuario> {
+    return apiRequest<Usuario>("/api/usuarios/me", {
+      method: "PUT",
+      body: JSON.stringify(input),
+    })
+  },
+
+  cambiarMiPassword(input: CambiarPasswordPropiaInput): Promise<void> {
+    return apiRequest<void>("/api/usuarios/me/password", {
+      method: "PUT",
+      body: JSON.stringify(input),
     })
   },
 }
