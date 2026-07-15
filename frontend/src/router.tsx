@@ -9,6 +9,7 @@ import { AppLayout } from "@/layout/app-layout"
 import { AuthLayout } from "@/layout/auth-layout"
 import { CategoriasPage } from "@/pages/categorias"
 import { ClientesPage } from "@/pages/clientes"
+import { ConfiguracionPage } from "@/pages/configuracion"
 import { DashboardPage } from "@/pages/dashboard"
 import { IncidenciasPage } from "@/pages/incidencias"
 import { IncidenciaDetallePage } from "@/pages/incidencias/detalle"
@@ -124,6 +125,16 @@ const perfilRoute = createRoute({
   ),
 })
 
+const configuracionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/configuracion",
+  component: () => (
+    <AppLayout>
+      <ConfiguracionPage />
+    </AppLayout>
+  ),
+})
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   dashboardRoute,
@@ -133,6 +144,7 @@ const routeTree = rootRoute.addChildren([
   ]),
   clientesRoute,
   categoriasRoute,
+  configuracionRoute,
   usuariosRoute,
   reportesRoute,
   notificacionesRoute,
