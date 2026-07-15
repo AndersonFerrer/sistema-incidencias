@@ -26,11 +26,13 @@ import { cn } from "@/lib/utils"
 import type { Categoria } from "@/types/categorias"
 import type { AplicativoCliente } from "@/types/aplicativos"
 import type { EstadoAprobacion } from "@/types/estados-aprobacion"
+import type { EstadoProceso } from "@/types/estados-proceso"
 import type { Incidencia, Prioridad } from "@/types/incidencias"
 import type { Usuario } from "@/types/usuarios"
 import {
   EstadoAprobacionBadge,
 } from "@/pages/incidencias/components/estado-badge"
+import { IncidenciaEstadoProcesoBadge } from "@/pages/incidencias/components/incidencia-estado-proceso-badge"
 import { PrioridadBadge } from "@/pages/incidencias/components/prioridad-badge"
 
 type IncidenciasTableProps = {
@@ -38,8 +40,10 @@ type IncidenciasTableProps = {
   categorias: Categoria[]
   aplicativos: AplicativoCliente[]
   estadosAprobacion: EstadoAprobacion[]
+  estadosProceso: EstadoProceso[]
   usuarios: Usuario[]
   currentUserIsAdmin: boolean
+  onEliminar: (incidencia: Incidencia) => void
 }
 
 type SortColumn = "titulo" | "creadoEn" | "prioridad"
@@ -86,6 +90,13 @@ function findEstadoAprobacion(
   return estados.find((estado) => estado.id === estadoId)
 }
 
+function findEstadoProceso(
+  estadoId: string,
+  estados: EstadoProceso[]
+) {
+  return estados.find((estado) => estado.id === estadoId)
+}
+
 function compareByColumn(
   a: Incidencia,
   b: Incidencia,
@@ -105,8 +116,10 @@ export function IncidenciasTable({
   categorias,
   aplicativos,
   estadosAprobacion,
+  estadosProceso,
   usuarios,
   currentUserIsAdmin,
+  onEliminar,
 }: IncidenciasTableProps) {
   const navigate = useNavigate()
 
@@ -203,7 +216,10 @@ export function IncidenciasTable({
                 Categoría
               </TableHead>
               <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
-                Estado
+                Estado (aprob.)
+              </TableHead>
+              <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
+                Estado (proceso)
               </TableHead>
               {renderSortableHeader("Prioridad", "prioridad")}
               <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -222,7 +238,7 @@ export function IncidenciasTable({
             {sortedIncidencias.length === 0 ? (
               <TableRow className="hover:bg-transparent">
                 <TableCell
-                  colSpan={8}
+                  colSpan={9}
                   className="px-4 py-8 text-center text-sm text-slate-500"
                 >
                   No se encontraron incidencias con los filtros actuales.
@@ -239,6 +255,10 @@ export function IncidenciasTable({
                 const estadoAprobacion = findEstadoAprobacion(
                   incidencia.estadoAprobacionId,
                   estadosAprobacion
+                )
+                const estadoProceso = findEstadoProceso(
+                  incidencia.estadoProcesoId,
+                  estadosProceso
                 )
                 const asignado = incidencia.asignadoA
                   ? usuariosById.get(incidencia.asignadoA)
@@ -285,6 +305,13 @@ export function IncidenciasTable({
                       )}
                     </TableCell>
                     <TableCell className="py-2">
+                      {estadoProceso ? (
+                        <IncidenciaEstadoProcesoBadge clave={estadoProceso.clave} />
+                      ) : (
+                        <span className="text-sm text-slate-500">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-2">
                       <PrioridadBadge prioridad={incidencia.prioridad} />
                     </TableCell>
                     <TableCell className="py-2 text-sm text-slate-500">
@@ -301,7 +328,10 @@ export function IncidenciasTable({
                           variant="ghost"
                           aria-label={`Eliminar incidencia ${incidencia.codigo}`}
                           className="text-slate-400 hover:text-red-600"
-                          onClick={(event) => event.stopPropagation()}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            onEliminar(incidencia)
+                          }}
                         >
                           <Trash2 aria-hidden="true" />
                         </Button>

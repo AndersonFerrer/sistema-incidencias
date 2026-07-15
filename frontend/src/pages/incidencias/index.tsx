@@ -10,6 +10,8 @@ import { IncidenciasHeader } from "@/pages/incidencias/components/incidencias-he
 import { IncidenciasPagination } from "@/pages/incidencias/components/incidencias-pagination"
 import { IncidenciasTable } from "@/pages/incidencias/components/incidencias-table"
 import { NuevaIncidenciaView } from "@/pages/incidencias/components/nueva-incidencia-view"
+import { ConfirmarEliminarIncidenciaDialog } from "@/pages/incidencias/components/confirmar-eliminar-incidencia-dialog"
+import { ApiError } from "@/lib/http"
 import { aplicativosService } from "@/services/aplicativos-service"
 import { categoriasService } from "@/services/categorias-service"
 import { estadosAprobacionService } from "@/services/estados-aprobacion-service"
@@ -58,6 +60,10 @@ export function IncidenciasPage() {
   const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const [incidenciaAEliminar, setIncidenciaAEliminar] = useState<Incidencia | null>(null)
+  const [isEliminando, setIsEliminando] = useState(false)
+  const [errorEliminar, setErrorEliminar] = useState<string | null>(null)
 
   const [estadosProceso, setEstadosProceso] = useState<EstadoProceso[]>([])
   const [estadosAprobacion, setEstadosAprobacion] = useState<EstadoAprobacion[]>(
@@ -121,6 +127,26 @@ export function IncidenciasPage() {
     setPage(0)
     setVista("listado")
   }, [])
+
+  const handleEliminar = useCallback((incidencia: Incidencia) => {
+    setIncidenciaAEliminar(incidencia)
+    setErrorEliminar(null)
+  }, [])
+
+  const confirmarEliminar = useCallback(async () => {
+    if (!incidenciaAEliminar) return
+    setErrorEliminar(null)
+    try {
+      await incidentsService.eliminar(incidenciaAEliminar.id)
+      setIncidenciaAEliminar(null)
+      recargarListado()
+    } catch (err) {
+      // Re-throw so the dialog shows the inline error and stays open.
+      throw err instanceof ApiError || err instanceof Error
+        ? err
+        : new Error("No se pudo eliminar la incidencia.")
+    }
+  }, [incidenciaAEliminar, recargarListado])
 
   // Debounce the search text so rapid keystrokes don't fire a fetch per char.
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -230,8 +256,10 @@ export function IncidenciasPage() {
         categorias={categorias}
         aplicativos={aplicativos}
         estadosAprobacion={estadosAprobacion}
+        estadosProceso={estadosProceso}
         usuarios={usuarios}
         currentUserIsAdmin={currentUserIsAdmin}
+        onEliminar={handleEliminar}
       />
 
       <IncidenciasPagination
@@ -247,6 +275,20 @@ export function IncidenciasPage() {
           Actualizando resultados...
         </div>
       ) : null}
+
+      <ConfirmarEliminarIncidenciaDialog
+        open={incidenciaAEliminar !== null}
+        incidencia={
+          incidenciaAEliminar
+            ? { codigo: incidenciaAEliminar.codigo, titulo: incidenciaAEliminar.titulo }
+            : null
+        }
+        onClose={() => {
+          setIncidenciaAEliminar(null)
+          setErrorEliminar(null)
+        }}
+        onConfirm={confirmarEliminar}
+      />
     </div>
   )
 }

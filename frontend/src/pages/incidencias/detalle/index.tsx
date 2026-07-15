@@ -578,7 +578,7 @@ export function IncidenciaDetallePage() {
                   </h1>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  {puedeEditar ? (
+                  {puedeEditar && !esFinalizada ? (
                     <Button
                       type="button"
                       variant="outline"
@@ -594,7 +594,7 @@ export function IncidenciaDetallePage() {
                       Subir adjuntos
                     </Button>
                   ) : null}
-                  {puedeEditar ? (
+                  {puedeEditar && !esFinalizada ? (
                     <Button
                       type="button"
                       variant="outline"
@@ -607,7 +607,7 @@ export function IncidenciaDetallePage() {
                       Editar
                     </Button>
                   ) : null}
-                  {puedeEliminar ? (
+                  {puedeEliminar && !esFinalizada ? (
                     <Button
                       type="button"
                       variant="destructive"
@@ -631,7 +631,7 @@ export function IncidenciaDetallePage() {
           <IncidenciaAdjuntosCard
             adjuntos={adjuntos}
             baseUrl={API_BASE_URL}
-            puedeSubir={puedeSubirAdjuntos}
+            puedeSubir={puedeSubirAdjuntos && !esFinalizada}
             onSubirAdjuntos={handleOpenSubirAdjuntos}
           />
 
@@ -697,7 +697,7 @@ export function IncidenciaDetallePage() {
             asignado={asignado}
           />
 
-          {puedeEditar && estadoAprobacionClave !== "RECHAZADA" ? (
+          {puedeEditar && estadoAprobacionClave !== "RECHAZADA" && !esFinalizada ? (
             <Card className="rounded-lg bg-white shadow-sm">
               <CardContent className="flex flex-col gap-1.5 p-3">
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
