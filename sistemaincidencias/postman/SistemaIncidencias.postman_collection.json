@@ -1752,6 +1752,79 @@
 					}
 				}
 			]
+		},
+		{
+			"name": "Dashboard",
+			"description": "Endpoint agregado del dashboard. GET /api/dashboard?rango={7d|30d|90d|all} (default 30d). Requiere Authorization: Bearer {{token}}. Aplica scope por rol (administrador ve todo, agente solo asignado, usuario solo creador) en el DAO WHERE - el cliente no puede relajar el filtro. RF-06..11 + RNF-01.",
+			"item": [
+				{
+					"name": "Obtener dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/dashboard?rango=30d",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"dashboard"
+							],
+							"query": [
+								{
+									"key": "rango",
+									"value": "30d",
+									"description": "Ventana temporal: 7d | 30d | 90d | all. Default 30d. Valor invalido -> 400."
+								}
+							]
+						},
+						"description": "Devuelve DashboardResponse con kpis, byCategoria, tendenciaSemanal, recientes (5), tiempoPromedioResolucionHoras y rangoAplicado. Tiempo promedio es null cuando no hay FINALIZADA en el scope + rango (el frontend oculta la card). tendenciaSemanal se limita a 26 semanas cuando rango=all."
+					},
+					"response": [
+						{
+							"name": "ADMINISTRADOR - 200 (ve todo en 30d)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"kpis\": {\n        \"total\": 25,\n        \"byEstadoAprobacion\": {\n            \"SOLICITADA\": 5,\n            \"APROBADA\": 15,\n            \"RECHAZADA\": 5\n        },\n        \"byEstadoProceso\": {\n            \"PENDIENTE\": 8,\n            \"EN_PROCESO\": 12,\n            \"FINALIZADA\": 5\n        }\n    },\n    \"byCategoria\": [\n        {\"categoriaId\": \"550e8400-e29b-41d4-a716-446655440001\", \"categoriaNombre\": \"Hardware\", \"total\": 10},\n        {\"categoriaId\": \"550e8400-e29b-41d4-a716-446655440002\", \"categoriaNombre\": \"Software\", \"total\": 8},\n        {\"categoriaId\": \"550e8400-e29b-41d4-a716-446655440003\", \"categoriaNombre\": \"Red\", \"total\": 7}\n    ],\n    \"tendenciaSemanal\": [\n        {\"semanaInicio\": \"2026-06-15\", \"total\": 4},\n        {\"semanaInicio\": \"2026-06-22\", \"total\": 7},\n        {\"semanaInicio\": \"2026-06-29\", \"total\": 9},\n        {\"semanaInicio\": \"2026-07-06\", \"total\": 5}\n    ],\n    \"recientes\": [\n        {\"id\": \"660e8400-e29b-41d4-a716-446655440001\", \"codigo\": \"INC-2026-0001\", \"titulo\": \"Servidor de base de datos no responde\", \"categoriaNombre\": \"Hardware\", \"asignadoA\": \"770e8400-e29b-41d4-a716-446655440010\", \"estadoProcesoCodigo\": \"EN_PROCESO\", \"estadoAprobacionCodigo\": \"APROBADA\", \"prioridad\": \"CRITICA\", \"creadoEn\": \"2026-07-12T10:30:00\", \"resueltoEn\": null},\n        {\"id\": \"660e8400-e29b-41d4-a716-446655440002\", \"codigo\": \"INC-2026-0002\", \"titulo\": \"Login falla con SSO\", \"categoriaNombre\": \"Software\", \"asignadoA\": \"770e8400-e29b-41d4-a716-446655440011\", \"estadoProcesoCodigo\": \"PENDIENTE\", \"estadoAprobacionCodigo\": \"SOLICITADA\", \"prioridad\": \"ALTA\", \"creadoEn\": \"2026-07-11T16:45:00\", \"resueltoEn\": null},\n        {\"id\": \"660e8400-e29b-41d4-a716-446655440003\", \"codigo\": \"INC-2026-0003\", \"titulo\": \"Latencia alta en API reportes\", \"categoriaNombre\": \"Software\", \"asignadoA\": \"770e8400-e29b-41d4-a716-446655440010\", \"estadoProcesoCodigo\": \"FINALIZADA\", \"estadoAprobacionCodigo\": \"APROBADA\", \"prioridad\": \"MEDIA\", \"creadoEn\": \"2026-07-10T09:15:00\", \"resueltoEn\": \"2026-07-11T13:15:00\"},\n        {\"id\": \"660e8400-e29b-41d4-a716-446655440004\", \"codigo\": \"INC-2026-0004\", \"titulo\": \"Caida de VPN corporativa\", \"categoriaNombre\": \"Red\", \"asignadoA\": null, \"estadoProcesoCodigo\": \"EN_PROCESO\", \"estadoAprobacionCodigo\": \"APROBADA\", \"prioridad\": \"ALTA\", \"creadoEn\": \"2026-07-09T14:00:00\", \"resueltoEn\": null},\n        {\"id\": \"660e8400-e29b-41d4-a716-446655440005\", \"codigo\": \"INC-2026-0005\", \"titulo\": \"Reporte mensual con datos faltantes\", \"categoriaNombre\": \"Software\", \"asignadoA\": \"770e8400-e29b-41d4-a716-446655440012\", \"estadoProcesoCodigo\": \"FINALIZADA\", \"estadoAprobacionCodigo\": \"APROBADA\", \"prioridad\": \"BAJA\", \"creadoEn\": \"2026-07-08T08:20:00\", \"resueltoEn\": \"2026-07-09T17:00:00\"}\n    ],\n    \"tiempoPromedioResolucionHoras\": 18.5,\n    \"rangoAplicado\": \"30d\"\n}",
+							"_postman_previewlanguage": "json"
+						},
+						{
+							"name": "AGENTE - 200 (solo asignadoA = currentUser.id)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"kpis\": {\n        \"total\": 4,\n        \"byEstadoAprobacion\": {\n            \"SOLICITADA\": 1,\n            \"APROBADA\": 3,\n            \"RECHAZADA\": 0\n        },\n        \"byEstadoProceso\": {\n            \"PENDIENTE\": 1,\n            \"EN_PROCESO\": 2,\n            \"FINALIZADA\": 1\n        }\n    },\n    \"byCategoria\": [\n        {\"categoriaId\": \"550e8400-e29b-41d4-a716-446655440001\", \"categoriaNombre\": \"Hardware\", \"total\": 2},\n        {\"categoriaId\": \"550e8400-e29b-41d4-a716-446655440002\", \"categoriaNombre\": \"Software\", \"total\": 2}\n    ],\n    \"tendenciaSemanal\": [\n        {\"semanaInicio\": \"2026-06-29\", \"total\": 2},\n        {\"semanaInicio\": \"2026-07-06\", \"total\": 2}\n    ],\n    \"recientes\": [\n        {\"id\": \"660e8400-e29b-41d4-a716-446655440001\", \"codigo\": \"INC-2026-0001\", \"titulo\": \"Servidor de base de datos no responde\", \"categoriaNombre\": \"Hardware\", \"asignadoA\": \"770e8400-e29b-41d4-a716-446655440010\", \"estadoProcesoCodigo\": \"EN_PROCESO\", \"estadoAprobacionCodigo\": \"APROBADA\", \"prioridad\": \"CRITICA\", \"creadoEn\": \"2026-07-12T10:30:00\", \"resueltoEn\": null},\n        {\"id\": \"660e8400-e29b-41d4-a716-446655440003\", \"codigo\": \"INC-2026-0003\", \"titulo\": \"Latencia alta en API reportes\", \"categoriaNombre\": \"Software\", \"asignadoA\": \"770e8400-e29b-41d4-a716-446655440010\", \"estadoProcesoCodigo\": \"FINALIZADA\", \"estadoAprobacionCodigo\": \"APROBADA\", \"prioridad\": \"MEDIA\", \"creadoEn\": \"2026-07-10T09:15:00\", \"resueltoEn\": \"2026-07-11T13:15:00\"}\n    ],\n    \"tiempoPromedioResolucionHoras\": 28.0,\n    \"rangoAplicado\": \"30d\"\n}",
+							"_postman_previewlanguage": "json"
+						},
+						{
+							"name": "USUARIO - 200 (solo creadoPorUsuarioId = currentUser.id, sin FINALIZADA)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"kpis\": {\n        \"total\": 6,\n        \"byEstadoAprobacion\": {\n            \"SOLICITADA\": 3,\n            \"APROBADA\": 2,\n            \"RECHAZADA\": 1\n        },\n        \"byEstadoProceso\": {\n            \"PENDIENTE\": 4,\n            \"EN_PROCESO\": 2,\n            \"FINALIZADA\": 0\n        }\n    },\n    \"byCategoria\": [\n        {\"categoriaId\": \"550e8400-e29b-41d4-a716-446655440002\", \"categoriaNombre\": \"Software\", \"total\": 4},\n        {\"categoriaId\": \"550e8400-e29b-41d4-a716-446655440003\", \"categoriaNombre\": \"Red\", \"total\": 2}\n    ],\n    \"tendenciaSemanal\": [\n        {\"semanaInicio\": \"2026-06-22\", \"total\": 1},\n        {\"semanaInicio\": \"2026-06-29\", \"total\": 2},\n        {\"semanaInicio\": \"2026-07-06\", \"total\": 3}\n    ],\n    \"recientes\": [\n        {\"id\": \"660e8400-e29b-41d4-a716-446655440006\", \"codigo\": \"INC-2026-0010\", \"titulo\": \"No puedo exportar a Excel\", \"categoriaNombre\": \"Software\", \"asignadoA\": null, \"estadoProcesoCodigo\": \"PENDIENTE\", \"estadoAprobacionCodigo\": \"SOLICITADA\", \"prioridad\": \"BAJA\", \"creadoEn\": \"2026-07-12T09:00:00\", \"resueltoEn\": null},\n        {\"id\": \"660e8400-e29b-41d4-a716-446655440007\", \"codigo\": \"INC-2026-0011\", \"titulo\": \"Error 500 al cargar dashboard\", \"categoriaNombre\": \"Software\", \"asignadoA\": \"770e8400-e29b-41d4-a716-446655440010\", \"estadoProcesoCodigo\": \"EN_PROCESO\", \"estadoAprobacionCodigo\": \"APROBADA\", \"prioridad\": \"MEDIA\", \"creadoEn\": \"2026-07-11T11:20:00\", \"resueltoEn\": null},\n        {\"id\": \"660e8400-e29b-41d4-a716-446655440008\", \"codigo\": \"INC-2026-0012\", \"titulo\": \"Rechazada: cambio de horario\", \"categoriaNombre\": \"Red\", \"asignadoA\": null, \"estadoProcesoCodigo\": \"PENDIENTE\", \"estadoAprobacionCodigo\": \"RECHAZADA\", \"prioridad\": \"BAJA\", \"creadoEn\": \"2026-07-10T14:30:00\", \"resueltoEn\": null}\n    ],\n    \"tiempoPromedioResolucionHoras\": null,\n    \"rangoAplicado\": \"30d\"\n}",
+							"_postman_previewlanguage": "json"
+						},
+						{
+							"name": "rango invalido - 400",
+							"status": "Bad Request",
+							"code": 400,
+							"body": "{\n    \"fecha\": \"2026-07-14T22:50:00\",\n    \"estado\": 400,\n    \"error\": \"Bad Request\",\n    \"mensaje\": \"Rango invalido. Valores permitidos: 7d, 30d, 90d, all\",\n    \"ruta\": \"/api/dashboard\",\n    \"detalles\": []\n}",
+							"_postman_previewlanguage": "json"
+						},
+						{
+							"name": "Token invalido - 401",
+							"status": "Unauthorized",
+							"code": 401,
+							"body": "{\n    \"fecha\": \"2026-07-14T22:50:00\",\n    \"estado\": 401,\n    \"error\": \"Unauthorized\",\n    \"mensaje\": \"Token no enviado o invalido\",\n    \"ruta\": \"/api/dashboard\",\n    \"detalles\": []\n}",
+							"_postman_previewlanguage": "json"
+						}
+					]
+				}
+			]
 		}
 	],
 	"variable": [
