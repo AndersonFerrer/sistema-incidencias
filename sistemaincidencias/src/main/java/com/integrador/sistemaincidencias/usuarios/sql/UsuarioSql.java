@@ -89,4 +89,12 @@ public final class UsuarioSql {
                 actualizado_en = CURRENT_TIMESTAMP
             WHERE id = ?
             """;
+
+    public static final String ACTUALIZAR_PERFIL = """
+            UPDATE usuarios
+            SET nombre = ?,
+                avatar_url = ?,
+                actualizado_en = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """;
 }
