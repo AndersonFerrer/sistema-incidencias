@@ -31,6 +31,7 @@ type IncidenciasTableProps = {
   categorias: Categoria[]
   aplicativos: AplicativoCliente[]
   estadosAprobacion: EstadoAprobacion[]
+  currentUserIsAdmin: boolean
 }
 
 const dateFormatter = new Intl.DateTimeFormat("es-PE", {
@@ -71,6 +72,7 @@ export function IncidenciasTable({
   categorias,
   aplicativos,
   estadosAprobacion,
+  currentUserIsAdmin,
 }: IncidenciasTableProps) {
   const navigate = useNavigate()
 
@@ -230,16 +232,18 @@ export function IncidenciasTable({
                       {formatDate(incidencia.creadoEn)}
                     </TableCell>
                     <TableCell className="px-4 py-2 text-right">
-                      <Button
-                        type="button"
-                        size="icon-xs"
-                        variant="ghost"
-                        aria-label={`Eliminar incidencia ${incidencia.codigo}`}
-                        className="text-slate-400 hover:text-red-600"
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        <Trash2 aria-hidden="true" />
-                      </Button>
+                      {currentUserIsAdmin ? (
+                        <Button
+                          type="button"
+                          size="icon-xs"
+                          variant="ghost"
+                          aria-label={`Eliminar incidencia ${incidencia.codigo}`}
+                          className="text-slate-400 hover:text-red-600"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <Trash2 aria-hidden="true" />
+                        </Button>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 )

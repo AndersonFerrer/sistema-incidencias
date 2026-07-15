@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { Card } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
@@ -16,6 +16,7 @@ import { estadosAprobacionService } from "@/services/estados-aprobacion-service"
 import { estadosProcesoService } from "@/services/estados-proceso-service"
 import { incidentsService } from "@/services/incidents-service"
 import { usuariosService } from "@/services/usuarios-service"
+import { useAuthStore } from "@/store/auth-store"
 import type { AplicativoCliente } from "@/types/aplicativos"
 import type { Categoria } from "@/types/categorias"
 import type { EstadoAprobacion } from "@/types/estados-aprobacion"
@@ -41,6 +42,12 @@ type Vista = "listado" | "nueva"
 
 export function IncidenciasPage() {
   const [vista, setVista] = useState<Vista>("listado")
+
+  const currentUser = useAuthStore((state) => state.user)
+  const currentUserIsAdmin = useMemo(
+    () => currentUser?.rol === "ADMINISTRADOR",
+    [currentUser]
+  )
 
   const [filtros, setFiltros] =
     useState<IncidenciasFiltrosValues>(FILTROS_INICIALES)
@@ -223,6 +230,7 @@ export function IncidenciasPage() {
         categorias={categorias}
         aplicativos={aplicativos}
         estadosAprobacion={estadosAprobacion}
+        currentUserIsAdmin={currentUserIsAdmin}
       />
 
       <IncidenciasPagination
