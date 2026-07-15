@@ -16,22 +16,52 @@ import {
 
 import { ChartCard } from "@/pages/dashboard/components/chart-card"
 import {
-  categoryData,
   chartColors,
   pieColors,
-  pieData,
-  trendData,
+  statusLabels,
 } from "@/pages/dashboard/data"
+import type {
+  CategoriaConteo,
+  TendenciaSemanal,
+} from "@/services/dashboard-service"
 
-export function DashboardCharts() {
+type DashboardChartsProps = {
+  byCategoria: CategoriaConteo[]
+  tendenciaSemanal: TendenciaSemanal[]
+  byEstadoProceso: Record<string, number>
+}
+
+/**
+ * Tres graficos del dashboard alimentados por agregados del backend:
+ * - Barras: incidencias por categoria (RF-08).
+ * - Linea: serie semanal de incidencias creadas (RF-09).
+ * - Pie: distribucion por estado de proceso (derivada de `byEstadoProceso`).
+ */
+export function DashboardCharts({
+  byCategoria,
+  tendenciaSemanal,
+  byEstadoProceso,
+}: DashboardChartsProps) {
+  const tendencia = tendenciaSemanal.map((punto) => ({
+    semana: formatearSemana(punto.semanaInicio),
+    total: punto.total,
+  }))
+
+  const pieData = ["PENDIENTE", "EN_PROCESO", "FINALIZADA"]
+    .map((codigo) => ({
+      name: statusLabels[codigo] ?? codigo,
+      value: byEstadoProceso[codigo] ?? 0,
+    }))
+    .filter((item) => item.value > 0)
+
   return (
     <section className="grid grid-cols-3 gap-7">
       <ChartCard title="Incidencias por Categoría">
         <ResponsiveContainer height="100%" width="100%">
-          <BarChart data={categoryData} margin={{ left: 4, right: 12 }}>
+          <BarChart data={byCategoria} margin={{ left: 4, right: 12 }}>
             <CartesianGrid stroke={chartColors.grid} strokeDasharray="4 4" />
             <XAxis
-              dataKey="name"
+              dataKey="categoriaNombre"
               tick={{ fill: chartColors.text, fontSize: 12 }}
               tickLine={false}
             />
@@ -42,7 +72,7 @@ export function DashboardCharts() {
             />
             <Tooltip cursor={{ fill: "hsl(217 91% 50% / 0.08)" }} />
             <Bar
-              dataKey="cantidad"
+              dataKey="total"
               fill={chartColors.blue}
               radius={[5, 5, 0, 0]}
             />
@@ -52,10 +82,10 @@ export function DashboardCharts() {
 
       <ChartCard title="Tendencia Temporal">
         <ResponsiveContainer height="100%" width="100%">
-          <LineChart data={trendData} margin={{ left: 4, right: 8 }}>
+          <LineChart data={tendencia} margin={{ left: 4, right: 8 }}>
             <CartesianGrid stroke={chartColors.grid} strokeDasharray="4 4" />
             <XAxis
-              dataKey="week"
+              dataKey="semana"
               tick={{ fill: chartColors.text, fontSize: 12 }}
               tickLine={false}
             />
@@ -67,7 +97,7 @@ export function DashboardCharts() {
             <Tooltip />
             <Legend verticalAlign="bottom" />
             <Line
-              dataKey="creadas"
+              dataKey="total"
               dot={{
                 fill: "white",
                 r: 5,
@@ -75,18 +105,6 @@ export function DashboardCharts() {
                 strokeWidth: 2,
               }}
               stroke={chartColors.blue}
-              strokeWidth={2.5}
-              type="monotone"
-            />
-            <Line
-              dataKey="resueltas"
-              dot={{
-                fill: "white",
-                r: 5,
-                stroke: chartColors.green,
-                strokeWidth: 2,
-              }}
-              stroke={chartColors.green}
               strokeWidth={2.5}
               type="monotone"
             />
@@ -136,4 +154,25 @@ export function DashboardCharts() {
       </ChartCard>
     </section>
   )
+}
+
+function formatearSemana(semanaInicio: string): string {
+  // semanaInicio viene como YYYY-MM-DD (LocalDate lunes). Mostramos "dd MMM".
+  const [, mm, dd] = semanaInicio.split("-")
+  const meses = [
+    "ene",
+    "feb",
+    "mar",
+    "abr",
+    "may",
+    "jun",
+    "jul",
+    "ago",
+    "sep",
+    "oct",
+    "nov",
+    "dic",
+  ]
+  const mes = meses[Number(mm) - 1] ?? ""
+  return `${Number(dd)} ${mes}`
 }
