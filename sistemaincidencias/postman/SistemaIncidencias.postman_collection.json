@@ -2068,6 +2068,265 @@
 					]
 				}
 			]
+		},
+		{
+			"name": "Notificaciones",
+			"description": "Endpoints del modulo de notificaciones (change notificaciones-realtime, PR1 backend). Las cinco rutas viven bajo /api/notificaciones/* y requieren Authorization: Bearer {{token}}. El scope por usuario esta aplicado en SQL con WHERE usuario_id = currentUser.id (decision D6 del design): el cliente nunca puede relajar el alcance. Las operaciones de escritura son idempotentes: marcarLeida repetido conserva el timestamp original (COALESCE) y marcarTodasLeidas repetido afecta cero filas cuando ya estan todas leidas. La generacion automatica de filas la disparan los hooks de IncidenciaService (T6) para los cinco eventos del RF-37: asignar / aprobar / rechazar / cambiar estado / comentar.",
+			"item": [
+				{
+					"name": "Listar notificaciones del usuario",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/notificaciones?page=0&size=20&soloNoLeidas=false",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"notificaciones"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Pagina 0-indexada. Default 0."
+								},
+								{
+									"key": "size",
+									"value": "20",
+									"description": "Tamano de pagina. Default 20, max 50 (cap aplicado por PageRequest.of)."
+								},
+								{
+									"key": "soloNoLeidas",
+									"value": "false",
+									"description": "Si true, agrega WHERE leido_en IS NULL."
+								}
+							]
+						},
+						"description": "Devuelve PageResult<NotificacionResponse> con las notificaciones del usuario autenticado, ordenadas por creado_en DESC. Cada item expone id, usuarioId, incidenciaId, tipo (INCIDENCIA_ASIGNADA | INCIDENCIA_APROBADA | INCIDENCIA_RECHAZADA | INCIDENCIA_ESTADO_CAMBIADO | INCIDENCIA_COMENTARIO), titulo, descripcion, leido (booleano derivado de leido_en), leidoEn y creadoEn."
+					},
+					"response": [
+						{
+							"name": "AGENTE - 200 (7 notificaciones propias)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"contenido\": [\n        {\n            \"id\": \"880e8400-e29b-41d4-a716-446655440001\",\n            \"usuarioId\": \"770e8400-e29b-41d4-a716-446655440010\",\n            \"incidenciaId\": \"660e8400-e29b-41d4-a716-446655440001\",\n            \"tipo\": \"INCIDENCIA_ASIGNADA\",\n            \"titulo\": \"Incidencia INC-2026-1234 asignada\",\n            \"descripcion\": \"Servidor de base de datos no responde\",\n            \"leido\": false,\n            \"leidoEn\": null,\n            \"creadoEn\": \"2026-07-15T08:30:00\"\n        },\n        {\n            \"id\": \"880e8400-e29b-41d4-a716-446655440002\",\n            \"usuarioId\": \"770e8400-e29b-41d4-a716-446655440010\",\n            \"incidenciaId\": \"660e8400-e29b-41d4-a716-446655440002\",\n            \"tipo\": \"INCIDENCIA_ESTADO_CAMBIADO\",\n            \"titulo\": \"Incidencia INC-2026-1200 cambio a EN_PROCESO\",\n            \"descripcion\": null,\n            \"leido\": true,\n            \"leidoEn\": \"2026-07-15T07:45:00\",\n            \"creadoEn\": \"2026-07-15T07:30:00\"\n        }\n    ],\n    \"total\": 7,\n    \"page\": 0,\n    \"size\": 20\n}",
+							"_postman_previewlanguage": "json"
+						},
+						{
+							"name": "AGENTE - 200 (filtro soloNoLeidas=true reduce el conteo)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"contenido\": [\n        {\n            \"id\": \"880e8400-e29b-41d4-a716-446655440001\",\n            \"usuarioId\": \"770e8400-e29b-41d4-a716-446655440010\",\n            \"incidenciaId\": \"660e8400-e29b-41d4-a716-446655440001\",\n            \"tipo\": \"INCIDENCIA_ASIGNADA\",\n            \"titulo\": \"Incidencia INC-2026-1234 asignada\",\n            \"descripcion\": \"Servidor de base de datos no responde\",\n            \"leido\": false,\n            \"leidoEn\": null,\n            \"creadoEn\": \"2026-07-15T08:30:00\"\n        }\n    ],\n    \"total\": 4,\n    \"page\": 0,\n    \"size\": 20\n}",
+							"_postman_previewlanguage": "json"
+						},
+						{
+							"name": "Token invalido - 401",
+							"status": "Unauthorized",
+							"code": 401,
+							"body": "{\n    \"fecha\": \"2026-07-15T08:30:01\",\n    \"estado\": 401,\n    \"error\": \"Unauthorized\",\n    \"mensaje\": \"Token no valido o expirado\",\n    \"ruta\": \"/api/notificaciones\",\n    \"detalles\": []\n}",
+							"_postman_previewlanguage": "json"
+						}
+					]
+				},
+				{
+					"name": "Contar notificaciones no leidas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/notificaciones/no-leidas/count",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"notificaciones",
+								"no-leidas",
+								"count"
+							]
+						},
+						"description": "Retorna { total: long } con el numero de filas leido_en IS NULL del usuario autenticado. Es el endpoint que poll-ea el bell del topbar cada 30 s. Total nunca es null; cuando no hay no-leidas devuelve 0 y el frontend oculta el badge."
+					},
+					"response": [
+						{
+							"name": "AGENTE - 200 (5 no leidas)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"total\": 5\n}",
+							"_postman_previewlanguage": "json"
+						},
+						{
+							"name": "AGENTE - 200 (0 no leidas, todas marcadas)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"total\": 0\n}",
+							"_postman_previewlanguage": "json"
+						}
+					]
+				},
+				{
+					"name": "Marcar notificacion como leida",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/notificaciones/:id/leida",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"notificaciones",
+								":id",
+								"leida"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "880e8400-e29b-41d4-a716-446655440001",
+									"description": "UUID de la notificacion a marcar como leida. Si pertenece a otro usuario retorna 404 (no 403, para no filtrar existencia)."
+								}
+							]
+						},
+						"description": "Idempotente. UPDATE con COALESCE(leido_en, ?): si ya estaba leida conserva el timestamp original y la operacion sigue retornando 200. Cross-user access retorna 404."
+					},
+					"response": [
+						{
+							"name": "dueno - 200 (marca por primera vez)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"id\": \"880e8400-e29b-41d4-a716-446655440001\",\n    \"usuarioId\": \"770e8400-e29b-41d4-a716-446655440010\",\n    \"incidenciaId\": \"660e8400-e29b-41d4-a716-446655440001\",\n    \"tipo\": \"INCIDENCIA_ASIGNADA\",\n    \"titulo\": \"Incidencia INC-2026-1234 asignada\",\n    \"descripcion\": \"Servidor de base de datos no responde\",\n    \"leido\": true,\n    \"leidoEn\": \"2026-07-15T08:45:00\",\n    \"creadoEn\": \"2026-07-15T08:30:00\"\n}",
+							"_postman_previewlanguage": "json"
+						},
+						{
+							"name": "dueno - 200 (segunda llamada, idempotente, leidoEn preservado)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"id\": \"880e8400-e29b-41d4-a716-446655440001\",\n    \"usuarioId\": \"770e8400-e29b-41d4-a716-446655440010\",\n    \"incidenciaId\": \"660e8400-e29b-41d4-a716-446655440001\",\n    \"tipo\": \"INCIDENCIA_ASIGNADA\",\n    \"titulo\": \"Incidencia INC-2026-1234 asignada\",\n    \"descripcion\": \"Servidor de base de datos no responde\",\n    \"leido\": true,\n    \"leidoEn\": \"2026-07-15T08:45:00\",\n    \"creadoEn\": \"2026-07-15T08:30:00\"\n}",
+							"_postman_previewlanguage": "json"
+						},
+						{
+							"name": "otro usuario - 404",
+							"status": "Not Found",
+							"code": 404,
+							"body": "{\n    \"fecha\": \"2026-07-15T08:46:00\",\n    \"estado\": 404,\n    \"error\": \"Not Found\",\n    \"mensaje\": \"Notificacion no encontrada\",\n    \"ruta\": \"/api/notificaciones/880e8400-e29b-41d4-a716-446655440099/leida\",\n    \"detalles\": []\n}",
+							"_postman_previewlanguage": "json"
+						},
+						{
+							"name": "UUID invalido - 400",
+							"status": "Bad Request",
+							"code": 400,
+							"body": "{\n    \"fecha\": \"2026-07-15T08:46:30\",\n    \"estado\": 400,\n    \"error\": \"Bad Request\",\n    \"mensaje\": \"Failed to convert value of type 'String' to required type 'UUID'; nested exception...\",\n    \"ruta\": \"/api/notificaciones/abc/leida\",\n    \"detalles\": []\n}",
+							"_postman_previewlanguage": "json"
+						}
+					]
+				},
+				{
+					"name": "Marcar todas como leidas",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/notificaciones/marcar-todas-leidas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"notificaciones",
+								"marcar-todas-leidas"
+							]
+						},
+						"description": "UPDATE masivo con WHERE usuario_id = ? AND leido_en IS NULL. Retorna { total: N } con el numero de filas efectivamente actualizadas. Segunda llamada consecutiva retorna { total: 0 }. Sin body."
+					},
+					"response": [
+						{
+							"name": "AGENTE - 200 (marca 4 no leidas)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"total\": 4\n}",
+							"_postman_previewlanguage": "json"
+						},
+						{
+							"name": "AGENTE - 200 (segunda llamada, 0 ya leidas)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"total\": 0\n}",
+							"_postman_previewlanguage": "json"
+						}
+					]
+				},
+				{
+					"name": "Eliminar notificacion",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/notificaciones/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"notificaciones",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "880e8400-e29b-41d4-a716-446655440001",
+									"description": "UUID de la notificacion. Solo el dueno puede eliminarla; 404 para id ajeno o inexistente."
+								}
+							]
+						},
+						"description": "Borrado fisico. Retorna 204 No Content. 404 cuando el id pertenece a otro usuario o no existe; 400 cuando no es UUID valido."
+					},
+					"response": [
+						{
+							"name": "dueno - 204 No Content",
+							"status": "No Content",
+							"code": 204,
+							"body": "",
+							"_postman_previewlanguage": "json"
+						},
+						{
+							"name": "otro usuario - 404",
+							"status": "Not Found",
+							"code": 404,
+							"body": "{\n    \"fecha\": \"2026-07-15T08:50:00\",\n    \"estado\": 404,\n    \"error\": \"Not Found\",\n    \"mensaje\": \"Notificacion no encontrada\",\n    \"ruta\": \"/api/notificaciones/880e8400-e29b-41d4-a716-446655440099\",\n    \"detalles\": []\n}",
+							"_postman_previewlanguage": "json"
+						}
+					]
+				}
+			]
 		}
 	],
 	"variable": [
