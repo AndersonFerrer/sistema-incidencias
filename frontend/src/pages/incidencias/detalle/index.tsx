@@ -1,6 +1,13 @@
-import { ArrowLeft, Pencil } from "lucide-react"
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Check,
+  Pencil,
+  Trash2,
+  Upload,
+} from "lucide-react"
 import { useNavigate, useParams } from "@tanstack/react-router"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import {
   Alert,
@@ -17,13 +24,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
+import { API_BASE_URL } from "@/lib/env"
+import { ApiError } from "@/lib/http"
+import { ConfirmarEliminarIncidenciaDialog } from "@/pages/incidencias/components/confirmar-eliminar-incidencia-dialog"
+import { EditarIncidenciaDialog } from "@/pages/incidencias/components/editar-incidencia-dialog"
+import { SubirAdjuntosDialog } from "@/pages/incidencias/components/subir-adjuntos-dialog"
 import { IncidenciaAdjuntosCard } from "@/pages/incidencias/detalle/components/incidencia-adjuntos-card"
 import { IncidenciaActividadCard } from "@/pages/incidencias/detalle/components/incidencia-actividad-card"
 import { IncidenciaComentariosCard } from "@/pages/incidencias/detalle/components/incidencia-comentarios-card"
 import { IncidenciaRevisionCard } from "@/pages/incidencias/detalle/components/incidencia-revision-card"
 import { IncidenciaSidebar } from "@/pages/incidencias/detalle/components/incidencia-sidebar"
 import { RechazarIncidenciaDialog } from "@/pages/incidencias/detalle/components/rechazar-incidencia-dialog"
-import { API_BASE_URL } from "@/lib/env"
 import { aplicativosService } from "@/services/aplicativos-service"
 import { categoriasService } from "@/services/categorias-service"
 import { estadosAprobacionService } from "@/services/estados-aprobacion-service"
@@ -34,8 +45,20 @@ import type { AplicativoCliente } from "@/types/aplicativos"
 import type { Categoria } from "@/types/categorias"
 import type { EstadoAprobacion } from "@/types/estados-aprobacion"
 import type { EstadoProceso } from "@/types/estados-proceso"
-import type { IncidenciaDetalle } from "@/types/incidencias"
+import type {
+  ActualizarIncidenciaInput,
+  IncidenciaDialogMode,
+  IncidenciaDetalle,
+} from "@/types/incidencias"
+import { CLOSED_DIALOG } from "@/types/incidencias"
 import type { Usuario } from "@/types/usuarios"
+
+type ToastAlert = {
+  variant: "default" | "destructive"
+  message: string
+}
+
+const ALERT_AUTO_DISMISS_MS = 3000
 
 export function IncidenciaDetallePage() {
   const navigate = useNavigate()
@@ -56,32 +79,59 @@ export function IncidenciaDetallePage() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [isActionSubmitting, setIsActionSubmitting] = useState(false)
 
-  const [rechazarAbierto, setRechazarAbierto] = useState(false)
   const [rechazarError, setRechazarError] = useState<string | null>(null)
 
-  const cargarDetalle = async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const response = await incidentsService.obtenerDetalle(id)
-      setDetalle(response)
-    } catch (err) {
-      setDetalle(null)
-      setError(
-        err instanceof Error
-          ? err.message
-          : "No se pudo obtener el detalle de la incidencia."
-      )
-    } finally {
-      setIsLoading(false)
+  const [dialogMode, setDialogMode] =
+    useState<IncidenciaDialogMode>(CLOSED_DIALOG)
+  const [toast, setToast] = useState<ToastAlert | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const showToast = useCallback((alert: ToastAlert) => {
+    setToast(alert)
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null)
+      toastTimerRef.current = null
+    }, ALERT_AUTO_DISMISS_MS)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     }
-  }
+  }, [])
+
+  const cargarDetalle = useCallback(
+    async (signal?: AbortSignal) => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const response = await incidentsService.obtenerDetalle(id, signal)
+        if (signal?.aborted) return
+        setDetalle(response)
+      } catch (err) {
+        if (signal?.aborted) return
+        setDetalle(null)
+        setError(
+          err instanceof Error
+            ? err.message
+            : "No se pudo obtener el detalle de la incidencia."
+        )
+      } finally {
+        if (!signal?.aborted) {
+          setIsLoading(false)
+        }
+      }
+    },
+    [id]
+  )
 
   useEffect(() => {
     if (!id) return
-    void cargarDetalle()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id])
+    const controller = new AbortController()
+    void cargarDetalle(controller.signal)
+    return () => controller.abort()
+  }, [cargarDetalle, id])
 
   useEffect(() => {
     let cancelled = false
@@ -181,6 +231,46 @@ export function IncidenciaDetallePage() {
     return usuarioById.get(idAsignado) ?? null
   }, [detalle, usuarioById])
 
+  const handleCloseDialog = useCallback(() => {
+    setDialogMode(CLOSED_DIALOG)
+  }, [])
+
+  const handleOpenEdit = useCallback(() => {
+    if (!detalle) return
+    setActionError(null)
+    setDialogMode({ kind: "edit", incidenciaId: detalle.incidencia.id })
+  }, [detalle])
+
+  const handleOpenSubirAdjuntos = useCallback(() => {
+    if (!detalle) return
+    setActionError(null)
+    setDialogMode({
+      kind: "subir-adjuntos",
+      incidenciaId: detalle.incidencia.id,
+    })
+  }, [detalle])
+
+  const handleOpenEliminar = useCallback(() => {
+    if (!detalle) return
+    setActionError(null)
+    setDialogMode({
+      kind: "confirmar-eliminar",
+      incidenciaId: detalle.incidencia.id,
+    })
+  }, [detalle])
+
+  const abrirModalRechazo = useCallback(() => {
+    if (!detalle) return
+    setRechazarError(null)
+    setDialogMode({ kind: "rechazar", incidenciaId: detalle.incidencia.id })
+  }, [detalle])
+
+  const cerrarModalRechazo = useCallback(() => {
+    if (isActionSubmitting) return
+    setRechazarError(null)
+    setDialogMode(CLOSED_DIALOG)
+  }, [isActionSubmitting])
+
   const handleAceptarSolicitud = async () => {
     if (!detalle) return
     setIsActionSubmitting(true)
@@ -188,6 +278,10 @@ export function IncidenciaDetallePage() {
     try {
       await incidentsService.aprobarRechazar(detalle.incidencia.id, "aprobar")
       await cargarDetalle()
+      showToast({
+        variant: "default",
+        message: "Solicitud aprobada correctamente.",
+      })
     } catch (err) {
       setActionError(
         err instanceof Error
@@ -199,17 +293,6 @@ export function IncidenciaDetallePage() {
     }
   }
 
-  const abrirModalRechazo = () => {
-    setRechazarError(null)
-    setRechazarAbierto(true)
-  }
-
-  const cerrarModalRechazo = () => {
-    if (isActionSubmitting) return
-    setRechazarAbierto(false)
-    setRechazarError(null)
-  }
-
   const confirmarRechazo = async (motivoRechazo: string) => {
     if (!detalle) return
     setIsActionSubmitting(true)
@@ -219,7 +302,11 @@ export function IncidenciaDetallePage() {
         motivoRechazo,
       })
       await cargarDetalle()
-      setRechazarAbierto(false)
+      setDialogMode(CLOSED_DIALOG)
+      showToast({
+        variant: "default",
+        message: "Solicitud rechazada correctamente.",
+      })
     } catch (err) {
       setRechazarError(
         err instanceof Error
@@ -240,6 +327,10 @@ export function IncidenciaDetallePage() {
         contenido,
       })
       await cargarDetalle()
+      showToast({
+        variant: "default",
+        message: "Comentario enviado correctamente.",
+      })
     } catch (err) {
       setActionError(
         err instanceof Error
@@ -262,6 +353,10 @@ export function IncidenciaDetallePage() {
         estadoProcesoId: siguiente.id,
       })
       await cargarDetalle()
+      showToast({
+        variant: "default",
+        message: `Estado actualizado a ${siguiente.etiqueta}.`,
+      })
     } catch (err) {
       setActionError(
         err instanceof Error
@@ -289,6 +384,10 @@ export function IncidenciaDetallePage() {
         estado.clave === "RECHAZADA" ? "rechazar" : "aprobar"
       )
       await cargarDetalle()
+      showToast({
+        variant: "default",
+        message: `Estado de aprobación actualizado a ${estado.etiqueta}.`,
+      })
     } catch (err) {
       setActionError(
         err instanceof Error
@@ -299,6 +398,81 @@ export function IncidenciaDetallePage() {
       setIsActionSubmitting(false)
     }
   }
+
+  const handleEdit = useCallback(
+    async (input: ActualizarIncidenciaInput) => {
+      if (!detalle) return
+      const targetId = detalle.incidencia.id
+      try {
+        await incidentsService.actualizar(targetId, input)
+        await cargarDetalle()
+        showToast({
+          variant: "default",
+          message: "Incidencia actualizada correctamente.",
+        })
+      } catch (err) {
+        const message =
+          err instanceof ApiError
+            ? err.message
+            : err instanceof Error
+              ? err.message
+              : "No se pudo actualizar la incidencia."
+        showToast({ variant: "destructive", message })
+        throw err
+      }
+    },
+    [detalle, cargarDetalle, showToast]
+  )
+
+  const handleSubirAdjuntos = useCallback(
+    async (files: File[]) => {
+      if (!detalle) return
+      const targetId = detalle.incidencia.id
+      try {
+        await incidentsService.subirAdjuntos(targetId, files)
+        await cargarDetalle()
+        showToast({
+          variant: "default",
+          message:
+            files.length === 1
+              ? "Adjunto subido correctamente."
+              : `${files.length} adjuntos subidos correctamente.`,
+        })
+      } catch (err) {
+        const message =
+          err instanceof ApiError
+            ? err.message
+            : err instanceof Error
+              ? err.message
+              : "No se pudieron subir los adjuntos."
+        showToast({ variant: "destructive", message })
+        throw err
+      }
+    },
+    [detalle, cargarDetalle, showToast]
+  )
+
+  const handleEliminar = useCallback(async () => {
+    if (!detalle) return
+    const targetId = detalle.incidencia.id
+    try {
+      await incidentsService.eliminar(targetId)
+      showToast({
+        variant: "default",
+        message: `Incidencia ${detalle.incidencia.codigo} eliminada correctamente.`,
+      })
+      void navigate({ to: "/incidencias" })
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "No se pudo eliminar la incidencia."
+      showToast({ variant: "destructive", message })
+      throw err
+    }
+  }, [detalle, navigate, showToast])
 
   if (isLoading) {
     return (
@@ -343,6 +517,11 @@ export function IncidenciaDetallePage() {
     estadoAprobacionClave === "APROBADA" &&
     Boolean(siguienteEstado)
 
+  const editDialogOpen = dialogMode.kind === "edit"
+  const subirDialogOpen = dialogMode.kind === "subir-adjuntos"
+  const eliminarDialogOpen = dialogMode.kind === "confirmar-eliminar"
+  const rechazarDialogOpen = dialogMode.kind === "rechazar"
+
   return (
     <div className="flex flex-col gap-4">
       <Button
@@ -355,6 +534,20 @@ export function IncidenciaDetallePage() {
         <ArrowLeft aria-hidden="true" className="size-3.5" />
         Volver a incidencias
       </Button>
+
+      {toast ? (
+        <Alert variant={toast.variant}>
+          {toast.variant === "destructive" ? (
+            <AlertTriangle aria-hidden="true" />
+          ) : (
+            <Check aria-hidden="true" />
+          )}
+          <AlertTitle>
+            {toast.variant === "destructive" ? "Error" : "Listo"}
+          </AlertTitle>
+          <AlertDescription>{toast.message}</AlertDescription>
+        </Alert>
+      ) : null}
 
       {actionError ? (
         <Alert variant="destructive">
@@ -376,10 +569,44 @@ export function IncidenciaDetallePage() {
                     {incidencia.titulo}
                   </h1>
                 </div>
-                <Button type="button" variant="outline" size="sm">
-                  <Pencil data-icon="inline-start" className="size-3.5" />
-                  Editar
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-3"
+                    onClick={handleOpenSubirAdjuntos}
+                    disabled={isActionSubmitting}
+                  >
+                    <Upload
+                      data-icon="inline-start"
+                      className="size-3.5"
+                    />
+                    Subir adjuntos
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-3"
+                    onClick={handleOpenEdit}
+                    disabled={isActionSubmitting}
+                  >
+                    <Pencil data-icon="inline-start" className="size-3.5" />
+                    Editar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="h-8 px-3"
+                    onClick={handleOpenEliminar}
+                    disabled={isActionSubmitting}
+                  >
+                    <Trash2 data-icon="inline-start" className="size-3.5" />
+                    Eliminar
+                  </Button>
+                </div>
               </div>
               <p className="text-sm leading-relaxed text-slate-600">
                 {incidencia.descripcion}
@@ -493,8 +720,38 @@ export function IncidenciaDetallePage() {
         </div>
       </div>
 
+      <EditarIncidenciaDialog
+        key={`editar-${incidencia.id}`}
+        open={editDialogOpen}
+        mode="editar"
+        initial={incidencia}
+        aplicativos={aplicativos}
+        categorias={categorias}
+        usuarios={usuarios}
+        onClose={handleCloseDialog}
+        onSubmit={handleEdit}
+      />
+
+      <SubirAdjuntosDialog
+        key={`adjuntos-${incidencia.id}`}
+        open={subirDialogOpen}
+        onClose={handleCloseDialog}
+        onSubmit={handleSubirAdjuntos}
+      />
+
+      <ConfirmarEliminarIncidenciaDialog
+        key={`eliminar-${incidencia.id}`}
+        open={eliminarDialogOpen}
+        incidencia={{
+          codigo: incidencia.codigo,
+          titulo: incidencia.titulo,
+        }}
+        onClose={handleCloseDialog}
+        onConfirm={handleEliminar}
+      />
+
       <Dialog
-        open={rechazarAbierto}
+        open={rechazarDialogOpen}
         onOpenChange={(open) => {
           if (!open) cerrarModalRechazo()
         }}
