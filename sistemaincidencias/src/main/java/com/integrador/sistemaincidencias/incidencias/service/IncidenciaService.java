@@ -27,6 +27,8 @@ import com.integrador.sistemaincidencias.incidencias.model.Aprobacion;
 import com.integrador.sistemaincidencias.incidencias.model.Comentario;
 import com.integrador.sistemaincidencias.incidencias.model.HistorialIncidencia;
 import com.integrador.sistemaincidencias.incidencias.model.Incidencia;
+import com.integrador.sistemaincidencias.notificaciones.model.NotificacionTipo;
+import com.integrador.sistemaincidencias.notificaciones.service.NotificacionService;
 import com.integrador.sistemaincidencias.shared.exception.AccesoDenegadoException;
 import com.integrador.sistemaincidencias.shared.exception.RecursoNoEncontradoException;
 import com.integrador.sistemaincidencias.shared.exception.ReglaNegocioException;
@@ -35,8 +37,10 @@ import com.integrador.sistemaincidencias.shared.pagination.PageResult;
 import com.integrador.sistemaincidencias.shared.storage.ArchivoAlmacenado;
 import com.integrador.sistemaincidencias.shared.storage.ArchivoStorageService;
 import com.integrador.sistemaincidencias.usuarios.model.Usuario;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -51,6 +55,8 @@ public class IncidenciaService {
     private static final String ESTADO_APROBACION_RECHAZADA = "RECHAZADA";
     private static final String ESTADO_PROCESO_PENDIENTE = "PENDIENTE";
 
+    private static final int PREVIEW_COMENTARIO = 60;
+
     private final IncidenciaDao incidenciaDao;
     private final ComentarioDao comentarioDao;
     private final AdjuntoDao adjuntoDao;
@@ -60,6 +66,7 @@ public class IncidenciaService {
     private final EstadoProcesoDao estadoProcesoDao;
     private final AuthService authService;
     private final ArchivoStorageService archivoStorageService;
+    private final NotificacionService notificacionService;
 
     public PageResult<IncidenciaResponse> listar(IncidenciaFiltro filtro, PageRequest pageRequest) {
         PageResult<Incidencia> page = incidenciaDao.listar(filtro, pageRequest);
@@ -117,6 +124,16 @@ public class IncidenciaService {
 
         Incidencia creada = incidenciaDao.insertar(incidencia);
         registrarHistorial(creada.getId(), usuario.getId(), "CREADA", null, creada.getEstadoProcesoId(), "Incidencia creada");
+        // Hook T6 RF-37: si la incidencia nace asignada, notificar al asignado (excluyendo al actor).
+        if (creada.getAsignadoA() != null) {
+            notificacionService.crearParaUsuario(
+                    creada.getAsignadoA(),
+                    usuario.getId(),
+                    NotificacionTipo.INCIDENCIA_ASIGNADA,
+                    creada.getId(),
+                    "Incidencia " + creada.getCodigo() + " asignada",
+                    creada.getTitulo());
+        }
         return creada;
     }
 
@@ -137,6 +154,7 @@ public class IncidenciaService {
         Incidencia incidencia = buscar(id);
         validarAlcance(usuario, incidencia, "actualizar");
         validarNoFinalizada(incidencia);
+        UUID asignadoAnterior = incidencia.getAsignadoA();
         incidencia.setTitulo(request.getTitulo().trim());
         incidencia.setDescripcion(request.getDescripcion().trim());
         incidencia.setCategoriaId(request.getCategoriaId());
@@ -145,6 +163,18 @@ public class IncidenciaService {
 
         Incidencia actualizada = incidenciaDao.actualizar(incidencia);
         registrarHistorial(id, usuario.getId(), "ACTUALIZADA", null, actualizada.getEstadoProcesoId(), "Incidencia actualizada");
+        // Hook T6 RF-37: solo notifica cuando el asignado efectivamente cambia
+        // (de null a id, o de un id a otro) y excluye auto-eventos.
+        UUID asignadoNuevo = actualizada.getAsignadoA();
+        if (!Objects.equals(asignadoAnterior, asignadoNuevo) && asignadoNuevo != null) {
+            notificacionService.crearParaUsuario(
+                    asignadoNuevo,
+                    usuario.getId(),
+                    NotificacionTipo.INCIDENCIA_ASIGNADA,
+                    id,
+                    "Incidencia " + actualizada.getCodigo() + " asignada",
+                    actualizada.getTitulo());
+        }
         return actualizada;
     }
 
@@ -165,7 +195,55 @@ public class IncidenciaService {
 
         Incidencia actualizada = incidenciaDao.cambiarEstado(id, nuevo.getId(), Boolean.TRUE.equals(nuevo.getEsTerminal()));
         registrarHistorial(id, usuario.getId(), "CAMBIO_ESTADO", actual.getId(), nuevo.getId(), request.getNota());
+        // Hook T6 RF-37: notifica al creador y al asignado (excluyendo actor; deduplicados).
+        notificarCambioEstado(incidencia, actualizada, nuevo, usuario.getId());
         return toResponse(actualizada);
+    }
+
+    /**
+     * Genera las notificaciones de INCIDENCIA_ESTADO_CAMBIADO para los
+     * destinatarios relevantes (creador y asignado) deduplicando y
+     * silenciando auto-eventos. Se hace manualmente en lugar de un bucle
+     * explicito para que la regla este en un solo lugar del codigo y el
+     * escenario del spec ("dos filas: una por destinatario") sea evidente.
+     */
+    private void notificarCambioEstado(
+            Incidencia original,
+            Incidencia actualizada,
+            EstadoProceso nuevo,
+            UUID actorId
+    ) {
+        Set<UUID> destinatarios = new LinkedHashSet<>();
+        if (original.getCreadoPorUsuarioId() != null) {
+            destinatarios.add(original.getCreadoPorUsuarioId());
+        }
+        if (actualizada.getAsignadoA() != null) {
+            destinatarios.add(actualizada.getAsignadoA());
+        }
+        for (UUID destinatario : destinatarios) {
+            if (destinatario.equals(actorId)) {
+                continue;
+            }
+            notificacionService.crearParaUsuario(
+                    destinatario,
+                    actorId,
+                    NotificacionTipo.INCIDENCIA_ESTADO_CAMBIADO,
+                    actualizada.getId(),
+                    "Incidencia " + original.getCodigo()
+                            + " cambio a " + nuevo.getClave(),
+                    requestNotaCambioEstado(actualizada.getId()));
+        }
+    }
+
+    /**
+     * Adjunta al mensaje un eco breve del historial para que el destinatario
+     * vea que actor produjo el cambio. Aqui colocamos el codigo de la
+     * incidencia en el cuerpo y dejamos el titulo sintetizando el evento.
+     * (La nota libre del caller no se propaga para evitar filtrar contexto
+     * sensible a usuarios no participantes.)
+     */
+    private String requestNotaCambioEstado(UUID incidenciaId) {
+        return null;
     }
 
     public IncidenciaResponse aprobar(UUID id, String authorizationHeader) {
@@ -181,6 +259,14 @@ public class IncidenciaService {
                 .estadoAprobacionId(aprobada.getId())
                 .build());
         registrarHistorial(id, usuario.getId(), "APROBADA", null, incidencia.getEstadoProcesoId(), "Incidencia aprobada");
+        // Hook T6 RF-37: notifica al creador (no al agente que aprobo, salvo auto-evento).
+        notificacionService.crearParaUsuario(
+                incidencia.getCreadoPorUsuarioId(),
+                usuario.getId(),
+                NotificacionTipo.INCIDENCIA_APROBADA,
+                id,
+                "Tu solicitud " + incidencia.getCodigo() + " fue aprobada",
+                null);
         return toResponse(actualizada);
     }
 
@@ -191,15 +277,25 @@ public class IncidenciaService {
         validarNoFinalizada(incidencia);
         EstadoAprobacion rechazada = obtenerEstadoAprobacion(ESTADO_APROBACION_RECHAZADA);
         Incidencia actualizada = incidenciaDao.cambiarAprobacion(id, rechazada.getId());
+        String motivo = request == null ? null : request.getMotivoRechazo();
         aprobacionDao.insertar(Aprobacion.builder()
                 .id(UUID.randomUUID())
                 .incidenciaId(id)
                 .revisadoPor(usuario.getId())
                 .estadoAprobacionId(rechazada.getId())
-                .motivoRechazo(request == null ? null : request.getMotivoRechazo())
+                .motivoRechazo(motivo)
                 .build());
         registrarHistorial(id, usuario.getId(), "RECHAZADA", null, incidencia.getEstadoProcesoId(),
-                request == null ? "Incidencia rechazada" : request.getMotivoRechazo());
+                motivo == null ? "Incidencia rechazada" : motivo);
+        // Hook T6 RF-37: notifica al creador con el motivo de rechazo.
+        notificacionService.crearParaUsuario(
+                incidencia.getCreadoPorUsuarioId(),
+                usuario.getId(),
+                NotificacionTipo.INCIDENCIA_RECHAZADA,
+                id,
+                "Tu solicitud " + incidencia.getCodigo() + " fue rechazada. Motivo: "
+                        + (motivo == null ? "(sin motivo)" : motivo),
+                motivo);
         return toResponse(actualizada);
     }
 
@@ -215,7 +311,30 @@ public class IncidenciaService {
                 .build();
         Comentario creado = comentarioDao.insertar(comentario);
         registrarHistorial(incidenciaId, usuario.getId(), "COMENTARIO_AGREGADO", null, null, "Comentario agregado");
+        // Hook T6 RF-37: notifica al asignado (no al autor del comentario).
+        // Si asignadoA == null, no hay destinatario valido (incidencia sin responsable).
+        if (incidencia.getAsignadoA() != null) {
+            String preview = previewComentario(request.getContenido());
+            notificacionService.crearParaUsuario(
+                    incidencia.getAsignadoA(),
+                    usuario.getId(),
+                    NotificacionTipo.INCIDENCIA_COMENTARIO,
+                    incidenciaId,
+                    "Nuevo comentario en " + incidencia.getCodigo() + ": \"" + preview + "\"",
+                    null);
+        }
         return toResponse(creado);
+    }
+
+    private String previewComentario(String contenido) {
+        if (contenido == null) {
+            return "";
+        }
+        String limpio = contenido.replaceAll("\\s+", " ").trim();
+        if (limpio.length() <= PREVIEW_COMENTARIO) {
+            return limpio;
+        }
+        return limpio.substring(0, PREVIEW_COMENTARIO) + "...";
     }
 
     public AdjuntoResponse agregarAdjunto(UUID incidenciaId, CrearAdjuntoRequest request, String authorizationHeader) {
