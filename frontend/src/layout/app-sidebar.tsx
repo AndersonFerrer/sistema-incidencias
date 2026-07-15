@@ -13,14 +13,20 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAuthStore } from "@/store/auth-store"
 
-const navigation = [
+type SidebarItem = {
+  label: string
+  icon: typeof LayoutGrid
+  to?: string
+}
+
+const navigation: SidebarItem[] = [
   { label: "Dashboard", icon: LayoutGrid, to: "/dashboard" },
   { label: "Incidencias", icon: AlertTriangle, to: "/incidencias" },
   { label: "Usuarios", icon: Users, to: "/usuarios" },
-  { label: "Reportes", icon: BarChart3 },
+  { label: "Reportes", icon: BarChart3, to: "/reportes" },
 ]
 
-const configuration = [
+const configuration: SidebarItem[] = [
   { label: "Clientes", icon: Briefcase, to: "/clientes" },
   { label: "Categorías", icon: Tags, to: "/categorias" },
   { label: "Estados", icon: GitBranch },
@@ -31,7 +37,7 @@ function SidebarSection({
   items,
 }: {
   title: string
-  items: typeof navigation
+  items: SidebarItem[]
 }) {
   return (
     <section className="flex flex-col gap-1.5">

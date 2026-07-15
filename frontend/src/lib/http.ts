@@ -3,6 +3,11 @@ import { useAuthStore } from "@/store/auth-store"
 
 type RequestOptions = RequestInit & {
   token?: string | null
+  /**
+   * Cambia el parseo del body. "json" (default) mantiene el contrato
+   * actual; "blob" se usa para descargar binarios (PDF / XLSX).
+   */
+  responseType?: "json" | "blob"
 }
 
 export class ApiError extends Error {
@@ -17,7 +22,7 @@ export class ApiError extends Error {
 
 export async function apiRequest<T>(
   path: string,
-  { headers, token, signal, ...options }: RequestOptions = {}
+  { headers, token, signal, responseType, ...options }: RequestOptions = {}
 ) {
   const authToken = token ?? useAuthStore.getState().token
   const isFormData =
@@ -32,12 +37,16 @@ export async function apiRequest<T>(
     },
   })
 
-  const contentType = response.headers.get("content-type")
-  const payload = contentType?.includes("application/json")
-    ? await response.json()
-    : null
-
   if (!response.ok) {
+    let payload: { mensaje?: string; message?: string } | null = null
+    const contentType = response.headers.get("content-type")
+    if (contentType?.includes("application/json")) {
+      try {
+        payload = await response.json()
+      } catch {
+        payload = null
+      }
+    }
     const message =
       payload?.mensaje ??
       payload?.message ??
@@ -46,5 +55,13 @@ export async function apiRequest<T>(
     throw new ApiError(message, response.status)
   }
 
-  return payload as T
+  if (responseType === "blob") {
+    return (await response.blob()) as unknown as T
+  }
+
+  const contentType = response.headers.get("content-type")
+  if (contentType?.includes("application/json")) {
+    return (await response.json()) as T
+  }
+  return null as T
 }
