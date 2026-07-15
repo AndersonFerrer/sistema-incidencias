@@ -1,1 +1,3 @@
-Paquete de service. Se puebla en T2 (dao/sql), T4 (service) y T5 (controller).
+// Paquete de service del modulo notificaciones (change notificaciones-realtime).
+// T2 (dao, sql) / T4 (service) / T5 (controller).
+package com.integrador.sistemaincidencias.notificaciones.service;
