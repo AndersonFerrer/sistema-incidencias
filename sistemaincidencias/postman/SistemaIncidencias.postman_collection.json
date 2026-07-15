@@ -2,9 +2,9 @@
 	"info": {
 		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
 		"name": "Sistema Incidencias",
-		"description": "Colección de endpoints para el Sistema de Gestión de Incidencias.\n\nBase URL: http://localhost:8080\n\n## Autenticación\nLa mayoría de endpoints requieren header Authorization: Bearer {{token}}\nEl token se obtiene llamando a POST /api/auth/login o POST /api/auth/demo\n\n## Variables de colección\n- `baseUrl`: http://localhost:8080\n- `token`: JWT obtenido tras login\n- `usuarioId`: UUID del usuario para operaciones específicas\n- `rolId`: UUID del rol para operaciones específicas\n- `aplicativoId`: UUID del aplicativo\n- `categoriaId`: UUID de la categoría\n- `estadoAprobacionId`: UUID del estado de aprobación\n- `estadoProcesoId`: UUID del estado de proceso\n- `incidenciaId`: UUID de incidencia para pruebas\n- `agenteId`: UUID de agente asignado\n- `usuarioExternoId`: UUID de usuario externo reportante\n\n## Adjuntos en incidencias\nCrear incidencia, actualizar incidencia y subir adjuntos usan multipart/form-data cuando se van a enviar archivos. En actualización, si el campo archivos no se envía, los adjuntos existentes se conservan sin reemplazo.",
+		"description": "Colección de endpoints para el Sistema de Gestión de Incidencias.\n\nBase URL: http://localhost:8080\n\n## Autenticación\nLa mayoría de endpoints requieren header Authorization: Bearer {{token}}\nEl token se obtiene llamando a POST /api/auth/login o POST /api/auth/demo\n\n## Variables de colección\n- `baseUrl`: http://localhost:8080\n- `token`: JWT obtenido tras login\n- `usuarioId`: UUID del usuario para operaciones específicas\n- `rolId`: UUID del rol para operaciones específicas\n- `aplicativoId`: UUID del aplicativo\n- `categoriaId`: UUID de la categoría\n- `estadoAprobacionId`: UUID del estado de aprobación\n- `estadoProcesoId`: UUID del estado de proceso\n- `incidenciaId`: UUID de incidencia para pruebas\n- `agenteId`: UUID de agente asignado\n- `usuarioExternoId`: UUID de usuario externo reportante\n\n## Adjuntos en incidencias\nCrear incidencia, actualizar incidencia y subir adjuntos usan multipart/form-data cuando se van a enviar archivos. En actualización, si el campo archivos no se envía, los adjuntos existentes se conservan sin reemplazo.\n\n## Perfil propio y eliminación lógica (change E)\n- `GET /api/usuarios/me`: devuelve el perfil del usuario autenticado.\n- `PUT /api/usuarios/me`: actualiza solo `nombre` y `avatarUrl`.\n- `PUT /api/usuarios/me/password`: cambia la propia contraseña verificando la actual.\n- `DELETE /api/usuarios/{id}`: soft delete (`activo=false`), solo ADMINISTRADOR y nunca sobre sí mismo.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"version": "1.3.0"
+		"version": "1.4.0"
 	},
 	"auth": {
 		"type": "bearer",
@@ -462,6 +462,203 @@
 						},
 						"description": "Desactiva un usuario (establece activo = false). Sin body."
 					}
+				},
+				{
+					"name": "Eliminar usuario (soft delete)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"usuarios",
+								"{{usuarioId}}"
+							]
+						},
+						"description": "Elimina un usuario realizando soft delete (activo = false). Solo el rol ADMINISTRADOR puede ejecutar este endpoint.\n\nReglas:\n- 204 No Content cuando la eliminación es exitosa.\n- 403 si el solicitante no es administrador.\n- 400 si el administrador intenta eliminarse a sí mismo.\n- 404 si el id objetivo no existe.\n\nEl registro y sus referencias (FK) se conservan en la base de datos."
+					},
+					"response": [
+						{
+							"name": "Eliminado (204)",
+							"status": "No Content",
+							"code": 204,
+							"body": ""
+						},
+						{
+							"name": "Auto-eliminación prohibida (400)",
+							"status": "Bad Request",
+							"code": 400,
+							"body": "{\n    \"fecha\": \"2026-07-15T11:00:00\",\n    \"estado\": 400,\n    \"error\": \"Bad Request\",\n    \"mensaje\": \"No puedes eliminar tu propio usuario administrador\",\n    \"ruta\": \"/api/usuarios/99999999-9999-9999-9999-999999999999\"\n}"
+						},
+						{
+							"name": "Sin permiso (403)",
+							"status": "Forbidden",
+							"code": 403,
+							"body": "{\n    \"fecha\": \"2026-07-15T11:00:00\",\n    \"estado\": 403,\n    \"error\": \"Forbidden\",\n    \"mensaje\": \"Solo el administrador puede realizar esta operacion\",\n    \"ruta\": \"/api/usuarios/550e8400-e29b-41d4-a716-446655440010\"\n}"
+						},
+						{
+							"name": "Usuario inexistente (404)",
+							"status": "Not Found",
+							"code": 404,
+							"body": "{\n    \"fecha\": \"2026-07-15T11:00:00\",\n    \"estado\": 404,\n    \"error\": \"Not Found\",\n    \"mensaje\": \"Usuario no encontrado\",\n    \"ruta\": \"/api/usuarios/00000000-0000-0000-0000-000000000000\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Obtener mi perfil",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/usuarios/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"usuarios",
+								"me"
+							]
+						},
+						"description": "Devuelve el perfil propio del usuario autenticado. Disponible para cualquier rol (ADMINISTRADOR, AGENTE, USUARIO).\n\nEl id objetivo se resuelve del JWT — no se acepta id del cliente. Nunca incluye el password_hash."
+					},
+					"response": [
+						{
+							"name": "Perfil propio (200)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"nombre\": \"Admin\",\n    \"email\": \"admin@sistema.com\",\n    \"rol\": {\n        \"id\": \"660e8400-e29b-41d4-a716-446655440001\",\n        \"codigo\": \"ADMINISTRADOR\",\n        \"nombre\": \"Administrador\",\n        \"descripcion\": \"Control total del sistema\",\n        \"activo\": true\n    },\n    \"activo\": true,\n    \"avatarUrl\": null,\n    \"creadoEn\": \"2026-01-15T10:00:00\",\n    \"actualizadoEn\": \"2026-07-15T11:00:00\"\n}"
+						},
+						{
+							"name": "Sin token (401)",
+							"status": "Unauthorized",
+							"code": 401,
+							"body": "{\n    \"fecha\": \"2026-07-15T11:00:00\",\n    \"estado\": 401,\n    \"error\": \"Unauthorized\",\n    \"mensaje\": \"Token no enviado\",\n    \"ruta\": \"/api/usuarios/me\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Actualizar mi perfil",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Ana Pérez\",\n    \"avatarUrl\": \"https://example.com/avatar.png\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/usuarios/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"usuarios",
+								"me"
+							]
+						},
+						"description": "Actualiza únicamente los campos auto-editables: nombre y avatarUrl. Email, rol y activo NO se modifican aunque se envíen.\n\nBody:\n- nombre (String, 1-150): obligatorio\n- avatarUrl (String, max 500, opcional, URL HTTPS o vacío para limpiar)"
+					},
+					"response": [
+						{
+							"name": "Perfil actualizado (200)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"nombre\": \"Ana Pérez\",\n    \"email\": \"admin@sistema.com\",\n    \"rol\": {\n        \"id\": \"660e8400-e29b-41d4-a716-446655440001\",\n        \"codigo\": \"ADMINISTRADOR\",\n        \"nombre\": \"Administrador\",\n        \"descripcion\": \"Control total del sistema\",\n        \"activo\": true\n    },\n    \"activo\": true,\n    \"avatarUrl\": \"https://example.com/avatar.png\",\n    \"creadoEn\": \"2026-01-15T10:00:00\",\n    \"actualizadoEn\": \"2026-07-15T11:30:00\"\n}"
+						},
+						{
+							"name": "Datos inválidos (400)",
+							"status": "Bad Request",
+							"code": 400,
+							"body": "{\n    \"fecha\": \"2026-07-15T11:00:00\",\n    \"estado\": 400,\n    \"error\": \"Bad Request\",\n    \"mensaje\": \"Datos de entrada invalidos\",\n    \"ruta\": \"/api/usuarios/me\",\n    \"detalles\": [\n        \"nombre: El nombre no puede estar vacío\",\n        \"avatarUrl: debe coincidir con el patrón HTTPS\"\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Cambiar mi contraseña",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"currentPassword\": \"admin123\",\n    \"newPassword\": \"nuevaClaveSegura123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/usuarios/me/password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"usuarios",
+								"me",
+								"password"
+							]
+						},
+						"description": "Cambia la contraseña del usuario autenticado. Verifica la contraseña actual con BCrypt.matches antes de reemplazar el hash.\n\nBody:\n- currentPassword (String, obligatorio): contraseña actual\n- newPassword (String, 8-100): nueva contraseña\n\nRetorna 204 No Content en éxito."
+					},
+					"response": [
+						{
+							"name": "Contraseña actualizada (204)",
+							"status": "No Content",
+							"code": 204,
+							"body": ""
+						},
+						{
+							"name": "Contraseña actual incorrecta (400)",
+							"status": "Bad Request",
+							"code": 400,
+							"body": "{\n    \"fecha\": \"2026-07-15T11:00:00\",\n    \"estado\": 400,\n    \"error\": \"Bad Request\",\n    \"mensaje\": \"La contraseña actual no coincide\",\n    \"ruta\": \"/api/usuarios/me/password\"\n}"
+						},
+						{
+							"name": "Nueva contraseña corta (400)",
+							"status": "Bad Request",
+							"code": 400,
+							"body": "{\n    \"fecha\": \"2026-07-15T11:00:00\",\n    \"estado\": 400,\n    \"error\": \"Bad Request\",\n    \"mensaje\": \"Datos de entrada invalidos\",\n    \"ruta\": \"/api/usuarios/me/password\",\n    \"detalles\": [\n        \"newPassword: el tamaño debe estar entre 8 y 100\"\n    ]\n}"
+						}
+					]
 				}
 			]
 		},
@@ -1825,8 +2022,7 @@
 					]
 				}
 			]
-		}
-		,
+		},
 		{
 			"name": "Reportes",
 			"description": "Endpoints del modulo de reportes (change reportes-export, PR1 backend + PR2 exporters). GET /api/reportes devuelve la vista previa JSON con KPIs, distribuciones, tendencia y detalle (RF-41..43). GET /api/reportes/exportar devuelve el mismo dataset renderizado como application/pdf (Apache PDFBox 3.0.3) o application/vnd.openxmlformats-officedocument.spreadsheetml.sheet (Apache POI 5.3 SXSSF), con Content-Disposition: attachment; filename=\"reporte-YYYYMMDD-HHMMSS.{ext}\" (RF-44). Ambos requieren Authorization: Bearer {{token}}. El scope por rol lo aplica el servicio (administrador sin filtro, agente asignadoA, usuario creado_por_usuario_id) - el cliente nunca puede relajar el filtro.",
