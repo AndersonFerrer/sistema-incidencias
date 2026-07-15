@@ -678,6 +678,7 @@ export function IncidenciaDetallePage() {
           <IncidenciaActividadCard
             historial={historial}
             usuarios={usuarios}
+            estadosProceso={estadosProceso}
             solicitante={solicitante}
           />
         </div>
