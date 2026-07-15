@@ -40,8 +40,6 @@ const PRIORIDADES: { value: Prioridad; label: string }[] = [
   { value: "CRITICA", label: "Crítica" },
 ]
 
-const AGENT_ROLE_CODES = ["AGENTE", "ADMINISTRADOR"]
-
 type FieldErrors = {
   titulo: string | null
   descripcion: string | null
@@ -169,12 +167,7 @@ export function EditarIncidenciaDialog({
   }, [categoriasDelCliente, categoriaId])
 
   const usuariosAsignables = useMemo(
-    () =>
-      usuarios
-        .filter((usuario) => usuario.activo)
-        .filter((usuario) =>
-          AGENT_ROLE_CODES.includes(usuario.rol?.codigo ?? "")
-        ),
+    () => usuarios.filter((usuario) => usuario.activo),
     [usuarios]
   )
 
@@ -493,8 +486,7 @@ export function EditarIncidenciaDialog({
                 ))}
               </select>
               <FieldDescription>
-                Solo se muestran usuarios activos con rol AGENTE o
-                ADMINISTRADOR.
+                Solo se muestran usuarios activos.
               </FieldDescription>
               <FieldError>
                 {errors.asignadoA ? errors.asignadoA : null}

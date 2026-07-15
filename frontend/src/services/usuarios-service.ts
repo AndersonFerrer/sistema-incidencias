@@ -41,6 +41,13 @@ export const usuariosService = {
     })
   },
 
+  listarAgentesAsignables(signal?: AbortSignal): Promise<Usuario[]> {
+    return apiRequest<Usuario[]>("/api/usuarios/agentes-asignables", {
+      method: "GET",
+      signal,
+    })
+  },
+
   crear(input: CrearUsuarioInput): Promise<Usuario> {
     return apiRequest<Usuario>("/api/usuarios", {
       method: "POST",

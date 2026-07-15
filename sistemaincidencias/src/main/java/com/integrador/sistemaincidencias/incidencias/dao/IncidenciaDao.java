@@ -200,6 +200,10 @@ public class IncidenciaDao {
             where.append(" AND asignado_a = ?");
             parametros.add(filtro.getAsignadoA());
         }
+        if (filtro.getCreadoPorUsuarioId() != null) {
+            where.append(" AND creado_por_usuario_id = ?");
+            parametros.add(filtro.getCreadoPorUsuarioId());
+        }
         if (filtro.getPrioridad() != null) {
             where.append(" AND prioridad = ?");
             parametros.add(filtro.getPrioridad().name());

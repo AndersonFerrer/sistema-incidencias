@@ -49,6 +49,13 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioService.obtener(authorizationHeader, id));
     }
 
+    @GetMapping("/agentes-asignables")
+    public ResponseEntity<List<UsuarioResponse>> listarAgentesAsignables(
+            @RequestHeader("Authorization") String authorizationHeader
+    ) {
+        return ResponseEntity.ok(usuarioService.listarAgentesAsignables(authorizationHeader));
+    }
+
     @PostMapping
     public ResponseEntity<UsuarioResponse> crear(
             @RequestHeader("Authorization") String authorizationHeader,

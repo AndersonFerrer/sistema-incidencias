@@ -46,6 +46,14 @@ public class UsuarioService {
                 .toList();
     }
 
+    public List<UsuarioResponse> listarAgentesAsignables(String authorizationHeader) {
+        permisoAdministracionService.validarAutenticado(authorizationHeader);
+        return usuarioDao.listarAsignables()
+                .stream()
+                .map(usuarioDtoMapper::toResponse)
+                .toList();
+    }
+
     public UsuarioResponse obtener(String authorizationHeader, UUID id) {
         permisoAdministracionService.validarAdministrador(authorizationHeader);
         return usuarioDtoMapper.toResponse(buscarUsuario(id));

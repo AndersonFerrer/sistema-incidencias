@@ -59,6 +59,20 @@ public class UsuarioDao {
         }
     }
 
+    public List<Usuario> listarAsignables() {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(UsuarioSql.LISTAR_ASIGNABLES);
+                ResultSet rs = statement.executeQuery()) {
+            List<Usuario> usuarios = new ArrayList<>();
+            while (rs.next()) {
+                usuarios.add(usuarioMapper.mapear(rs));
+            }
+            return usuarios;
+        } catch (SQLException exception) {
+            throw new AccesoDatosException("Error al listar usuarios asignables", exception);
+        }
+    }
+
     public List<Usuario> listar(String texto, String codigoRol, Boolean activo, int limit, int offset) {
         List<Object> parametros = new ArrayList<>();
         String sql = construirSqlListado(texto, codigoRol, activo, parametros);

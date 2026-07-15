@@ -27,6 +27,7 @@ import com.integrador.sistemaincidencias.incidencias.model.Aprobacion;
 import com.integrador.sistemaincidencias.incidencias.model.Comentario;
 import com.integrador.sistemaincidencias.incidencias.model.HistorialIncidencia;
 import com.integrador.sistemaincidencias.incidencias.model.Incidencia;
+import com.integrador.sistemaincidencias.shared.exception.AccesoDenegadoException;
 import com.integrador.sistemaincidencias.shared.exception.RecursoNoEncontradoException;
 import com.integrador.sistemaincidencias.shared.exception.ReglaNegocioException;
 import com.integrador.sistemaincidencias.shared.pagination.PageRequest;
@@ -35,6 +36,7 @@ import com.integrador.sistemaincidencias.shared.storage.ArchivoAlmacenado;
 import com.integrador.sistemaincidencias.shared.storage.ArchivoStorageService;
 import com.integrador.sistemaincidencias.usuarios.model.Usuario;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -69,8 +71,10 @@ public class IncidenciaService {
                 .build();
     }
 
-    public IncidenciaDetalleResponse obtenerDetalle(UUID id) {
+    public IncidenciaDetalleResponse obtenerDetalle(UUID id, String authorizationHeader) {
+        Usuario actual = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia incidencia = buscar(id);
+        validarAlcance(actual, incidencia, "obtenerDetalle");
         return IncidenciaDetalleResponse.builder()
                 .incidencia(toResponse(incidencia))
                 .comentarios(comentarioDao.listarPorIncidencia(id).stream().map(this::toResponse).toList())
@@ -131,6 +135,7 @@ public class IncidenciaService {
 
     private Incidencia actualizarIncidencia(UUID id, ActualizarIncidenciaRequest request, Usuario usuario) {
         Incidencia incidencia = buscar(id);
+        validarAlcance(usuario, incidencia, "actualizar");
         validarNoFinalizada(incidencia);
         incidencia.setTitulo(request.getTitulo().trim());
         incidencia.setDescripcion(request.getDescripcion().trim());
@@ -146,6 +151,7 @@ public class IncidenciaService {
     public IncidenciaResponse cambiarEstado(UUID id, CambiarEstadoRequest request, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia incidencia = buscar(id);
+        validarAlcance(usuario, incidencia, "cambiarEstado");
         validarNoRechazada(incidencia);
         EstadoProceso actual = obtenerEstadoProceso(incidencia.getEstadoProcesoId());
         EstadoProceso nuevo = obtenerEstadoProceso(request.getEstadoProcesoId());
@@ -165,6 +171,7 @@ public class IncidenciaService {
     public IncidenciaResponse aprobar(UUID id, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia incidencia = buscar(id);
+        validarAlcance(usuario, incidencia, "aprobar");
         EstadoAprobacion aprobada = obtenerEstadoAprobacion(ESTADO_APROBACION_APROBADA);
         Incidencia actualizada = incidenciaDao.cambiarAprobacion(id, aprobada.getId());
         aprobacionDao.insertar(Aprobacion.builder()
@@ -180,6 +187,7 @@ public class IncidenciaService {
     public IncidenciaResponse rechazar(UUID id, AprobacionRequest request, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia incidencia = buscar(id);
+        validarAlcance(usuario, incidencia, "rechazar");
         validarNoFinalizada(incidencia);
         EstadoAprobacion rechazada = obtenerEstadoAprobacion(ESTADO_APROBACION_RECHAZADA);
         Incidencia actualizada = incidenciaDao.cambiarAprobacion(id, rechazada.getId());
@@ -197,7 +205,8 @@ public class IncidenciaService {
 
     public ComentarioResponse agregarComentario(UUID incidenciaId, CrearComentarioRequest request, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
-        buscar(incidenciaId);
+        Incidencia incidencia = buscar(incidenciaId);
+        validarAlcance(usuario, incidencia, "agregarComentario");
         Comentario comentario = Comentario.builder()
                 .id(UUID.randomUUID())
                 .incidenciaId(incidenciaId)
@@ -212,6 +221,7 @@ public class IncidenciaService {
     public AdjuntoResponse agregarAdjunto(UUID incidenciaId, CrearAdjuntoRequest request, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia incidencia = buscar(incidenciaId);
+        validarAlcance(usuario, incidencia, "agregarAdjunto");
         validarNoFinalizada(incidencia);
         Adjunto adjunto = Adjunto.builder()
                 .id(UUID.randomUUID())
@@ -230,6 +240,7 @@ public class IncidenciaService {
     public List<AdjuntoResponse> agregarAdjuntos(UUID incidenciaId, List<MultipartFile> archivos, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia incidencia = buscar(incidenciaId);
+        validarAlcance(usuario, incidencia, "agregarAdjuntos");
         validarNoFinalizada(incidencia);
         return registrarAdjuntosDesdeArchivos(incidenciaId, usuario.getId(), archivos).stream()
                 .map(this::toResponse)
@@ -239,6 +250,9 @@ public class IncidenciaService {
     public void eliminar(UUID id, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia incidencia = buscar(id);
+        if (!usuario.getRol().esAdministrador()) {
+            throw new AccesoDenegadoException("Solo el administrador puede eliminar incidencias");
+        }
         validarNoFinalizada(incidencia);
         incidenciaDao.eliminar(id);
         // La eliminación física deja el log fuera del historial de la propia incidencia por cascada.
@@ -277,6 +291,26 @@ public class IncidenciaService {
         if (Boolean.TRUE.equals(actual.getEsTerminal())) {
             throw new ReglaNegocioException(
                     "La incidencia esta finalizada y no permite esta operacion (estado de proceso terminal)");
+        }
+    }
+
+    private void validarAlcance(Usuario actual, Incidencia target, String metodo) {
+        if (actual.getRol().esAdministrador()) {
+            return;
+        }
+        if (actual.getRol().esAgente()) {
+            if (!Objects.equals(target.getAsignadoA(), actual.getId())) {
+                throw new AccesoDenegadoException("Solo puedes modificar incidencias asignadas a ti");
+            }
+            return;
+        }
+        boolean esComentarioOAdjunto = metodo.startsWith("agregarComentario")
+                || metodo.startsWith("agregarAdjunto");
+        if (!esComentarioOAdjunto) {
+            throw new AccesoDenegadoException("No tienes permisos para realizar esta operacion");
+        }
+        if (!Objects.equals(target.getCreadoPorUsuarioId(), actual.getId())) {
+            throw new AccesoDenegadoException("Solo puedes operar sobre incidencias creadas por ti");
         }
     }
 
