@@ -1,13 +1,13 @@
-import { Plus } from "lucide-react"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
 import {
   IncidenciasFilters,
   type IncidenciasFiltrosValues,
 } from "@/pages/incidencias/components/incidencias-filters"
+import { IncidenciasHeader } from "@/pages/incidencias/components/incidencias-header"
+import { IncidenciasPagination } from "@/pages/incidencias/components/incidencias-pagination"
 import { IncidenciasTable } from "@/pages/incidencias/components/incidencias-table"
 import { NuevaIncidenciaView } from "@/pages/incidencias/components/nueva-incidencia-view"
 import { aplicativosService } from "@/services/aplicativos-service"
@@ -35,6 +35,7 @@ const FILTROS_INICIALES: IncidenciasFiltrosValues = {
 }
 
 const PAGE_SIZE = 20
+const SEARCH_DEBOUNCE_MS = 300
 
 type Vista = "listado" | "nueva"
 
@@ -43,6 +44,7 @@ export function IncidenciasPage() {
 
   const [filtros, setFiltros] =
     useState<IncidenciasFiltrosValues>(FILTROS_INICIALES)
+  const [debouncedTexto, setDebouncedTexto] = useState(filtros.texto)
   const [page, setPage] = useState(0)
 
   const [incidencias, setIncidencias] = useState<Incidencia[]>([])
@@ -113,18 +115,29 @@ export function IncidenciasPage() {
     setVista("listado")
   }, [])
 
+  // Debounce the search text so rapid keystrokes don't fire a fetch per char.
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setDebouncedTexto(filtros.texto)
+    }, SEARCH_DEBOUNCE_MS)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [filtros.texto])
+
   useEffect(() => {
     if (vista !== "listado") return
 
-    let cancelled = false
+    const controller = new AbortController()
+    setIsLoading(true)
+    setError(null)
 
-    async function loadIncidencias() {
-      setIsLoading(true)
-      setError(null)
-
-      try {
-        const response = await incidentsService.listar({
-          texto: filtros.texto.trim() || undefined,
+    incidentsService
+      .listar(
+        {
+          texto: debouncedTexto.trim() || undefined,
           estadoProcesoId: filtros.estadoProcesoId || undefined,
           estadoAprobacionId: filtros.estadoAprobacionId || undefined,
           categoriaId: filtros.categoriaId || undefined,
@@ -134,14 +147,17 @@ export function IncidenciasPage() {
           hasta: filtros.hasta || undefined,
           page,
           size: PAGE_SIZE,
-        })
-
-        if (cancelled) return
-
+        },
+        controller.signal
+      )
+      .then((response) => {
+        if (controller.signal.aborted) return
         setIncidencias(response.contenido)
         setTotal(response.total)
-      } catch (err) {
-        if (cancelled) return
+        setIsLoading(false)
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) return
         setIncidencias([])
         setTotal(0)
         setError(
@@ -149,25 +165,22 @@ export function IncidenciasPage() {
             ? err.message
             : "No se pudo obtener el listado de incidencias."
         )
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false)
-        }
-      }
-    }
+        setIsLoading(false)
+      })
 
-    loadIncidencias()
-
-    return () => {
-      cancelled = true
-    }
-  }, [filtros, page, vista])
-
-  const totalLabel = useMemo(() => {
-    if (isLoading) return "Cargando incidencias..."
-    if (error) return error
-    return `${total} incidencias encontradas`
-  }, [total, isLoading, error])
+    return () => controller.abort()
+  }, [
+    debouncedTexto,
+    filtros.estadoProcesoId,
+    filtros.estadoAprobacionId,
+    filtros.categoriaId,
+    filtros.prioridad,
+    filtros.clienteId,
+    filtros.desde,
+    filtros.hasta,
+    page,
+    vista,
+  ])
 
   if (vista === "nueva") {
     return (
@@ -184,22 +197,12 @@ export function IncidenciasPage() {
 
   return (
     <div className="flex flex-col gap-3">
-      <header className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-0.5">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-950">
-            Incidencias
-          </h1>
-          <p className="text-xs text-slate-500">{totalLabel}</p>
-        </div>
-        <Button
-          size="default"
-          className="h-8 px-3"
-          onClick={() => setVista("nueva")}
-        >
-          <Plus data-icon="inline-start" className="size-3.5" />
-          Nueva Incidencia
-        </Button>
-      </header>
+      <IncidenciasHeader
+        totalShown={total}
+        onNueva={() => setVista("nueva")}
+        loading={isLoading}
+        errorMessage={error}
+      />
 
       <Card className="rounded-lg bg-white p-3 shadow-sm">
         <IncidenciasFilters
@@ -217,12 +220,15 @@ export function IncidenciasPage() {
 
       <IncidenciasTable
         incidencias={incidencias}
-        total={total}
-        page={page}
-        size={PAGE_SIZE}
         categorias={categorias}
         aplicativos={aplicativos}
         estadosAprobacion={estadosAprobacion}
+      />
+
+      <IncidenciasPagination
+        page={page}
+        limit={PAGE_SIZE}
+        count={total}
         onPageChange={setPage}
       />
 
