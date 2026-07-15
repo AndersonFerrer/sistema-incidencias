@@ -69,11 +69,6 @@ export const incidentsService = {
     if (input.asignadoA) {
       formData.append("asignadoA", input.asignadoA)
     }
-    console.log(
-      "[DEBUG service] crear() input.archivos:",
-      input.archivos?.length,
-      input.archivos?.map((f) => ({ name: f.name, size: f.size }))
-    )
     input.archivos?.forEach((archivo) => {
       formData.append("archivos", archivo)
     })

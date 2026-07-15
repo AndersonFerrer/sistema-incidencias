@@ -13,7 +13,6 @@ export type Incidencia = {
   creadoPorUsuarioId: string
   usuarioExternoId: string | null
   asignadoA: string | null
-  motivoRechazo?: string | null
   creadoEn: string
   actualizadoEn: string
   resueltoEn: string | null

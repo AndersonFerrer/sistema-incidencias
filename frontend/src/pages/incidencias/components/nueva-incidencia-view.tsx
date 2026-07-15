@@ -102,6 +102,7 @@ export function NuevaIncidenciaView({
 
     if (!list || list.length === 0) return;
 
+    setArchivos((prev) => [...prev, ...Array.from(list)]);
     event.target.value = "";
   };
 
