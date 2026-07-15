@@ -152,6 +152,22 @@ public class UsuarioDao {
         }
     }
 
+    /**
+     * Updates only the self-editable profile fields (nombre, avatarUrl) for the
+     * given user id. Email, role and activo are intentionally NOT touched.
+     */
+    public void actualizarPerfil(UUID id, String nombre, String avatarUrl) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(UsuarioSql.ACTUALIZAR_PERFIL)) {
+            statement.setString(1, nombre);
+            statement.setString(2, avatarUrl);
+            statement.setObject(3, id);
+            statement.executeUpdate();
+        } catch (SQLException exception) {
+            throw new AccesoDatosException("Error al actualizar perfil de usuario", exception);
+        }
+    }
+
     private String construirSqlListado(String texto, String codigoRol, Boolean activo, List<Object> parametros) {
         StringBuilder sql = new StringBuilder(UsuarioSql.CAMPOS_BASE);
         sql.append(" WHERE 1 = 1");
