@@ -1,5 +1,6 @@
 package com.integrador.sistemaincidencias.notificaciones.controller;
 
+import com.integrador.sistemaincidencias.notificaciones.dto.NotificacionBulkResponse;
 import com.integrador.sistemaincidencias.notificaciones.dto.NotificacionCountResponse;
 import com.integrador.sistemaincidencias.notificaciones.dto.NotificacionResponse;
 import com.integrador.sistemaincidencias.notificaciones.service.NotificacionService;
@@ -89,7 +90,7 @@ public class NotificacionController {
     }
 
     @PostMapping("/marcar-todas-leidas")
-    public ResponseEntity<NotificacionCountResponse> marcarTodasLeidas(
+    public ResponseEntity<NotificacionBulkResponse> marcarTodasLeidas(
             @RequestHeader("Authorization") String token
     ) {
         Usuario actual = permisoAdministracionService.validarAutenticado(token);

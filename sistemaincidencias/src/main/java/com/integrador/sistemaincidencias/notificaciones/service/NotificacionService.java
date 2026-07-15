@@ -1,6 +1,7 @@
 package com.integrador.sistemaincidencias.notificaciones.service;
 
 import com.integrador.sistemaincidencias.notificaciones.dao.NotificacionDao;
+import com.integrador.sistemaincidencias.notificaciones.dto.NotificacionBulkResponse;
 import com.integrador.sistemaincidencias.notificaciones.dto.NotificacionCountResponse;
 import com.integrador.sistemaincidencias.notificaciones.dto.NotificacionResponse;
 import com.integrador.sistemaincidencias.notificaciones.model.Notificacion;
@@ -86,11 +87,19 @@ public class NotificacionService {
 
     /**
      * Marca todas las notificaciones del usuario. Idempotente.
+     *
+     * <p>Retorna {@link NotificacionBulkResponse} (forma
+     * {@code {"actualizadas": N}}) exigido por el spec
+     * ({@code /api/notificaciones/marcar-todas-leidas}). Se usa un
+     * DTO dedicado para no sobrecargar
+     * {@link NotificacionCountResponse}, cuya semantica
+     * ({@code {"total": N}}) sigue siendo la del badge del topbar
+     * (endpoint {@code /no-leidas/count}).</p>
      */
-    public NotificacionCountResponse marcarTodasLeidas(UUID usuarioId) {
+    public NotificacionBulkResponse marcarTodasLeidas(UUID usuarioId) {
         long actualizadas = notificacionDao.marcarTodasLeidas(
                 usuarioId, LocalDateTime.now());
-        return NotificacionCountResponse.builder().total(actualizadas).build();
+        return NotificacionBulkResponse.builder().actualizadas(actualizadas).build();
     }
 
     /**
