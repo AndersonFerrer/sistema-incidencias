@@ -44,6 +44,7 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -90,12 +91,23 @@ public class IncidenciaService {
                 .build();
     }
 
+    /**
+     * Crea la incidencia y registra su historial + notificacion de
+     * asignacion en una sola unidad transaccional (ver escenario
+     * "fallo en insercion hace rollback completo" del spec).
+     */
+    @Transactional
     public IncidenciaResponse crear(CrearIncidenciaRequest request, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia creada = crearIncidencia(request, usuario);
         return toResponse(creada);
     }
 
+    /**
+     * Variante con archivos: el INSERT de la incidencia, el historial
+     * y la notificacion se ejecutan dentro de la misma transaccion.
+     */
+    @Transactional
     public IncidenciaResponse crearConArchivos(CrearIncidenciaRequest request, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia creada = crearIncidencia(request, usuario);
@@ -137,12 +149,22 @@ public class IncidenciaService {
         return creada;
     }
 
+    /**
+     * Actualiza la incidencia y emite la notificacion de reasignacion
+     * dentro de la misma transaccion.
+     */
+    @Transactional
     public IncidenciaResponse actualizar(UUID id, ActualizarIncidenciaRequest request, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia actualizada = actualizarIncidencia(id, request, usuario);
         return toResponse(actualizada);
     }
 
+    /**
+     * Variante con archivos: la mutacion, el historial y la
+     * notificacion viven en la misma unidad transaccional.
+     */
+    @Transactional
     public IncidenciaResponse actualizarConArchivos(UUID id, ActualizarIncidenciaRequest request, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia actualizada = actualizarIncidencia(id, request, usuario);
@@ -178,6 +200,11 @@ public class IncidenciaService {
         return actualizada;
     }
 
+    /**
+     * Cambia el estado operativo y notifica al creador + asignado en
+     * una sola transaccion.
+     */
+    @Transactional
     public IncidenciaResponse cambiarEstado(UUID id, CambiarEstadoRequest request, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia incidencia = buscar(id);
@@ -246,6 +273,11 @@ public class IncidenciaService {
         return null;
     }
 
+    /**
+     * Aprueba la incidencia: cambio de estado + aprobacion + historial
+     * + notificacion al creador viven en la misma unidad transaccional.
+     */
+    @Transactional
     public IncidenciaResponse aprobar(UUID id, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia incidencia = buscar(id);
@@ -270,6 +302,11 @@ public class IncidenciaService {
         return toResponse(actualizada);
     }
 
+    /**
+     * Rechaza la incidencia: cambio de estado + aprobacion + historial
+     * + notificacion al creador viven en la misma unidad transaccional.
+     */
+    @Transactional
     public IncidenciaResponse rechazar(UUID id, AprobacionRequest request, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia incidencia = buscar(id);
@@ -299,6 +336,11 @@ public class IncidenciaService {
         return toResponse(actualizada);
     }
 
+    /**
+     * Inserta el comentario, registra historial y notifica al asignado
+     * y al creador en una sola unidad transaccional.
+     */
+    @Transactional
     public ComentarioResponse agregarComentario(UUID incidenciaId, CrearComentarioRequest request, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia incidencia = buscar(incidenciaId);

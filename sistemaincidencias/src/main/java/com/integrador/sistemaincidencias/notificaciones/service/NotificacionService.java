@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Orquestador del modulo de notificaciones.
@@ -148,7 +149,16 @@ public class NotificacionService {
      * asociar la notificacion al aplicativo cliente de origen
      * (no la usan los hooks de T6, pero el service la ofrece para no
      * tocar su firma si se anade en una iteracion posterior).
+     *
+     * <p>Anotada como {@link Transactional} (REQUIRED) para que la
+     * insercion participe en la transaccion abierta por el caller
+     * (hooks de {@code IncidenciaService}). Si la insercion falla,
+     * Spring propaga el rollback a la mutacion de incidencia y al
+     * historial registrados en la misma unidad de trabajo, evitando
+     * el escenario "fallo en insercion hace rollback completo" del
+     * spec quede en commit parcial.</p>
      */
+    @Transactional
     public Notificacion crear(
             UUID usuarioDestinoId,
             NotificacionTipo tipo,
