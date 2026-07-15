@@ -3,5 +3,6 @@ proyecto/
 node_modules/
 dist/
 sistemaincidencias/logs/
+logs/
 smoke-screenshots/
 .playwright-cli/
