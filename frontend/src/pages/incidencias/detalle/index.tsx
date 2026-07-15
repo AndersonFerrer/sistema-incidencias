@@ -71,6 +71,7 @@ export function IncidenciaDetallePage() {
   const puedeEditar =
     currentUserRol === "ADMINISTRADOR" || currentUserRol === "AGENTE"
   const puedeEliminar = currentUserRol === "ADMINISTRADOR"
+  const puedeSubirAdjuntos = puedeEditar
 
   const [detalle, setDetalle] = useState<IncidenciaDetalle | null>(null)
   const [categorias, setCategorias] = useState<Categoria[]>([])
@@ -630,6 +631,8 @@ export function IncidenciaDetallePage() {
           <IncidenciaAdjuntosCard
             adjuntos={adjuntos}
             baseUrl={API_BASE_URL}
+            puedeSubir={puedeSubirAdjuntos}
+            onSubirAdjuntos={handleOpenSubirAdjuntos}
           />
 
           {puedeEditar ? (
