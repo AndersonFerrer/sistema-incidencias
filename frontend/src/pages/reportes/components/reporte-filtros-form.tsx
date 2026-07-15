@@ -1,15 +1,7 @@
 import { Button } from "@/components/ui/button"
-import { GRANULARIDADES_DISPONIBLES, RANGOS_DISPONIBLES } from "@/pages/reportes/data"
-import type { Usuario } from "@/types/usuarios"
 
-/**
- * Rango efectivo que envia la pagina al backend. `custom` se expande a
- * `desde` + `hasta` explicitos (no se envia como query param).
- */
-export type PresetRango = "7d" | "30d" | "90d" | "all" | "custom"
-
-export type ReporteFiltrosFormState = {
-  preset: PresetRango
+type ReporteFiltrosFormState = {
+  preset: "7d" | "30d" | "90d" | "all" | "custom"
   desde: string
   hasta: string
   agenteId: string | null
@@ -21,7 +13,7 @@ type ReporteFiltrosFormProps = {
   onChange: (state: ReporteFiltrosFormState) => void
   onAplicar: () => void
   /** Lista de agentes asignables segun el rol; undefined oculta el selector. */
-  agentes?: Usuario[]
+  agentes?: { id: string; nombre: string }[]
   loading?: boolean
 }
 
@@ -30,10 +22,8 @@ type ReporteFiltrosFormProps = {
  * controla los valores via `state` + `onChange`. Pulsa `Aplicar` para
  * disparar la refetch.
  *
- * Comportamiento:
- * - Preset `custom` muestra los inputs `desde` / `hasta` nativos (ISO
- *   `YYYY-MM-DD`, sin locale).
- * - Selector de agente oculto para USUARIO (no recibe la lista).
+ * - Preset `custom` muestra los inputs `desde`/`hasta` nativos (ISO).
+ * - Selector de agente solo se muestra si llega `agentes[]`.
  * - Granularidad default `Semanal` (alineado con el backend).
  */
 export function ReporteFiltrosForm({
@@ -46,12 +36,9 @@ export function ReporteFiltrosForm({
   const update = <K extends keyof ReporteFiltrosFormState>(
     key: K,
     value: ReporteFiltrosFormState[K]
-  ) => {
-    onChange({ ...state, [key]: value })
-  }
+  ) => onChange({ ...state, [key]: value })
 
   const showCustomDates = state.preset === "custom"
-  const showAgente = Array.isArray(agentes)
 
   return (
     <form
@@ -66,14 +53,14 @@ export function ReporteFiltrosForm({
         <select
           aria-label="Periodo del reporte"
           className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-          onChange={(e) => update("preset", e.target.value as PresetRango)}
+          onChange={(e) => update("preset", e.target.value as ReporteFiltrosFormState["preset"])}
           value={state.preset}
         >
-          {RANGOS_DISPONIBLES.map((opcion) => (
-            <option key={opcion.codigo} value={opcion.codigo}>
-              {opcion.etiqueta}
-            </option>
-          ))}
+          <option value="7d">Últimos 7 días</option>
+          <option value="30d">Últimos 30 días</option>
+          <option value="90d">Últimos 90 días</option>
+          <option value="all">Todo el histórico</option>
+          <option value="custom">Rango personalizado</option>
         </select>
       </label>
 
@@ -102,20 +89,20 @@ export function ReporteFiltrosForm({
         </>
       ) : null}
 
-      {showAgente ? (
+      {Array.isArray(agentes) ? (
         <label className="flex flex-col gap-1 text-xs font-medium text-slate-500">
           <span>Agente</span>
           <select
             aria-label="Agente"
             className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            disabled={agentes!.length <= 1}
+            disabled={agentes.length <= 1}
             onChange={(e) =>
               update("agenteId", e.target.value === "" ? null : e.target.value)
             }
             value={state.agenteId ?? ""}
           >
             <option value="">Todos los agentes</option>
-            {agentes!.map((agente) => (
+            {agentes.map((agente) => (
               <option key={agente.id} value={agente.id}>
                 {agente.nombre}
               </option>
@@ -132,11 +119,9 @@ export function ReporteFiltrosForm({
           onChange={(e) => update("granularidad", e.target.value)}
           value={state.granularidad}
         >
-          {GRANULARIDADES_DISPONIBLES.map((opcion) => (
-            <option key={opcion.codigo} value={opcion.codigo}>
-              {opcion.etiqueta}
-            </option>
-          ))}
+          <option value="DIARIA">Diaria</option>
+          <option value="SEMANAL">Semanal</option>
+          <option value="MENSUAL">Mensual</option>
         </select>
       </label>
 
@@ -151,3 +136,6 @@ export function ReporteFiltrosForm({
     </form>
   )
 }
+
+export type { ReporteFiltrosFormState }
+export type PresetRango = "7d" | "30d" | "90d" | "all" | "custom"

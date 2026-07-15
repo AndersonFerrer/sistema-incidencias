@@ -4,10 +4,6 @@ import type {
   ReporteResponse,
 } from "@/types/reportes"
 
-/**
- * Construye un query string a partir de un `ReporteFiltro`.
- * Omite claves vacias o nulas para no contaminar el cache del backend.
- */
 function buildQuery(filtro: ReporteFiltro): string {
   const params = new URLSearchParams()
   if (filtro.desde) params.set("desde", filtro.desde)
@@ -19,7 +15,10 @@ function buildQuery(filtro: ReporteFiltro): string {
   return qs ? `?${qs}` : ""
 }
 
-function buildExportQuery(filtro: ReporteFiltro, formato: "pdf" | "xlsx"): string {
+function buildExportQuery(
+  filtro: ReporteFiltro,
+  formato: "pdf" | "xlsx"
+): string {
   const params = new URLSearchParams()
   if (filtro.desde) params.set("desde", filtro.desde)
   if (filtro.hasta) params.set("hasta", filtro.hasta)
@@ -31,8 +30,8 @@ function buildExportQuery(filtro: ReporteFiltro, formato: "pdf" | "xlsx"): strin
 }
 
 /**
- * Dispara la descarga de un `Blob` simulando el click en un `<a download>`.
- * Revoca la URL inmediatamente despues para no dejar refs colgadas.
+ * Dispara descarga de un `Blob` simulando click en `<a download>`.
+ * Revoca la URL object para no dejar refs colgadas.
  */
 export function iniciarDescarga(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob)
@@ -45,16 +44,12 @@ export function iniciarDescarga(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url)
 }
 
-/**
- * Wrappers finos sobre `GET /api/reportes` (JSON) y
- * `GET /api/reportes/exportar?formato=pdf|xlsx` (Blob).
- */
 export const reportesService = {
   obtener(filtro: ReporteFiltro, signal?: AbortSignal): Promise<ReporteResponse> {
-    return apiRequest<ReporteResponse>(
-      `/api/reportes${buildQuery(filtro)}`,
-      { method: "GET", signal }
-    )
+    return apiRequest<ReporteResponse>(`/api/reportes${buildQuery(filtro)}`, {
+      method: "GET",
+      signal,
+    })
   },
 
   descargarPdf(filtro: ReporteFiltro, signal?: AbortSignal): Promise<Blob> {
