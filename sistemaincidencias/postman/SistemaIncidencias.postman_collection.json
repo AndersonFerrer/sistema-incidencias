@@ -1826,6 +1826,229 @@
 				}
 			]
 		}
+		,
+		{
+			"name": "Reportes",
+			"description": "Endpoints del modulo de reportes (change reportes-export, PR1). GET /api/reportes devuelve la vista previa JSON con KPIs, distribuciones, tendencia y detalle (RF-41..43). GET /api/reportes/exportar es el placeholder de PR1 y devuelve 501; la implementacion PDF/XLSX llega en PR2 (RF-44). Ambos requieren Authorization: Bearer {{token}}. El scope por rol lo aplica el servicio (administrador sin filtro, agente asignadoA, usuario creado_por_usuario_id) - el cliente nunca puede relajar el filtro.",
+			"item": [
+				{
+					"name": "Obtener reporte JSON (ADMINISTRADOR)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/reportes?rango=30d&granularidad=semanal",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"reportes"
+							],
+							"query": [
+								{
+									"key": "rango",
+									"value": "30d",
+									"description": "Preset de ventana: 7d | 30d | 90d | all. Default 30d. Tiene prioridad baja frente a desde/hasta explicitos."
+								},
+								{
+									"key": "granularidad",
+									"value": "semanal",
+									"description": "Bucket de la serie temporal: Diaria | Semanal | Mensual. Default Semanal."
+								},
+								{
+									"key": "desde",
+									"value": "",
+									"description": "Fecha inicio ISO YYYY-MM-DD (opcional). Si se envia, gana sobre rango."
+								},
+								{
+									"key": "hasta",
+									"value": "",
+									"description": "Fecha fin ISO YYYY-MM-DD (opcional). Inclusivo en timestamps; el backend transforma a [desde 00:00:00, hasta+1dia 00:00:00)."
+								},
+								{
+									"key": "agenteId",
+									"value": "",
+									"description": "Drill-down opcional por agente (solo ADMINISTRADOR). AGENTE/USUARIO lo ignoran."
+								}
+							]
+						},
+						"description": "Devuelve ReporteResponse con filtro (eco normalizado), kpis, byCategoria, tendencia, resumenPorAgente, tiempoPromedioResolucionHoras (0.0 cuando no hay FINALIZADA en el rango) y detalle (top 50). resumenPorAgente viene vacio para el rol USUARIO."
+					},
+					"response": [
+						{
+							"name": "ADMINISTRADOR - 200 (sin agenteId, todo el rango)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"filtro\": {\n        \"desde\": \"2026-06-15\",\n        \"hasta\": \"2026-07-15\",\n        \"rangoAplicado\": \"30d\",\n        \"granularidad\": \"Semanal\"\n    },\n    \"kpis\": {\n        \"total\": 32,\n        \"byEstadoAprobacion\": {\"SOLICITADA\": 6, \"APROBADA\": 18, \"RECHAZADA\": 8},\n        \"byEstadoProceso\": {\"PENDIENTE\": 10, \"EN_PROCESO\": 14, \"FINALIZADA\": 8},\n        \"byPrioridad\": {\"BAJA\": 5, \"MEDIA\": 12, \"ALTA\": 10, \"CRITICA\": 5}\n    },\n    \"byCategoria\": [\n        {\"categoriaId\": \"550e8400-e29b-41d4-a716-446655440001\", \"categoriaNombre\": \"Hardware\", \"total\": 12},\n        {\"categoriaId\": \"550e8400-e29b-41d4-a716-446655440002\", \"categoriaNombre\": \"Software\", \"total\": 11},\n        {\"categoriaId\": \"550e8400-e29b-41d4-a716-446655440003\", \"categoriaNombre\": \"Red\", \"total\": 9}\n    ],\n    \"tendencia\": [\n        {\"bucketInicio\": \"2026-06-15\", \"total\": 3},\n        {\"bucketInicio\": \"2026-06-22\", \"total\": 7},\n        {\"bucketInicio\": \"2026-06-29\", \"total\": 11},\n        {\"bucketInicio\": \"2026-07-06\", \"total\": 11}\n    ],\n    \"resumenPorAgente\": [\n        {\"agenteId\": \"770e8400-e29b-41d4-a716-446655440010\", \"agenteNombre\": \"Carlos Perez\", \"totalAsignadas\": 12, \"resueltas\": 6, \"pendientes\": 3, \"enProceso\": 3, \"promedioResolucionHoras\": 24.5},\n        {\"agenteId\": \"770e8400-e29b-41d4-a716-446655440011\", \"agenteNombre\": \"Maria Lopez\", \"totalAsignadas\": 11, \"resueltas\": 5, \"pendientes\": 4, \"enProceso\": 2, \"promedioResolucionHoras\": 31.2}\n    ],\n    \"tiempoPromedioResolucionHoras\": 27.6,\n    \"detalle\": [\n        {\"id\": \"660e8400-e29b-41d4-a716-446655440001\", \"codigo\": \"INC-2026-0001\", \"titulo\": \"Servidor de base de datos no responde\", \"categoriaNombre\": \"Hardware\", \"asignadoA\": \"770e8400-e29b-41d4-a716-446655440010\", \"estadoProcesoCodigo\": \"EN_PROCESO\", \"estadoAprobacionCodigo\": \"APROBADA\", \"prioridad\": \"CRITICA\", \"creadoEn\": \"2026-07-12T10:30:00\", \"resueltoEn\": null}\n    ]\n}",
+							"_postman_previewlanguage": "json"
+						},
+						{
+							"name": "AGENTE - 200 (forzado a sus incidencias, resumenPorAgente solo el mismo)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"filtro\": {\n        \"desde\": \"2026-06-15\",\n        \"hasta\": \"2026-07-15\",\n        \"rangoAplicado\": \"30d\",\n        \"granularidad\": \"Semanal\"\n    },\n    \"kpis\": {\n        \"total\": 4,\n        \"byEstadoAprobacion\": {\"SOLICITADA\": 1, \"APROBADA\": 3, \"RECHAZADA\": 0},\n        \"byEstadoProceso\": {\"PENDIENTE\": 1, \"EN_PROCESO\": 2, \"FINALIZADA\": 1},\n        \"byPrioridad\": {\"BAJA\": 1, \"MEDIA\": 1, \"ALTA\": 1, \"CRITICA\": 1}\n    },\n    \"byCategoria\": [\n        {\"categoriaId\": \"550e8400-e29b-41d4-a716-446655440001\", \"categoriaNombre\": \"Hardware\", \"total\": 2},\n        {\"categoriaId\": \"550e8400-e29b-41d4-a716-446655440002\", \"categoriaNombre\": \"Software\", \"total\": 2}\n    ],\n    \"tendencia\": [\n        {\"bucketInicio\": \"2026-06-29\", \"total\": 2},\n        {\"bucketInicio\": \"2026-07-06\", \"total\": 2}\n    ],\n    \"resumenPorAgente\": [\n        {\"agenteId\": \"770e8400-e29b-41d4-a716-446655440010\", \"agenteNombre\": \"Carlos Perez\", \"totalAsignadas\": 4, \"resueltas\": 1, \"pendientes\": 1, \"enProceso\": 2, \"promedioResolucionHoras\": 28.0}\n    ],\n    \"tiempoPromedioResolucionHoras\": 28.0,\n    \"detalle\": [\n        {\"id\": \"660e8400-e29b-41d4-a716-446655440001\", \"codigo\": \"INC-2026-0001\", \"titulo\": \"Servidor de base de datos no responde\", \"categoriaNombre\": \"Hardware\", \"asignadoA\": \"770e8400-e29b-41d4-a716-446655440010\", \"estadoProcesoCodigo\": \"EN_PROCESO\", \"estadoAprobacionCodigo\": \"APROBADA\", \"prioridad\": \"CRITICA\", \"creadoEn\": \"2026-07-12T10:30:00\", \"resueltoEn\": null}\n    ]\n}",
+							"_postman_previewlanguage": "json"
+						},
+						{
+							"name": "USUARIO - 200 (resumenPorAgente vacio, agenteId descartado)",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"filtro\": {\n        \"desde\": \"2026-06-15\",\n        \"hasta\": \"2026-07-15\",\n        \"rangoAplicado\": \"30d\",\n        \"granularidad\": \"Semanal\"\n    },\n    \"kpis\": {\n        \"total\": 6,\n        \"byEstadoAprobacion\": {\"SOLICITADA\": 3, \"APROBADA\": 2, \"RECHAZADA\": 1},\n        \"byEstadoProceso\": {\"PENDIENTE\": 4, \"EN_PROCESO\": 2, \"FINALIZADA\": 0},\n        \"byPrioridad\": {\"BAJA\": 2, \"MEDIA\": 2, \"ALTA\": 2, \"CRITICA\": 0}\n    },\n    \"byCategoria\": [\n        {\"categoriaId\": \"550e8400-e29b-41d4-a716-446655440002\", \"categoriaNombre\": \"Software\", \"total\": 4},\n        {\"categoriaId\": \"550e8400-e29b-41d4-a716-446655440003\", \"categoriaNombre\": \"Red\", \"total\": 2}\n    ],\n    \"tendencia\": [\n        {\"bucketInicio\": \"2026-06-22\", \"total\": 1},\n        {\"bucketInicio\": \"2026-06-29\", \"total\": 2},\n        {\"bucketInicio\": \"2026-07-06\", \"total\": 3}\n    ],\n    \"resumenPorAgente\": [],\n    \"tiempoPromedioResolucionHoras\": 0.0,\n    \"detalle\": [\n        {\"id\": \"660e8400-e29b-41d4-a716-446655440006\", \"codigo\": \"INC-2026-0010\", \"titulo\": \"No puedo exportar a Excel\", \"categoriaNombre\": \"Software\", \"asignadoA\": null, \"estadoProcesoCodigo\": \"PENDIENTE\", \"estadoAprobacionCodigo\": \"SOLICITADA\", \"prioridad\": \"BAJA\", \"creadoEn\": \"2026-07-12T09:00:00\", \"resueltoEn\": null}\n    ]\n}",
+							"_postman_previewlanguage": "json"
+						}
+					]
+				},
+				{
+					"name": "Obtener reporte JSON (AGENTE drill-down forzado)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/reportes?agenteId=770e8400-e29b-41d4-a716-446655440099&rango=30d",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"reportes"
+							],
+							"query": [
+								{
+									"key": "agenteId",
+									"value": "770e8400-e29b-41d4-a716-446655440099",
+									"description": "Id de un agente distinto. El rol AGENTE recibe este id pero el servicio lo reemplaza por su propio user.id; el reporte nunca expone incidencias de terceros (RF-42 RBAC forzado)."
+								},
+								{
+									"key": "rango",
+									"value": "30d",
+									"description": "Preset 7d|30d|90d|all. Default 30d."
+								}
+							]
+						},
+						"description": "Demostracion del escenario RBAC para AGENTE: aunque el cliente envia el id de otro agente, ReporteService#scopeDe fuerza agenteFiltro = currentUser.id. El reporte solo contiene las incidencias asignadas al agente autenticado."
+					},
+					"response": []
+				},
+				{
+					"name": "Exportar reporte PDF (placeholder, retorna 501)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/reportes/exportar?rango=30d&formato=pdf",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"reportes",
+								"exportar"
+							],
+							"query": [
+								{
+									"key": "rango",
+									"value": "30d",
+									"description": "Preset ventana (7d|30d|90d|all|omitido=30d)."
+								},
+								{
+									"key": "formato",
+									"value": "pdf",
+									"description": "Requerido. Valores: pdf | xlsx. csv o ausente -> 400."
+								},
+								{
+									"key": "granularidad",
+									"value": "",
+									"description": "Opcional. Diaria|Semanal|Mensual. Default Semanal."
+								},
+								{
+									"key": "agenteId",
+									"value": "",
+									"description": "Opcional, solo ADMINISTRADOR."
+								}
+							]
+						},
+						"description": "Placeholder de PR1: ReporteService.exportar lanza UnsupportedOperationException y GlobalExceptionHandler responde 501 NOT_IMPLEMENTED. PR2 cablea Apache PDFBox 3.x (T6) + Apache POI (T7) y devuelve application/pdf con Content-Disposition: attachment; filename=\"reporte-{rango}.pdf\"."
+					},
+					"response": [
+						{
+							"name": "Placeholder PDF - 501 (llega en PR2)",
+							"status": "Not Implemented",
+							"code": 501,
+							"body": "{\n    \"fecha\": \"2026-07-15T12:00:00\",\n    \"estado\": 501,\n    \"error\": \"Not Implemented\",\n    \"mensaje\": \"La exportacion PDF/XLSX se implementa en PR2 del change reportes-export\",\n    \"ruta\": \"/api/reportes/exportar\",\n    \"detalles\": []\n}",
+							"_postman_previewlanguage": "json"
+						},
+						{
+							"name": "formato invalido (csv) - 400",
+							"status": "Bad Request",
+							"code": 400,
+							"body": "{\n    \"fecha\": \"2026-07-15T12:00:00\",\n    \"estado\": 400,\n    \"error\": \"Bad Request\",\n    \"mensaje\": \"Formato invalido. Valores permitidos: json, pdf, xlsx\",\n    \"ruta\": \"/api/reportes/exportar\",\n    \"detalles\": []\n}",
+							"_postman_previewlanguage": "json"
+						}
+					]
+				},
+				{
+					"name": "Exportar reporte XLSX (placeholder, retorna 501)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/reportes/exportar?rango=30d&formato=xlsx",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"reportes",
+								"exportar"
+							],
+							"query": [
+								{
+									"key": "rango",
+									"value": "30d",
+									"description": "Preset ventana (7d|30d|90d|all|omitido=30d)."
+								},
+								{
+									"key": "formato",
+									"value": "xlsx",
+									"description": "Requerido. Valores: pdf | xlsx. csv o ausente -> 400."
+								}
+							]
+						},
+						"description": "Placeholder de PR1: mismo comportamiento 501 que el PDF. PR2 cablea POI SXSSFWorkbook con hojas Resumen, Datos (top 50 con mismo orden que XLSX-aligned), Charts, Por estado, Por categoria, Por prioridad, Tendencia y Por agente."
+					},
+					"response": [
+						{
+							"name": "Placeholder XLSX - 501 (llega en PR2)",
+							"status": "Not Implemented",
+							"code": 501,
+							"body": "{\n    \"fecha\": \"2026-07-15T12:00:00\",\n    \"estado\": 501,\n    \"error\": \"Not Implemented\",\n    \"mensaje\": \"La exportacion PDF/XLSX se implementa en PR2 del change reportes-export\",\n    \"ruta\": \"/api/reportes/exportar\",\n    \"detalles\": []\n}",
+							"_postman_previewlanguage": "json"
+						}
+					]			
+				}
+			]
+		}
 	],
 	"variable": [
 		{
