@@ -51,6 +51,11 @@ export function NotificationDropdown({
 }: NotificationDropdownProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const controllerRef = useRef<AbortController | null>(null)
+  // Track si ya intentamos cargar en esta sesion abierta del dropdown. Sin esto,
+  // cuando el usuario tiene 0 notificaciones (items.length === 0) el effect
+  // cumple `items.length === 0 && !loading && !error` indefinidamente y dispara
+  // fetchItems() en bucle infinito en cada re-render.
+  const hasFetchedRef = useRef(false)
 
   const [items, setItems] = useState<Notificacion[]>([])
   const [loading, setLoading] = useState(false)
@@ -82,12 +87,21 @@ export function NotificationDropdown({
     }
   }, [])
 
-  // Carga lazy: solo cuando el panel se abre por primera vez.
+  // Carga lazy: solo cuando el panel se abre por primera vez (por sesion de apertura).
+  // Usamos un ref para evitar el refetch infinito cuando el usuario tiene 0
+  // notificaciones: sin el ref, `items.length === 0 && !loading && !error`
+  // permanece true tras cada fetch vacio y el effect re-dispara fetchItems().
   useEffect(() => {
-    if (open && items.length === 0 && !loading && !error) {
+    if (!open) {
+      // Al cerrar el panel, reseteamos para que la proxima apertura vuelva a fetchear.
+      hasFetchedRef.current = false
+      return
+    }
+    if (!hasFetchedRef.current && !loading && !error) {
+      hasFetchedRef.current = true
       void fetchItems()
     }
-  }, [open, items.length, loading, error, fetchItems])
+  }, [open, loading, error, fetchItems])
 
   // Click afuera cierra el panel.
   useEffect(() => {

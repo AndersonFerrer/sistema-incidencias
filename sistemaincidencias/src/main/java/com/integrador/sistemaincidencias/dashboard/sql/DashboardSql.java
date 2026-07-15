@@ -21,7 +21,7 @@ public final class DashboardSql {
 
     public static final String CONTAR_TOTAL = """
             SELECT COUNT(*)
-            FROM incidencias
+            FROM incidencias i
             WHERE 1 = 1
             """;
 
