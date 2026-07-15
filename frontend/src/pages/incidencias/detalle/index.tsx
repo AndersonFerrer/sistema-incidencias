@@ -686,6 +686,7 @@ export function IncidenciaDetallePage() {
           <IncidenciaSidebar
             incidencia={incidencia}
             estadoAprobacion={estadoAprobacion}
+            estadoProceso={estadoProceso}
             categoria={categoria}
             aplicativo={aplicativo}
             solicitante={solicitante}
