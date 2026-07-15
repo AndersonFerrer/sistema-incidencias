@@ -1,17 +1,26 @@
-# Capability Spec: `incidencias` — bug fixes, missing flows, UX polish
+# Capability Spec: `incidencias` — frontend UX polish + backend RBAC + scope por rol
 
 **Capability**: `incidencias`
 **Project**: sistema-incidencias
-**Scope**: Frontend only. No backend changes. No Postman collection changes. All 12 endpoints of `IncidenciaController` (`sistemaincidencias/src/main/java/com/integrador/sistemaincidencias/incidencias/controller/IncidenciaController.java`) stay untouched.
+**Scope**: Frontend + Backend + Postman collection. Covers authenticated users on `/incidencias` and `/incidencias/:id`, the backend RBAC enforcement on `IncidenciaController` (listar scope + per-resource mutation scope), the 4 catalog controllers (`CategoriaController`, `AplicativoClienteController`, `EstadoProcesoController`, `EstadoAprobacionController`) relaxed to `validarAutenticado` for `listar`, the new `GET /api/usuarios/agentes-asignables` endpoint for non-admin dropdowns, the new `validarAutenticado` helper in `PermisoAdministracionService`, and the corresponding frontend cleanup that drops the prior `currentUserIsAdmin` catalog gate.
 
-This capability spec is the synced baseline for the `incidencias` capability after the `incidencias-phase2-3` change (sdd-archived). It documents the post-archive behavior of the `/incidencias` list and `/incidencias/:id` detail pages, including the 4 production bugs fixed, the 3 newly-wired service flows, the 3 newly-added dialog components, role-based UI gating, AbortController-driven cancellation, debounced text search, post-action toasts, sidebar dual-badge + specific icons, the historial timeline, and client-side table sorting.
+This capability spec is the synced baseline for the `incidencias` capability after **two** archived changes (`incidencias-phase2-3` + `incidencias-rbac-agente`); the archive history below records what each change contributed and which drifts were applied during archive.
 
-> **Drift notes applied during archive** (vs the original delta spec, see `openspec/changes/archive/incidencias-phase2-3/archive-report.md`):
+> **Archive history** (baseline evolution; each archive added/extended requirements on top of the prior baseline):
+>
+> - **`incidencias-phase2-3`** (2026-07-14, archived): seeded the baseline. **Frontend-only** — 15 functional requirements (B1–B4 production bug fixes, 3 new dialogs, `AbortController` cancellation, 300ms debounce, success toasts, role-based UI gating, sidebar timeline, table sort) + 8 non-functional requirements. Drifts **S1–S3** applied (empty-state copy `"—"` → `"Sin asignar"`, `detalle/index.tsx` LOC band relaxed from ~200 to ~400–850, `Field` primitive scoped to the 3 new dialogs only). See `openspec/changes/archive/incidencias-phase2-3/archive-report.md`.
+> - **`incidencias-rbac-agente`** (2026-07-14, archived): **backend RBAC** + public catalogs + AGENTE/USUARIO scope. Added **7 functional requirements** (R-Autenticado helper, R-Catalogos-Get relaxed, R-AgentesAsignables endpoint, R-Agente-Scope, R-Usuario-Scope, R-ValidarAlcance, R-Frontend-Gate + R-Postman sync) + **2 non-functional requirements** (filter validation unchanged, no latency regression). Drift **D1** applied (USUARIO scope override wording clarification — see below). See `openspec/changes/archive/incidencias-rbac-agente/archive-report.md`.
+
+> **Drift notes applied during archive — `incidencias-phase2-3`** (vs the original delta spec, see `openspec/changes/archive/incidencias-phase2-3/archive-report.md`):
 >
 > - **S1 (REQ-12 / Scenario "Unassigned renders dash")**: empty-state copy for `asignadoA === null` (or unresolvable assignee) updated from the literal em-dash `"—"` to the neutral Spanish string `"Sin asignar"`. Matches the actual implementation at `frontend/src/pages/incidencias/components/incidencias-table.tsx:291`. Functionally equivalent; the new copy is friendlier and matches the rest of the page's Spanish copy per NFR-3.
 > - **S2 (NFR-7 / Scenario "Page sizes come down")**: the target LOC for `pages/incidencias/detalle/index.tsx` is relaxed from `~200 LOC` to a relaxed band. The shipped file is **811 LOC** because wiring the 3 new dialogs (Editar, SubirAdjuntos, ConfirmarEliminar) + `DialogMode` discriminated union + toast pattern + `AbortController` on `cargarDetalle` + catalog loading + approval/revision/rejection cards cannot realistically fit inside a 200-LOC ceiling. **Design §10 explicitly accepted this deviation**: extracted dialogs carry ~1450 LOC elsewhere; `detalle/index.tsx` retains the wiring/coordination layer. Future refactors may revisit this; the relaxed NFR-7 here reflects actual behavior.
 > - **S3 (NFR-1 / Scenario "Field primitives are used")**: the `Field` / `FieldLabel` / `FieldDescription` / `FieldError` / `FieldGroup` primitive requirement is explicitly **scoped to the 3 new dialogs** (`EditarIncidenciaDialog`, `SubirAdjuntosDialog`) **only**. The pre-existing `nueva-incidencia-view.tsx` continues to use raw `<label>` + `<select>` + `<textarea>` markup — that legacy create form was **out of scope** per design §3.2 ("modern Field applied only to the 3 new dialogs in this change"). A follow-up change should migrate `nueva-incidencia-view.tsx` to the same `Field` primitive for full parity.
+
+> **Drift notes applied during archive — `incidencias-rbac-agente`** (vs the original delta spec, see `openspec/changes/archive/incidencias-rbac-agente/archive-report.md`):
 >
+> - **D1 (REQ "USUARIO solo lista incidencias creadas por él" / Scenario "USUARIO con query param propio no se overridea")**: wording updated to reflect the actual implementation. The original delta said "la regla de scope domina; el query param coincide y se acepta por consistencia, **no se cambia el resultado**". The shipped code (`IncidenciaController.java:82`) **does** force-overwrite `filtro.setCreadoPorUsuarioId(actual.getId())` for any USUARIO caller — same pattern as the AGENTE branch. The result is byte-for-byte identical when the USUARIO passes `?creadoPorUsuarioId=<self.id>` (since `actual.getId()` equals the query param value), but the literal "no overridea" wording could mislead a future reader. Scenario body reworded: "the controller force-overwrites with `actual.getId()`; when the USUARIO passes their own id the result is unchanged; when they pass a different id the override scopes them down to their own creations per the RBAC rule." Resolved per verify-report §Open questions #3 by intent.
+
 > **Role-name canonicalization**: per `sistemaincidencias/AGENTS.md` and the seed script, role codes are `ADMINISTRADOR`, `AGENTE`, `USUARIO`. All requirements below use these canonical names (not `ADMIN` shorthand).
 
 ## Purpose
@@ -267,6 +276,193 @@ The `Asignado` column in `incidencias-table.tsx` shall resolve `incidencia.asign
 #### Scenario: Service module exposes the 9 methods
 - THE SYSTEM shall export `incidentsService` with the nine members listed above. `npm run build` SHALL succeed with no TS errors related to method shape.
 
+---
+
+## Requirements added by `incidencias-rbac-agente` (archive 2026-07-14)
+
+These 7 functional requirements were merged into this baseline from the delta spec at `openspec/changes/archive/incidencias-rbac-agente/specs/incidencias/spec.md` (originally proposed in `proposal.md §3.1`–`§3.6`). They extend the backend RBAC enforcement (helper + catalog relaxation + new endpoint + per-role listar scope + per-resource mutation scope), the frontend cleanup that removes the prior `currentUserIsAdmin` catalog gate, and the Postman sync.
+
+### Requirement: Permiso genérico "usuario autenticado"
+
+`PermisoAdministracionService.java` shall expose a new `validarAutenticado(String authorizationHeader): Usuario` helper that resolves the bearer token via `AuthService.obtenerUsuarioActual(...)`, returns the `Usuario` entity, and does NOT impose any role-based restriction. Any token that survives `AuthService` validation (active user, non-expired JWT) passes. This helper is the replacement for `validarAdministrador` on any endpoint that should be reachable by all 3 roles.
+
+#### Scenario: cualquier rol autenticado pasa
+- GIVEN a valid JWT bearer token for a user with role `AGENTE`
+- WHEN `PermisoAdministracionService.validarAutenticado(header)` is invoked
+- THEN THE SYSTEM returns the `Usuario` entity without throwing `AccesoDenegadoException`.
+
+#### Scenario: token inválido lanza AutenticacionException
+- GIVEN a JWT that fails `JwtService.validarToken` (expired, malformed, revoked)
+- WHEN `validarAutenticado(header)` is invoked
+- THEN THE SYSTEM propagates `AutenticacionException` (handled by `JwtAuthenticationFilter` upstream as 401).
+
+### Requirement: Catálogos legibles por cualquier usuario autenticado (GET)
+
+Los 4 catálogos de solo-lectura (`categorias`, `aplicativos`, `estados-proceso`, `estados-aprobacion`) shall be reachable by any authenticated user, not only `ADMINISTRADOR`. `POST`/`PUT`/`DELETE` siguen siendo admin-only. The relaxation is implemented by swapping `validarAdministrador(token)` → `validarAutenticado(token)` inside the `listar` methods of the 4 catalog controllers.
+
+#### Scenario: AGENTE lista categorías
+- GIVEN a JWT for a user with role `AGENTE`
+- WHEN `GET /api/categorias` is called
+- THEN THE SYSTEM returns 200 with the array of `CategoriaResponse` (no 403).
+
+#### Scenario: USUARIO lista aplicativos
+- GIVEN a JWT for a user with role `USUARIO`
+- WHEN `GET /api/aplicativos` is called
+- THEN THE SYSTEM returns 200 with the array of `AplicativoClienteResponse`.
+
+#### Scenario: USUARIO lista estados de proceso
+- GIVEN a JWT for a user with role `USUARIO`
+- WHEN `GET /api/estados-proceso` is called
+- THEN THE SYSTEM returns 200 with the array.
+
+#### Scenario: USUARIO lista estados de aprobación
+- GIVEN a JWT for a user with role `USUARIO`
+- WHEN `GET /api/estados-aprobacion` is called
+- THEN THE SYSTEM returns 200 with the array.
+
+#### Scenario: AGENTE sigue sin poder crear categoría
+- GIVEN a JWT for `AGENTE`
+- WHEN `POST /api/categorias` is called
+- THEN THE SYSTEM returns 403 with `mensaje = "Solo el administrador puede realizar esta operacion"` (write remains admin-only).
+
+### Requirement: Endpoint de agentes asignables para no-administradores
+
+THE SYSTEM shall expose `GET /api/usuarios/agentes-asignables` returning `List<UsuarioResponse>` filtered to users whose `rol.codigo IN ('AGENTE','ADMINISTRADOR')` AND `activo = true`. The endpoint is reachable by any authenticated user (gate: `validarAutenticado`), NOT `validarAdministrador`. Existing `GET /api/usuarios` keeps its admin-only restriction unchanged.
+
+#### Scenario: AGENTE ve solo pares asignables
+- GIVEN a JWT for `AGENTE` and a database with `USUARIO maria` + `AGENTE jose` + `AGENTE pedro` + `ADMINISTRADOR ana`
+- WHEN `GET /api/usuarios/agentes-asignables` is called
+- THEN THE SYSTEM returns `200` with `[{jose}, {pedro}, {ana}]` (3 entries — AGENTES + ADMINs, activos).
+
+#### Scenario: USUARIO también puede listar agentes para asignar
+- GIVEN a JWT for `USUARIO`
+- WHEN `GET /api/usuarios/agentes-asignables` is called
+- THEN THE SYSTEM returns 200 with the same filtered list.
+
+#### Scenario: inactivos excluidos
+- GIVEN a database where one `AGENTE` has `activo = false`
+- WHEN `GET /api/usuarios/agentes-asignables` is called
+- THEN THE SYSTEM excludes that user from the response.
+
+#### Scenario: GET /api/usuarios sigue siendo admin-only
+- GIVEN a JWT for `AGENTE`
+- WHEN `GET /api/usuarios` (the original endpoint) is called
+- THEN THE SYSTEM returns 403.
+
+### Requirement: AGENTE solo lista incidencias asignadas a él
+
+`IncidenciaController.listar` shall inject the calling `Usuario` from the bearer token before building the `IncidenciaFiltro`. When the caller's role is `AGENTE`, the `asignadoA` filter is forced to `currentUser.getId()` regardless of (and overriding) any `?asignadoA=` query param. ADMINISTRADOR passes the query param through unchanged. USUARIO behavior covered by separate requirement (below).
+
+#### Scenario: AGENTE ve solo las suyas aunque pase asignadoA=otro
+- GIVEN a JWT for `AGENTE jose` and a database with 3 incidencias: 1 asignada a `jose`, 1 asignada a `AGENTE pedro`, 1 sin asignar
+- WHEN `GET /api/incidencias?asignadoA={pedro-id}` is called with jose's token
+- THEN THE SYSTEM returns 200 with only the 1 incidencia de `jose` (query param ignored, scope forzado).
+
+#### Scenario: ADMIN pasa el filtro libre
+- GIVEN a JWT for `ADMINISTRADOR`
+- WHEN `GET /api/incidencias?asignadoA={pedro-id}` is called
+- THEN THE SYSTEM returns the incidencias de `pedro`.
+
+#### Scenario: ADMIN sin filtro ve todas
+- GIVEN a JWT for `ADMINISTRADOR` and a database with 25+ incidencias
+- WHEN `GET /api/incidencias` is called with no filters
+- THEN THE SYSTEM returns the full paginated list.
+
+#### Scenario: AGENTE sin filtro ve solo las suyas
+- GIVEN a JWT for `AGENTE jose` and a database with 25+ incidencias of which 4 assigned to jose
+- WHEN `GET /api/incidencias` is called with no filters
+- THEN THE SYSTEM returns only the 4 incidencias assigned to `jose`.
+
+### Requirement: USUARIO solo lista incidencias creadas por él
+
+`IncidenciaFiltro` shall gain a new nullable `creadoPorUsuarioId` field. `IncidenciaController.listar` shall map the caller's role to that filter when role is `USUARIO`: filter forced to `currentUser.getId()`. AGENTE keeps the AGENTE-scope rule; ADMINISTRADOR sees all. The DAO WHERE builder shall include `creado_por_usuario_id = ?` when the filter is non-null.
+
+#### Scenario: USUARIO ve solo las creadas por él
+- GIVEN a JWT for `USUARIO maria` and a database with 3 incidencias: 1 creada por `maria`, 1 creada por `USUARIO juan`, 1 creada por `ADMINISTRADOR ana`
+- WHEN `GET /api/incidencias` is called with maria's token
+- THEN THE SYSTEM returns only the 1 incidencia creada por maria.
+
+#### Scenario: USUARIO con query param propio produce resultado idéntico
+- GIVEN a JWT for `USUARIO maria`
+- WHEN `GET /api/incidencias?creadoPorUsuarioId={maria-id}` is called
+- THEN THE SYSTEM returns the same as sin filtro. (Drift D1 — the controller force-overwrites with `actual.getId()`; when the USUARIO passes their own id the result is unchanged; when they pass a different id the override scopes them down to their own creations per the RBAC rule.)
+
+### Requirement: AGENTE/USUARIO solo operan sobre incidencias en su alcance
+
+`IncidenciaService` shall expose a `validarAlcance(Usuario actual, Incidencia target)` rule. The rule applies to every state-changing method (`actualizar`, `actualizarConArchivos`, `cambiarEstado`, `aprobar`, `rechazar`, `agregarComentario`, `agregarAdjunto`, `agregarAdjuntos`) and to the read `obtener`. ADMINISTRADOR bypasses the rule. AGENTE passes only when `target.asignadoA == actual.id`. USUARIO passes only when `target.creadoPorUsuarioId == actual.id` AND only for `agregarComentario` and `agregarAdjunto(s)`; USUARIO may NOT `actualizar`, `cambiarEstado`, `aprobar`, `rechazar`, or `eliminar`.
+
+#### Scenario: AGENTE edita una incidencia suya
+- GIVEN a JWT for `AGENTE jose` and an incidencia assigned to jose
+- WHEN `PUT /api/incidencias/{id}` is called
+- THEN THE SYSTEM returns 200 with the updated resource.
+
+#### Scenario: AGENTE recibe 403 al editar una incidencia de otro
+- GIVEN a JWT for `AGENTE jose` and an incidencia assigned to `AGENTE pedro`
+- WHEN `PUT /api/incidencias/{id}` is called
+- THEN THE SYSTEM returns 403 with `mensaje = "Solo puedes modificar incidencias asignadas a ti"`.
+
+#### Scenario: AGENTE cambia estado de una incidencia suya
+- GIVEN a JWT for `AGENTE jose` and an incidencia assigned to jose with process state `EN_PROCESO`
+- WHEN `PATCH /api/incidencias/{id}/estado` is called
+- THEN THE SYSTEM returns 200 with the transitioned state.
+
+#### Scenario: USUARIO comenta en una incidencia suya
+- GIVEN a JWT for `USUARIO maria` and an incidencia created by maria
+- WHEN `POST /api/incidencias/{id}/comentarios` is called
+- THEN THE SYSTEM returns 201 with the new comentario.
+
+#### Scenario: USUARIO adjunta evidencia en una incidencia suya
+- GIVEN a JWT for `USUARIO maria` and an incidencia created by maria
+- WHEN `POST /api/incidencias/{id}/adjuntos` (multipart or JSON) is called
+- THEN THE SYSTEM returns 201 with the new adjunto(s).
+
+#### Scenario: USUARIO no puede cambiar estado
+- GIVEN a JWT for `USUARIO maria`
+- WHEN `PATCH /api/incidencias/{id}/estado` is called
+- THEN THE SYSTEM returns 403.
+
+#### Scenario: USUARIO no puede eliminar
+- GIVEN a JWT for `USUARIO maria`
+- WHEN `DELETE /api/incidencias/{id}` is called
+- THEN THE SYSTEM returns 403.
+
+#### Scenario: solo ADMINISTRADOR puede eliminar
+- GIVEN a JWT for `USUARIO` or `AGENTE`
+- WHEN `DELETE /api/incidencias/{id}` is called
+- THEN THE SYSTEM returns 403. (ADMINISTRADOR passes — required to align with the existing UI gate in `incidencias-table.tsx:324`.)
+
+### Requirement: Frontend retira gate temporal y consume agentes-asignables
+
+`frontend/src/pages/incidencias/index.tsx` shall remove the `currentUserIsAdmin` gate introduced in the prior bug-fix patch. `loadCatalogos()` shall call all 5 catalog endpoints unconditionally. The `usuarios` catalog shall be loaded via the new `usuariosService.listarAgentesAsignables()` method instead of the admin-gated `listar()`. `nueva-incidencia-view.tsx` and `editar-incidencia-dialog.tsx` shall switch their assignment dropdowns to the same new method.
+
+#### Scenario: AGENTE carga catálogos al entrar a /incidencias
+- GIVEN a logged-in AGENTE
+- WHEN the `/incidencias` page mounts
+- THEN THE SYSTEM issues `GET /api/categorias`, `/api/aplicativos`, `/api/estados-proceso`, `/api/estados-aprobacion`, `/api/usuarios/agentes-asignables` — all 5 return 200 — and the catalog state arrays populate normally (no `—` badges, no empty filters).
+
+#### Scenario: USUARIO también carga catálogos
+- GIVEN a logged-in USUARIO
+- WHEN the `/incidencias` page mounts
+- THEN THE SYSTEM receives 200 for all 5 catalog fetches.
+
+#### Scenario: el frontend ya no llama al endpoint admin-only
+- THE SYSTEM shall not call `GET /api/usuarios` from `pages/incidencias/index.tsx` (it remains the admin user-management page's exclusive caller). Grep returns zero matches other than in `pages/usuarios/`.
+
+#### Scenario: dropdown de asignación se llena desde agentes-asignables
+- GIVEN a logged-in AGENTE on the "Nueva Incidencia" form
+- WHEN the assignment dropdown opens
+- THEN THE SYSTEM shows AGENTES and ADMINs (active), excludes USUARIOs. Source: `GET /api/usuarios/agentes-asignables`.
+
+### Requirement: Postman collection sincronizada
+
+`sistemaincidencias/postman/SistemaIncidencias.postman_collection.json` shall document the new endpoint with method, path, auth requirement ("authenticated"), and a sample response shape. The relaxation of catalog GETs to "authenticated" (no longer admin-only) shall be reflected in each catalog entry's auth note.
+
+#### Scenario: nuevo endpoint en Postman
+- THE SYSTEM shall contain a Postman folder entry named "Usuarios - agentes asignables" (or equivalent) with `GET /api/usuarios/agentes-asignables`, marked as auth required, with an example 200 response body.
+
+#### Scenario: catálogos reflejan el nuevo rol mínimo
+- THE SYSTEM shall contain `GET /api/categorias`, `/api/aplicativos`, `/api/estados-proceso`, `/api/estados-aprobacion` marked as auth required (no longer "ADMINISTRADOR only").
+
 ## Non-functional Requirements
 
 ### Requirement: Modern shadcn Field en los diálogos nuevos (Field migration restricted to new dialogs)
@@ -337,24 +533,61 @@ No new dependencies shall be added to `frontend/package.json` for this capabilit
 #### Scenario: package.json untouched by this capability
 - THE SYSTEM shall not modify `frontend/package.json` or `frontend/package-lock.json`. `npm run build` SHALL pass without requiring any install step.
 
+---
+
+## Non-functional Requirements added by `incidencias-rbac-agente` (archive 2026-07-14)
+
+These 2 non-functional requirements were merged into this baseline from the delta spec at `openspec/changes/archive/incidencias-rbac-agente/specs/incidencias/spec.md`.
+
+### Requirement: Validación de inputs del filtro no se relaja
+
+`IncidenciaFiltro` accepts the new optional `creadoPorUsuarioId` UUID field. Bean validation on `IncidenciaFiltro` is not added (the field is a UUID or null) — input validation remains equivalent to the existing fields. Backend does not regress validation on the existing 9 filter fields.
+
+#### Scenario: filtro inválido no rompe el WHERE builder
+- WHEN a malformed `creadoPorUsuarioId` is supplied (not a UUID)
+- THEN THE SYSTEM returns 400 from Spring's parameter parsing, not from business logic.
+
+### Requirement: Performance no degrada en listar
+
+The forced `asignadoA` / `creadoPorUsuarioId` filter on listar adds at most one extra equality predicate to the existing WHERE. The existing `idx_asignado_a` (or equivalent) used by the optional-filter path is reused. No new indexes required for this change.
+
+#### Scenario: AGENTE lista sin regresión de latencia
+- GIVEN the same data and filters used today
+- WHEN the role-based filter is applied
+- THEN THE SYSTEM responds in a time within the same order of magnitude (no extra round-trip; no new full-scan).
+
 ## Out of scope (explicit non-requirements)
 
 The following are **explicitly NOT** required by this capability. Any implementation work for these belongs to a separate change.
 
-- **Backend authorization on `IncidenciaController` (B8)**: controller currently exposes all 12 endpoints to any authenticated user. UI-side role gating is a UX guard only, not authorization.
+- **Backend authorization on `IncidenciaController` (B8)** *(remaining after `incidencias-rbac-agente` archive)*: the 12 endpoints now enforce per-role listar scope + per-resource mutation scope (`validarAlcance`) per the `incidencias-rbac-agente` requirements added above. **Deleted B8**: B8's premise was "controller currently exposes all 12 endpoints to any authenticated user"; that premise no longer holds. Any further backend authorization work (e.g. finer-grained field-level permissions, time-bound role elevation) is a separate change.
 - **Backend PUT validation against estado terminal / rechazada (B9)**: PUT against an incidencia already in a terminal or rejected state succeeds today; this capability does not fix that.
 - **Notificaciones reales**: backend writes to the `notificaciones` table on key transitions; the frontend does not render those notifications in this capability.
 - **`DELETE /api/incidencias/{id}/adjuntos/{adjuntoId}` individual adjunto removal**: no backend endpoint exists.
 - **`motivoRechazo` field added to backend `IncidenciaResponse`**: contract change, out of scope; the rejection note stays sourced from `historial`.
 - **Editar / eliminar comentario propio**: only append is wired; edit/delete own comment is a future change.
-- **Field migration of `nueva-incidencia-view.tsx` to the modern shadcn `Field` primitive**: the legacy create form keeps its raw `<label>` + `<select>` markup in this change (see NFR-1 / drift S3 + design §3.2). Follow-up cleanup is welcome but not part of this capability.
+- **Field migration of `nueva-incidencia-view.tsx` to the modern shadcn `Field` primitive**: the legacy create form keeps its raw `<label>` + `<select>` markup (see NFR-1 / drift S3 + design §3.2). Follow-up cleanup is welcome but not part of this capability.
 - **Self-profile / change-own-password**: separate change.
 - **Roles CRUD UI**: separate change.
+- **`DELETE /api/usuarios/{id}` (RF-33)**: backend endpoint not implemented; out of scope.
+- **`DELETE /api/categorias/{id}`, `/api/estados-proceso/{id}`, `/api/estados-aprobacion/{id}`**: backend endpoints not implemented; out of scope (added by `incidencias-rbac-agente` archive).
+- **USUARIO mutation scope beyond `agregarComentario` + `agregarAdjunto(s)`**: per the rbac archive, USUARIO is restricted to comment + attach on incidencias they created. Extending USUARIO mutations (e.g. letting them re-categorize their own incidencia) is a follow-up change (added by `incidencias-rbac-agente` archive).
+- **Reportes + export PDF/Excel (RF-41..44)**: separate change (added by `incidencias-rbac-agente` archive).
+- **Dashboard real con `GET /api/dashboard` (RF-06..11)**: separate change (added by `incidencias-rbac-agente` archive).
+- **Configuración UI (RF-49..50)**: separate change (added by `incidencias-rbac-agente` archive).
+- **Demo login fix (`POST /api/auth/demo`)**: user explicitly excluded from this change (added by `incidencias-rbac-agente` archive).
+- **OpenAPI / Swagger (RNF-18)**: separate change (added by `incidencias-rbac-agente` archive).
+- **Breadcrumb (RF-46)**: separate change (added by `incidencias-rbac-agente` archive).
+- **Migration of `frontend/src/pages/incidencias/detalle/index.tsx` to consume `agentes-asignables`**: the detail page still calls the admin-only `usuariosService.listar()` at `detalle/index.tsx:158` and silently swallows the 403 via `try/catch {}`. AGENTE/USUARIO users landing on a detail page experience no error toast today. Migrating that page to the new endpoint and polishing the 403-state UI is a follow-up change — explicitly out of scope per `proposal.md §5` and `design.md §4` (added by `incidencias-rbac-agente` archive).
+- **New SQL indexes for the added predicates**: the `creado_por_usuario_id` and `asignado_a` filters hit already-indexed columns; no new indexes added (added by `incidencias-rbac-agente` archive).
 
 ## Acceptance criteria
 
-- All 15 functional requirements + 8 non-functional requirements are met (23/23 PASS per verify-report).
-- `npm run lint` passes with zero errors.
-- `npm run build` passes with zero errors.
-- Manual smoke walkthrough against the running backend exercises: create with adjuntos (B1), no `console.log` (B2), motivo from historial (B3), move to `FINALIZADA` (B4), edit, upload more adjuntos, delete, plus role-based UI verification for `ADMINISTRADOR`, `AGENTE`, `USUARIO`.
-- All 29 smoke items in `verify-report.md` (lines 67-95 of the archived copy) are walked by a maintainer against the live backend. CI environment is `deferred-no-backend`.
+- All 15 functional + 8 non-functional requirements from `incidencias-phase2-3` are met (23/23 PASS per the phase2-3 verify-report).
+- All 7 functional + 2 non-functional requirements added by `incidencias-rbac-agente` are met (9/9 PASS per the rbac verify-report).
+- **Combined baseline**: 22 functional requirements + 10 non-functional requirements (32/32 PASS across the two verify-reports).
+- `cd sistemaincidencias && ./mvnw compile` passes with no new errors (PASS per rbac verify-report; net-new clean).
+- `cd frontend && npm run lint` passes net-new (3 pre-existing errors from PR #9 `f26424a` remain out of scope per rbac verify-report §Regressions).
+- `cd frontend && npm run build` passes net-new (4 pre-existing errors from PR #9 `f26424a` remain out of scope per rbac verify-report §Regressions).
+- Manual smoke walkthrough against the running backend exercises: the full `incidencias-phase2-3` smoke checklist (create with adjuntos (B1), no `console.log` (B2), motivo from historial (B3), move to `FINALIZADA` (B4), edit, upload more adjuntos, delete, role-based UI verification for `ADMINISTRADOR`/`AGENTE`/`USUARIO`) **plus** the `incidencias-rbac-agente` scenarios (5 catalog GETs at AGENTE+USUARIO return 200, 4 `agentes-asignables` scenarios, 4 AGENTE-list scope scenarios, 2 USUARIO-list scope scenarios, 8 `validarAlcance` mutation scope scenarios, 4 frontend cleanup scenarios, 2 Postman sync scenarios). CI environment is `deferred-no-backend`; a maintainer walks both checklists against the live Spring Boot instance.
+- Pre-existing TS/lint errors in master (introduced by PR #9 `f26424a`, `incidencias-table.tsx:309` and `index.tsx:65-66`) are unrelated to this baseline and remain out of scope.
