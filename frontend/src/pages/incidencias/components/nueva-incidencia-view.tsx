@@ -28,8 +28,6 @@ const PRIORIDADES: { value: Prioridad; label: string }[] = [
   { value: "CRITICA", label: "Crítica" },
 ];
 
-const AGENT_ROLE_CODES = ["AGENTE", "ADMINISTRADOR"];
-
 type FormState = {
   titulo: string;
   descripcion: string;
@@ -88,12 +86,7 @@ export function NuevaIncidenciaView({
   }, [categoriasDelCliente, form.categoriaId]);
 
   const usuariosAsignables = useMemo(
-    () =>
-      usuarios
-        .filter((usuario) => usuario.activo)
-        .filter((usuario) =>
-          AGENT_ROLE_CODES.includes(usuario.rol?.codigo ?? ""),
-        ),
+    () => usuarios.filter((usuario) => usuario.activo),
     [usuarios],
   );
 

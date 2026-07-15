@@ -85,10 +85,8 @@ export function IncidenciasPage() {
         estadosAprobacionService.listar(),
         categoriasService.listar(),
         aplicativosService.listar(),
+        usuariosService.listarAgentesAsignables(),
       ]
-      if (currentUserIsAdmin) {
-        catalogPromises.push(usuariosService.listar())
-      }
 
       const [procesoR, aprobacionR, categoriasR, aplicativosR, usuariosR] =
         await Promise.allSettled(catalogPromises)
@@ -107,7 +105,7 @@ export function IncidenciasPage() {
       if (aplicativosR.status === "fulfilled") {
         setAplicativos(aplicativosR.value as AplicativoCliente[])
       }
-      if (usuariosR && usuariosR.status === "fulfilled") {
+      if (usuariosR.status === "fulfilled") {
         setUsuarios(usuariosR.value as Usuario[])
       }
 
@@ -116,7 +114,7 @@ export function IncidenciasPage() {
         aprobacionR,
         categoriasR,
         aplicativosR,
-        ...(usuariosR ? [usuariosR] : []),
+        usuariosR,
       ]
       const failedReasons = results
         .filter((r): r is PromiseRejectedResult => r.status === "rejected")
@@ -139,7 +137,7 @@ export function IncidenciasPage() {
     return () => {
       cancelled = true
     }
-  }, [currentUserIsAdmin])
+  }, [])
 
   const recargarListado = useCallback(() => {
     setPage(0)
