@@ -15,6 +15,8 @@ import com.integrador.sistemaincidencias.incidencias.model.Prioridad;
 import com.integrador.sistemaincidencias.incidencias.service.IncidenciaService;
 import com.integrador.sistemaincidencias.shared.pagination.PageRequest;
 import com.integrador.sistemaincidencias.shared.pagination.PageResult;
+import com.integrador.sistemaincidencias.usuarios.model.Usuario;
+import com.integrador.sistemaincidencias.auth.service.AuthService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
@@ -44,9 +46,11 @@ import org.springframework.web.multipart.MultipartFile;
 public class IncidenciaController {
 
     private final IncidenciaService incidenciaService;
+    private final AuthService authService;
 
     @GetMapping
     public ResponseEntity<PageResult<IncidenciaResponse>> listar(
+            @RequestHeader("Authorization") String token,
             @RequestParam(required = false) String texto,
             @RequestParam(required = false) UUID clienteId,
             @RequestParam(required = false) UUID estadoProcesoId,
@@ -70,6 +74,14 @@ public class IncidenciaController {
                 .desde(desde)
                 .hasta(hasta)
                 .build();
+        Usuario actual = authService.obtenerUsuarioActual(token);
+        if (!actual.getRol().esAdministrador()) {
+            if (actual.getRol().esAgente()) {
+                filtro.setAsignadoA(actual.getId());
+            } else {
+                filtro.setCreadoPorUsuarioId(actual.getId());
+            }
+        }
         return ResponseEntity.ok(incidenciaService.listar(filtro, PageRequest.of(page, size)));
     }
 
