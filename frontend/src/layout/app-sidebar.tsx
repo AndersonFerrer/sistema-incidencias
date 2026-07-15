@@ -3,15 +3,19 @@ import {
   AlertTriangle,
   BarChart3,
   Briefcase,
+  ChevronsUpDown,
   GitBranch,
   LayoutGrid,
+  LogOut,
   Shield,
   Tags,
+  UserRound,
   Users,
 } from "lucide-react"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAuthStore } from "@/store/auth-store"
+import { useState } from "react"
 
 type SidebarItem = {
   label: string
@@ -90,6 +94,7 @@ function SidebarSection({
 
 export function AppSidebar() {
   const user = useAuthStore((state) => state.user)
+  const logout = useAuthStore((state) => state.logout)
   const displayName = user?.nombre ?? "Carlos Méndez"
   const role = user?.rol ?? "Admin"
   const initials = displayName
@@ -98,6 +103,8 @@ export function AppSidebar() {
     .join("")
     .slice(0, 2)
     .toUpperCase()
+
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
     <aside className="fixed inset-y-0 left-0 flex w-64 flex-col overflow-hidden border-r border-slate-800 bg-slate-950 text-white">
@@ -116,16 +123,59 @@ export function AppSidebar() {
         <SidebarSection title="Configuración" items={configuration} />
       </div>
 
-      <div className="flex h-[60px] items-center gap-2.5 border-t border-slate-800 px-4">
-        <Avatar className="size-7 bg-slate-800" size="default">
-          <AvatarFallback className="bg-slate-800 text-[11px] font-semibold text-white">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <div className="min-w-0">
-          <p className="truncate text-xs font-semibold">{displayName}</p>
-          <p className="text-[11px] text-slate-500">{role}</p>
-        </div>
+      <div className="relative border-t border-slate-800 px-2 py-2">
+        <button
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          aria-label={`Menu de ${displayName}`}
+          onClick={() => setMenuOpen((prev) => !prev)}
+          className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-slate-800"
+        >
+          <Avatar className="size-7 bg-slate-800" size="default">
+            <AvatarFallback className="bg-slate-800 text-[11px] font-semibold text-white">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-semibold">{displayName}</p>
+            <p className="text-[11px] text-slate-500">{role}</p>
+          </div>
+          <ChevronsUpDown
+            aria-hidden="true"
+            className="size-3.5 text-slate-500"
+          />
+        </button>
+
+        {menuOpen ? (
+          <div
+            role="menu"
+            aria-label="Menu del usuario"
+            className="absolute bottom-[calc(100%-0.25rem)] left-2 right-2 z-10 flex flex-col gap-0.5 overflow-hidden rounded-md border border-slate-800 bg-slate-900 p-1 shadow-xl shadow-black/40"
+          >
+            <Link
+              to="/perfil"
+              role="menuitem"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center gap-2 rounded px-2 py-1.5 text-xs text-slate-200 transition-colors hover:bg-slate-800 hover:text-white"
+            >
+              <UserRound aria-hidden="true" className="size-3.5" />
+              <span>Mi perfil</span>
+            </Link>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false)
+                logout()
+              }}
+              className="flex items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-slate-200 transition-colors hover:bg-slate-800 hover:text-white"
+            >
+              <LogOut aria-hidden="true" className="size-3.5" />
+              <span>Cerrar sesion</span>
+            </button>
+          </div>
+        ) : null}
       </div>
     </aside>
   )
