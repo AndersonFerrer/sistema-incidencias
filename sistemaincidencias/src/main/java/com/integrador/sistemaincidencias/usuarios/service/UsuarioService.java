@@ -4,7 +4,9 @@ import com.integrador.sistemaincidencias.shared.exception.RecursoNoEncontradoExc
 import com.integrador.sistemaincidencias.shared.exception.ReglaNegocioException;
 import com.integrador.sistemaincidencias.usuarios.dao.RolDao;
 import com.integrador.sistemaincidencias.usuarios.dao.UsuarioDao;
+import com.integrador.sistemaincidencias.usuarios.dto.ActualizarPerfilRequest;
 import com.integrador.sistemaincidencias.usuarios.dto.ActualizarUsuarioRequest;
+import com.integrador.sistemaincidencias.usuarios.dto.CambiarPasswordPropiaRequest;
 import com.integrador.sistemaincidencias.usuarios.dto.CambiarPasswordRequest;
 import com.integrador.sistemaincidencias.usuarios.dto.CrearUsuarioRequest;
 import com.integrador.sistemaincidencias.usuarios.dto.UsuarioResponse;
@@ -107,6 +109,58 @@ public class UsuarioService {
         buscarUsuario(id);
         usuarioDao.cambiarActivo(id, activo);
         return usuarioDtoMapper.toResponse(buscarUsuario(id));
+    }
+
+    /**
+     * Reads the authenticated user's profile. Any active role may call this.
+     */
+    public UsuarioResponse obtenerPerfil(String authorizationHeader) {
+        Usuario actual = permisoAdministracionService.validarAutenticado(authorizationHeader);
+        return usuarioDtoMapper.toResponse(buscarUsuario(actual.getId()));
+    }
+
+    /**
+     * Updates only self-editable fields (nombre + avatarUrl). Email, role, and
+     * activo cannot be changed through this route.
+     */
+    public UsuarioResponse actualizarPerfil(
+            String authorizationHeader,
+            ActualizarPerfilRequest request
+    ) {
+        Usuario actual = permisoAdministracionService.validarAutenticado(authorizationHeader);
+        String nombre = request.getNombre().trim();
+        String avatar = limpiar(request.getAvatarUrl());
+        usuarioDao.actualizarPerfil(actual.getId(), nombre, avatar);
+        return usuarioDtoMapper.toResponse(buscarUsuario(actual.getId()));
+    }
+
+    /**
+     * Verifies the user's current password and replaces the stored hash with a
+     * fresh BCrypt of the new password. Returns 204; throws on mismatch.
+     */
+    public void cambiarPasswordPropia(
+            String authorizationHeader,
+            CambiarPasswordPropiaRequest request
+    ) {
+        Usuario actual = permisoAdministracionService.validarAutenticado(authorizationHeader);
+        Usuario recargado = buscarUsuario(actual.getId());
+        if (!passwordEncoder.matches(request.getCurrentPassword(), recargado.getPasswordHash())) {
+            throw new ReglaNegocioException("La contraseña actual no coincide");
+        }
+        usuarioDao.cambiarPassword(recargado.getId(), passwordEncoder.encode(request.getNewPassword()));
+    }
+
+    /**
+     * ADMIN-only soft delete (activo=false). Refuses to soft-delete the
+     * authenticated administrator's own row.
+     */
+    public void eliminar(String authorizationHeader, UUID id) {
+        Usuario administrador = permisoAdministracionService.validarAdministrador(authorizationHeader);
+        if (administrador.getId().equals(id)) {
+            throw new ReglaNegocioException("No puedes eliminar tu propio usuario administrador");
+        }
+        buscarUsuario(id);
+        usuarioDao.cambiarActivo(id, false);
     }
 
     private Usuario buscarUsuario(UUID id) {
