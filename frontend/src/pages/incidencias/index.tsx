@@ -80,48 +80,66 @@ export function IncidenciasPage() {
     async function loadCatalogos() {
       setIsLoadingCatalogos(true)
 
-      try {
-        const [
-          procesoResponse,
-          aprobacionResponse,
-          categoriasResponse,
-          aplicativosResponse,
-          usuariosResponse,
-        ] = await Promise.all([
-          estadosProcesoService.listar(),
-          estadosAprobacionService.listar(),
-          categoriasService.listar(),
-          aplicativosService.listar(),
-          usuariosService.listar(),
-        ])
+      const catalogPromises: Promise<unknown>[] = [
+        estadosProcesoService.listar(),
+        estadosAprobacionService.listar(),
+        categoriasService.listar(),
+        aplicativosService.listar(),
+      ]
+      if (currentUserIsAdmin) {
+        catalogPromises.push(usuariosService.listar())
+      }
 
-        if (cancelled) return
+      const [procesoR, aprobacionR, categoriasR, aplicativosR, usuariosR] =
+        await Promise.allSettled(catalogPromises)
 
-        setEstadosProceso(procesoResponse)
-        setEstadosAprobacion(aprobacionResponse)
-        setCategorias(categoriasResponse)
-        setAplicativos(aplicativosResponse)
-        setUsuarios(usuariosResponse)
-      } catch (err) {
-        if (cancelled) return
+      if (cancelled) return
+
+      if (procesoR.status === "fulfilled") {
+        setEstadosProceso(procesoR.value as EstadoProceso[])
+      }
+      if (aprobacionR.status === "fulfilled") {
+        setEstadosAprobacion(aprobacionR.value as EstadoAprobacion[])
+      }
+      if (categoriasR.status === "fulfilled") {
+        setCategorias(categoriasR.value as Categoria[])
+      }
+      if (aplicativosR.status === "fulfilled") {
+        setAplicativos(aplicativosR.value as AplicativoCliente[])
+      }
+      if (usuariosR && usuariosR.status === "fulfilled") {
+        setUsuarios(usuariosR.value as Usuario[])
+      }
+
+      const results = [
+        procesoR,
+        aprobacionR,
+        categoriasR,
+        aplicativosR,
+        ...(usuariosR ? [usuariosR] : []),
+      ]
+      const failedReasons = results
+        .filter((r): r is PromiseRejectedResult => r.status === "rejected")
+        .map((r) => r.reason)
+
+      if (failedReasons.length > 0) {
+        const first = failedReasons[0]
         setError(
-          err instanceof Error
-            ? err.message
+          first instanceof Error
+            ? first.message
             : "No se pudieron cargar los catálogos."
         )
-      } finally {
-        if (!cancelled) {
-          setIsLoadingCatalogos(false)
-        }
       }
+
+      setIsLoadingCatalogos(false)
     }
 
-    loadCatalogos()
+    void loadCatalogos()
 
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [currentUserIsAdmin])
 
   const recargarListado = useCallback(() => {
     setPage(0)
