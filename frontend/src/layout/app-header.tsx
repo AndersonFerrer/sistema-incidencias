@@ -58,29 +58,28 @@ export function AppHeader() {
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="relative">
-          <button
-            className="relative flex size-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
-            type="button"
-            aria-label="Notificaciones"
-            aria-expanded={bellOpen}
-            aria-haspopup="dialog"
-            onClick={() => setBellOpen((prev) => !prev)}
-          >
-            <Bell aria-hidden="true" className="size-4" />
-            {badgeText ? (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
-                {badgeText}
-              </span>
-            ) : null}
-          </button>
-
-          <NotificationDropdown
-            open={bellOpen}
-            onOpenChange={setBellOpen}
-            onCountChanged={refreshCount}
-          />
-        </div>
+        <NotificationDropdown
+          trigger={
+            <button
+              className="relative flex size-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+              type="button"
+              aria-label="Notificaciones"
+              aria-expanded={bellOpen}
+              aria-haspopup="dialog"
+              onClick={() => setBellOpen((prev) => !prev)}
+            >
+              <Bell aria-hidden="true" className="size-4" />
+              {badgeText ? (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+                  {badgeText}
+                </span>
+              ) : null}
+            </button>
+          }
+          open={bellOpen}
+          onOpenChange={setBellOpen}
+          onCountChanged={refreshCount}
+        />
 
         <div className="h-6 w-px bg-slate-200" />
 

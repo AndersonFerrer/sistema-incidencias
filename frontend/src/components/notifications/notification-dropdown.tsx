@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 
 import { ApiError } from "@/lib/http"
 import { cn } from "@/lib/utils"
@@ -8,14 +8,17 @@ import type { Notificacion } from "@/services/notificaciones-service"
 
 type NotificationDropdownProps = {
   /**
+   * Elemento disparador (boton bell con su badge). Se renderiza dentro del
+   * containerRef para que el listener de click-outside NO lo considere "afuera"
+   * y dispare onOpenChange(false) ANTES del onClick del bell — eso era la
+   * condicion de carrera que impedia que el dropdown se abriera.
+   */
+  trigger: ReactNode
+  /**
    * Triggered cuando el conteo de no-leidas puede haber cambiado fuera del
    * dropdown (p. ej. tras marcar como leida desde el dropdown mismo).
    */
   onCountChanged?: () => void
-  /**
-   * Si se provee, se renderiza el boton bell con su badge; si es `null`
-   * el componente solo renderiza el panel (uso interno / testing).
-   */
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -45,6 +48,7 @@ function formatRelativo(value: string): string {
 }
 
 export function NotificationDropdown({
+  trigger,
   onCountChanged,
   open,
   onOpenChange,
@@ -152,6 +156,7 @@ export function NotificationDropdown({
 
   return (
     <div ref={containerRef} className="relative">
+      {trigger}
       {open ? (
         <div
           aria-live="polite"
