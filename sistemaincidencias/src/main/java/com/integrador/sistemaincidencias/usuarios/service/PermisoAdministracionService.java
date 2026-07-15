@@ -19,4 +19,8 @@ public class PermisoAdministracionService {
         }
         return usuario;
     }
+
+    public Usuario validarAutenticado(String authorizationHeader) {
+        return authService.obtenerUsuarioActual(authorizationHeader);
+    }
 }

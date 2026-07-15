@@ -33,7 +33,7 @@ public class AplicativoClienteController {
     public ResponseEntity<List<AplicativoClienteResponse>> listar(
             @RequestHeader("Authorization") String token
     ) {
-        permisoAdministracionService.validarAdministrador(token);
+        permisoAdministracionService.validarAutenticado(token);
         return ResponseEntity.ok(aplicativoClienteService.listar());
     }
 
