@@ -311,18 +311,25 @@ public class IncidenciaService {
                 .build();
         Comentario creado = comentarioDao.insertar(comentario);
         registrarHistorial(incidenciaId, usuario.getId(), "COMENTARIO_AGREGADO", null, null, "Comentario agregado");
-        // Hook T6 RF-37: notifica al asignado (no al autor del comentario).
-        // Si asignadoA == null, no hay destinatario valido (incidencia sin responsable).
-        if (incidencia.getAsignadoA() != null) {
-            String preview = previewComentario(request.getContenido());
-            notificacionService.crearParaUsuario(
-                    incidencia.getAsignadoA(),
-                    usuario.getId(),
-                    NotificacionTipo.INCIDENCIA_COMENTARIO,
-                    incidenciaId,
-                    "Nuevo comentario en " + incidencia.getCodigo() + ": \"" + preview + "\"",
-                    null);
-        }
+        // Hook T6 RF-37: notifica al asignado y al creador (excluyendo al autor).
+        // La deduplicacion y el auto-event guard los aplica crearParaUsuario.
+        // Si asignadoA == creadoPorUsuarioId == null, no hay destinatario valido.
+        String preview = previewComentario(request.getContenido());
+        String titulo = "Nuevo comentario en " + incidencia.getCodigo() + ": \"" + preview + "\"";
+        notificacionService.crearParaUsuario(
+                incidencia.getAsignadoA(),
+                usuario.getId(),
+                NotificacionTipo.INCIDENCIA_COMENTARIO,
+                incidenciaId,
+                titulo,
+                null);
+        notificacionService.crearParaUsuario(
+                incidencia.getCreadoPorUsuarioId(),
+                usuario.getId(),
+                NotificacionTipo.INCIDENCIA_COMENTARIO,
+                incidenciaId,
+                titulo,
+                null);
         return toResponse(creado);
     }
 
