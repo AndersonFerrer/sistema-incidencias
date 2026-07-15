@@ -22,6 +22,7 @@ public class IncidenciaFiltro {
     private UUID estadoAprobacionId;
     private UUID categoriaId;
     private UUID asignadoA;
+    private UUID creadoPorUsuarioId;
     private Prioridad prioridad;
     private LocalDate desde;
     private LocalDate hasta;
