@@ -1829,7 +1829,7 @@
 		,
 		{
 			"name": "Reportes",
-			"description": "Endpoints del modulo de reportes (change reportes-export, PR1). GET /api/reportes devuelve la vista previa JSON con KPIs, distribuciones, tendencia y detalle (RF-41..43). GET /api/reportes/exportar es el placeholder de PR1 y devuelve 501; la implementacion PDF/XLSX llega en PR2 (RF-44). Ambos requieren Authorization: Bearer {{token}}. El scope por rol lo aplica el servicio (administrador sin filtro, agente asignadoA, usuario creado_por_usuario_id) - el cliente nunca puede relajar el filtro.",
+			"description": "Endpoints del modulo de reportes (change reportes-export, PR1 backend + PR2 exporters). GET /api/reportes devuelve la vista previa JSON con KPIs, distribuciones, tendencia y detalle (RF-41..43). GET /api/reportes/exportar devuelve el mismo dataset renderizado como application/pdf (Apache PDFBox 3.0.3) o application/vnd.openxmlformats-officedocument.spreadsheetml.sheet (Apache POI 5.3 SXSSF), con Content-Disposition: attachment; filename=\"reporte-YYYYMMDD-HHMMSS.{ext}\" (RF-44). Ambos requieren Authorization: Bearer {{token}}. El scope por rol lo aplica el servicio (administrador sin filtro, agente asignadoA, usuario creado_por_usuario_id) - el cliente nunca puede relajar el filtro.",
 			"item": [
 				{
 					"name": "Obtener reporte JSON (ADMINISTRADOR)",
@@ -1941,7 +1941,7 @@
 					"response": []
 				},
 				{
-					"name": "Exportar reporte PDF (placeholder, retorna 501)",
+					"name": "Exportar reporte PDF (binary, application/pdf)",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1983,14 +1983,24 @@
 								}
 							]
 						},
-						"description": "Placeholder de PR1: ReporteService.exportar lanza UnsupportedOperationException y GlobalExceptionHandler responde 501 NOT_IMPLEMENTED. PR2 cablea Apache PDFBox 3.x (T6) + Apache POI (T7) y devuelve application/pdf con Content-Disposition: attachment; filename=\"reporte-{rango}.pdf\"."
+						"description": "PR2: ReporteService.exportar construye el mismo dataset que el JSON y lo serializa con ReportePdfExporter (Apache PDFBox 3.0.3). Devuelve Content-Type: application/pdf y Content-Disposition: attachment; filename=\"reporte-YYYYMMDD-HHMMSS.pdf\". Click 'Save Response > Save as example' para persistir el binario y validar con curl -I (Content-Type) o xdg-open / open en macOS (visualmente)."
 					},
 					"response": [
 						{
-							"name": "Placeholder PDF - 501 (llega en PR2)",
-							"status": "Not Implemented",
-							"code": 501,
-							"body": "{\n    \"fecha\": \"2026-07-15T12:00:00\",\n    \"estado\": 501,\n    \"error\": \"Not Implemented\",\n    \"mensaje\": \"La exportacion PDF/XLSX se implementa en PR2 del change reportes-export\",\n    \"ruta\": \"/api/reportes/exportar\",\n    \"detalles\": []\n}",
+							"name": "PDF - 200 - application/pdf (header example, body binario)",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/pdf"
+								},
+								{
+									"key": "Content-Disposition",
+									"value": "attachment; filename=\"reporte-20260715-120000.pdf\""
+								}
+							],
+							"body": "[binary PDF body - reemplaza en Postman con 'Save Response > Save as example' para incluir el PDF real]",
 							"_postman_previewlanguage": "json"
 						},
 						{
@@ -2003,7 +2013,7 @@
 					]
 				},
 				{
-					"name": "Exportar reporte XLSX (placeholder, retorna 501)",
+					"name": "Exportar reporte XLSX (binary, openxmlformats)",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -2035,17 +2045,27 @@
 								}
 							]
 						},
-						"description": "Placeholder de PR1: mismo comportamiento 501 que el PDF. PR2 cablea POI SXSSFWorkbook con hojas Resumen, Datos (top 50 con mismo orden que XLSX-aligned), Charts, Por estado, Por categoria, Por prioridad, Tendencia y Por agente."
+						"description": "PR2: ReporteService.exportar reutiliza el mismo dataset y ReporteExcelExporter (POI 5.3 SXSSFWorkbook) genera 8 hojas: Resumen, Datos (10 cols alineadas con la preview), Charts (PNG embebido + bucket/total table), Por estado, Por categoria, Por prioridad, Tendencia y Por agente (solo cuando el alcance tiene agentes). Devuelve Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet y Content-Disposition: attachment; filename=\"reporte-YYYYMMDD-HHMMSS.xlsx\". SXSSFWorkbook se libera por try-with-resources (dispose() borra temporales)."
 					},
 					"response": [
 						{
-							"name": "Placeholder XLSX - 501 (llega en PR2)",
-							"status": "Not Implemented",
-							"code": 501,
-							"body": "{\n    \"fecha\": \"2026-07-15T12:00:00\",\n    \"estado\": 501,\n    \"error\": \"Not Implemented\",\n    \"mensaje\": \"La exportacion PDF/XLSX se implementa en PR2 del change reportes-export\",\n    \"ruta\": \"/api/reportes/exportar\",\n    \"detalles\": []\n}",
+							"name": "XLSX - 200 - openxmlformats (header example, body binario)",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+								},
+								{
+									"key": "Content-Disposition",
+									"value": "attachment; filename=\"reporte-20260715-120000.xlsx\""
+								}
+							],
+							"body": "[binary XLSX body - reemplaza en Postman con 'Save Response > Save as example' para incluir el workbook real]",
 							"_postman_previewlanguage": "json"
 						}
-					]			
+					]
 				}
 			]
 		}

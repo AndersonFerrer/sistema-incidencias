@@ -79,13 +79,13 @@ public class ReporteController {
                 .agenteId(agenteId)
                 .granularidad(granularidad)
                 .build();
-        // Placeholder: la implementacion real (PDFBox + POI) llega en PR2.
-        // ReporteService.exportar lanza UnsupportedOperationException que el
-        // GlobalExceptionHandler traduce a 501.
         byte[] contenido = reporteService.exportar(actual, request, formato);
+        String nombre = "reporte-" + java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
+                + "." + formato.codigo();
         return ResponseEntity.ok()
                 .header("Content-Type", mediaTypeDe(formato))
-                .header("Content-Disposition", "attachment; filename=\"placeholder\"")
+                .header("Content-Disposition", "attachment; filename=\"" + nombre + "\"")
                 .body(contenido);
     }
 
