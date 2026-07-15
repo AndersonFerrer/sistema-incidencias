@@ -42,6 +42,14 @@ public final class UsuarioSql {
             LIMIT 1
             """;
 
+    public static final String LISTAR_ASIGNABLES = CAMPOS_BASE + """
+            WHERE u.activo = true
+              AND r.activo = true
+              AND upper(r.codigo) IN ('AGENTE', 'ADMINISTRADOR')
+            ORDER BY u.nombre ASC
+            LIMIT 100
+            """;
+
     public static final String INSERTAR = """
             INSERT INTO usuarios (
                 id,
