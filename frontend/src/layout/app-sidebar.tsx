@@ -4,9 +4,9 @@ import {
   BarChart3,
   Briefcase,
   ChevronsUpDown,
-  GitBranch,
   LayoutGrid,
   LogOut,
+  Settings,
   Shield,
   Tags,
   UserRound,
@@ -33,7 +33,7 @@ const navigation: SidebarItem[] = [
 const configuration: SidebarItem[] = [
   { label: "Clientes", icon: Briefcase, to: "/clientes" },
   { label: "Categorías", icon: Tags, to: "/categorias" },
-  { label: "Estados", icon: GitBranch },
+  { label: "Configuración", icon: Settings, to: "/configuracion" },
 ]
 
 function SidebarSection({

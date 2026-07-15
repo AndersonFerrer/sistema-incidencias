@@ -9,6 +9,12 @@ export const authService = {
     })
   },
 
+  loginDemo() {
+    return apiRequest<AuthResponse>("/api/auth/demo", {
+      method: "POST",
+    })
+  },
+
   me(token: string) {
     return apiRequest<AuthUser>("/api/auth/me", { token })
   },
