@@ -32,6 +32,7 @@ public class ActualizarIncidenciaRequest {
     @NotNull(message = "La prioridad es obligatoria")
     private Prioridad prioridad;
 
+    @NotNull(message = "El agente asignado es obligatorio")
     private UUID asignadoA;
 
     @Builder.Default

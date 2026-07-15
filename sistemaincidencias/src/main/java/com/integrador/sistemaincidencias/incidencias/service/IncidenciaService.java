@@ -131,6 +131,7 @@ public class IncidenciaService {
 
     private Incidencia actualizarIncidencia(UUID id, ActualizarIncidenciaRequest request, Usuario usuario) {
         Incidencia incidencia = buscar(id);
+        validarNoFinalizada(incidencia);
         incidencia.setTitulo(request.getTitulo().trim());
         incidencia.setDescripcion(request.getDescripcion().trim());
         incidencia.setCategoriaId(request.getCategoriaId());
@@ -179,6 +180,7 @@ public class IncidenciaService {
     public IncidenciaResponse rechazar(UUID id, AprobacionRequest request, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia incidencia = buscar(id);
+        validarNoFinalizada(incidencia);
         EstadoAprobacion rechazada = obtenerEstadoAprobacion(ESTADO_APROBACION_RECHAZADA);
         Incidencia actualizada = incidenciaDao.cambiarAprobacion(id, rechazada.getId());
         aprobacionDao.insertar(Aprobacion.builder()
@@ -209,7 +211,8 @@ public class IncidenciaService {
 
     public AdjuntoResponse agregarAdjunto(UUID incidenciaId, CrearAdjuntoRequest request, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
-        buscar(incidenciaId);
+        Incidencia incidencia = buscar(incidenciaId);
+        validarNoFinalizada(incidencia);
         Adjunto adjunto = Adjunto.builder()
                 .id(UUID.randomUUID())
                 .incidenciaId(incidenciaId)
@@ -226,7 +229,8 @@ public class IncidenciaService {
 
     public List<AdjuntoResponse> agregarAdjuntos(UUID incidenciaId, List<MultipartFile> archivos, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
-        buscar(incidenciaId);
+        Incidencia incidencia = buscar(incidenciaId);
+        validarNoFinalizada(incidencia);
         return registrarAdjuntosDesdeArchivos(incidenciaId, usuario.getId(), archivos).stream()
                 .map(this::toResponse)
                 .toList();
@@ -234,7 +238,8 @@ public class IncidenciaService {
 
     public void eliminar(UUID id, String authorizationHeader) {
         Usuario usuario = authService.obtenerUsuarioActual(authorizationHeader);
-        buscar(id);
+        Incidencia incidencia = buscar(id);
+        validarNoFinalizada(incidencia);
         incidenciaDao.eliminar(id);
         // La eliminación física deja el log fuera del historial de la propia incidencia por cascada.
         // En una siguiente iteración conviene registrar auditoría global.
@@ -264,6 +269,14 @@ public class IncidenciaService {
         EstadoAprobacion rechazada = obtenerEstadoAprobacion(ESTADO_APROBACION_RECHAZADA);
         if (rechazada.getId().equals(incidencia.getEstadoAprobacionId())) {
             throw new ReglaNegocioException("Una incidencia rechazada no puede avanzar en el flujo operativo");
+        }
+    }
+
+    private void validarNoFinalizada(Incidencia incidencia) {
+        EstadoProceso actual = obtenerEstadoProceso(incidencia.getEstadoProcesoId());
+        if (Boolean.TRUE.equals(actual.getEsTerminal())) {
+            throw new ReglaNegocioException(
+                    "La incidencia esta finalizada y no permite esta operacion (estado de proceso terminal)");
         }
     }
 
