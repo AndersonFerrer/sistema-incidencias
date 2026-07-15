@@ -55,6 +55,11 @@ public class CategoriaService {
         return toResponse(categoriaDao.actualizar(actual));
     }
 
+    public void eliminar(UUID id) {
+        buscar(id);
+        categoriaDao.cambiarActivo(id, false);
+    }
+
     private Categoria buscar(UUID id) {
         return categoriaDao.buscarPorId(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Categoría no encontrada"));
