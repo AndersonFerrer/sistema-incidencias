@@ -310,17 +310,18 @@ export function NuevaIncidenciaView({
                 className="text-sm font-medium text-slate-700"
               >
                 Asignado a
-                <span className="ml-1 text-xs font-normal text-slate-400">
-                  (opcional)
+                <span className="ml-1 text-xs font-normal text-red-600">
+                  (obligatorio)
                 </span>
               </label>
               <select
                 id="incidencia-asignado"
                 value={form.asignadoA}
                 onChange={(event) => setField("asignadoA", event.target.value)}
+                required
                 className="h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <option value="">Sin asignar</option>
+                <option value="">Selecciona un agente</option>
                 {usuariosAsignables.map((usuario) => (
                   <option key={usuario.id} value={usuario.id}>
                     {usuario.nombre} — {usuario.rol.nombre}

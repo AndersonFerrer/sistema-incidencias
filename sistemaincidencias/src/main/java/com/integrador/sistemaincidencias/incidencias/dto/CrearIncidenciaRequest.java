@@ -36,6 +36,8 @@ public class CrearIncidenciaRequest {
     private Prioridad prioridad;
 
     private UUID usuarioExternoId;
+
+    @NotNull(message = "El agente asignado es obligatorio")
     private UUID asignadoA;
 
     @Builder.Default

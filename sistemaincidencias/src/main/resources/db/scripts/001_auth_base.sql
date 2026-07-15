@@ -49,7 +49,7 @@ VALUES (
     '00000000-0000-0000-0000-000000000101',
     'Administrador',
     'admin@sistema.com',
-    '$2a$10$grjgxQN/w9nPgYV2xeLYsudAtQ5M0HqEGsIS21rg005EDqpBbYUG6',
+    '$2a$10$1iYpEJ0JhiWXIUbvPpojSufUQuWuw6IkVNBmKvwztY7iXzWhxXjyW',
     '00000000-0000-0000-0000-000000000001',
     true,
     null,

@@ -1377,7 +1377,7 @@
 									"key": "asignadoA",
 									"value": "{{agenteId}}",
 									"type": "text",
-									"description": "UUID del agente asignado (opcional)",
+									"description": "UUID del agente asignado (obligatorio)",
 									"disabled": true
 								},
 								{
@@ -1467,7 +1467,7 @@
 									"key": "asignadoA",
 									"value": "{{agenteId}}",
 									"type": "text",
-									"description": "UUID del agente asignado (opcional)",
+									"description": "UUID del agente asignado (obligatorio)",
 									"disabled": true
 								},
 								{
