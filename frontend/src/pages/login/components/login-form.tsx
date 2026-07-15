@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
-import { LogIn } from "lucide-react"
+import { LogIn, Sparkles } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -22,15 +22,10 @@ import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { useAuthStore } from "@/store/auth-store"
 
-const demoAccounts = [
-  "admin@sistema.com (Admin)",
-  "ana@empresa.com (Agente)",
-  "sofia@externo.com (Solicitante)",
-]
-
 export function LoginForm() {
   const navigate = useNavigate()
   const login = useAuthStore((state) => state.login)
+  const loginDemo = useAuthStore((state) => state.loginDemo)
   const isLoading = useAuthStore((state) => state.isLoading)
   const error = useAuthStore((state) => state.error)
   const clearError = useAuthStore((state) => state.clearError)
@@ -41,6 +36,15 @@ export function LoginForm() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const authenticated = await login({ email, password })
+
+    if (authenticated) {
+      await navigate({ to: "/dashboard" })
+    }
+  }
+
+  async function handleDemoLogin() {
+    clearError()
+    const authenticated = await loginDemo()
 
     if (authenticated) {
       await navigate({ to: "/dashboard" })
@@ -110,21 +114,40 @@ export function LoginForm() {
             Ingresar
           </Button>
 
+          <Button
+            className="h-10 w-full"
+            disabled={isLoading}
+            type="button"
+            variant="outline"
+            onClick={handleDemoLogin}
+          >
+            {isLoading ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <Sparkles data-icon="inline-start" />
+            )}
+            Acceso demo
+          </Button>
+
           <Alert className="border-0 bg-muted/70 px-3 py-3">
-            <AlertDescription className="flex flex-col gap-1 text-xs">
-              <span className="font-medium text-muted-foreground">
-                Demo — Cuentas disponibles:
+            <AlertDescription className="flex flex-col gap-1 text-xs text-muted-foreground">
+              <span className="font-medium">
+                Acceso demo sin credenciales
               </span>
-              <span className="flex flex-col gap-0.5">
-                {demoAccounts.map((account) => (
-                  <span key={account}>{account}</span>
-                ))}
+              <span>
+                Inicia sesión automaticamente como
+                <code className="mx-1 rounded bg-muted px-1 font-mono">
+                  demo@sistema.com
+                </code>
+                (rol administrador). Para entrar con credenciales propias use
+                el formulario superior.
               </span>
             </AlertDescription>
           </Alert>
 
           <FieldDescription className="sr-only">
-            Formulario conectado a POST /api/auth/login.
+            Formulario conectado a POST /api/auth/login y acceso demo a POST
+            /api/auth/demo.
           </FieldDescription>
         </form>
       </CardContent>
