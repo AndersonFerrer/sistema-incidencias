@@ -230,6 +230,7 @@ export function IncidenciasPage() {
         categorias={categorias}
         aplicativos={aplicativos}
         estadosAprobacion={estadosAprobacion}
+        usuarios={usuarios}
         currentUserIsAdmin={currentUserIsAdmin}
       />
 

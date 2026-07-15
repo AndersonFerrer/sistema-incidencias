@@ -1,5 +1,11 @@
-import { ArrowUpDown, Trash2 } from "lucide-react"
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Trash2,
+} from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
+import { useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -20,7 +26,8 @@ import { cn } from "@/lib/utils"
 import type { Categoria } from "@/types/categorias"
 import type { AplicativoCliente } from "@/types/aplicativos"
 import type { EstadoAprobacion } from "@/types/estados-aprobacion"
-import type { Incidencia } from "@/types/incidencias"
+import type { Incidencia, Prioridad } from "@/types/incidencias"
+import type { Usuario } from "@/types/usuarios"
 import {
   EstadoAprobacionBadge,
 } from "@/pages/incidencias/components/estado-badge"
@@ -31,7 +38,19 @@ type IncidenciasTableProps = {
   categorias: Categoria[]
   aplicativos: AplicativoCliente[]
   estadosAprobacion: EstadoAprobacion[]
+  usuarios: Usuario[]
   currentUserIsAdmin: boolean
+}
+
+type SortColumn = "titulo" | "creadoEn" | "prioridad"
+type SortDirection = "asc" | "desc"
+type SortState = { column: SortColumn; direction: SortDirection } | null
+
+const PRIORIDAD_ORDEN: Record<Prioridad, number> = {
+  BAJA: 0,
+  MEDIA: 1,
+  ALTA: 2,
+  CRITICA: 3,
 }
 
 const dateFormatter = new Intl.DateTimeFormat("es-PE", {
@@ -67,14 +86,99 @@ function findEstadoAprobacion(
   return estados.find((estado) => estado.id === estadoId)
 }
 
+function compareByColumn(
+  a: Incidencia,
+  b: Incidencia,
+  column: SortColumn
+): number {
+  if (column === "prioridad") {
+    return PRIORIDAD_ORDEN[a.prioridad] - PRIORIDAD_ORDEN[b.prioridad]
+  }
+  if (column === "creadoEn") {
+    return Date.parse(a.creadoEn) - Date.parse(b.creadoEn)
+  }
+  return a.titulo.localeCompare(b.titulo, "es", { sensitivity: "base" })
+}
+
 export function IncidenciasTable({
   incidencias,
   categorias,
   aplicativos,
   estadosAprobacion,
+  usuarios,
   currentUserIsAdmin,
 }: IncidenciasTableProps) {
   const navigate = useNavigate()
+
+  const [sort, setSort] = useState<SortState>(null)
+
+  const usuariosById = useMemo(
+    () => new Map(usuarios.map((usuario) => [usuario.id, usuario])),
+    [usuarios]
+  )
+
+  const sortedIncidencias = useMemo(() => {
+    if (!sort) return incidencias
+    const list = [...incidencias]
+    list.sort((a, b) => {
+      const cmp = compareByColumn(a, b, sort.column)
+      return sort.direction === "asc" ? cmp : -cmp
+    })
+    return list
+  }, [incidencias, sort])
+
+  const toggleSort = (column: SortColumn) => {
+    setSort((prev) => {
+      if (!prev || prev.column !== column) {
+        // First click on a column: default to a sensible starting direction.
+        const initial = column === "creadoEn" ? "desc" : "asc"
+        return { column, direction: initial }
+      }
+      if (prev.direction === "asc") {
+        return { column, direction: "desc" }
+      }
+      return null
+    })
+  }
+
+  const ariaSortFor = (column: SortColumn): "ascending" | "descending" | "none" => {
+    if (!sort || sort.column !== column) return "none"
+    return sort.direction === "asc" ? "ascending" : "descending"
+  }
+
+  const sortIconFor = (column: SortColumn) => {
+    if (!sort || sort.column !== column) {
+      return ArrowUpDown
+    }
+    return sort.direction === "asc" ? ArrowUp : ArrowDown
+  }
+
+  const renderSortableHeader = (
+    label: string,
+    column: SortColumn,
+    className?: string
+  ) => {
+    const Icon = sortIconFor(column)
+    return (
+      <TableHead
+        aria-sort={ariaSortFor(column)}
+        className={cn(
+          "h-9 text-xs font-medium uppercase tracking-wide text-slate-500",
+          className
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => toggleSort(column)}
+          aria-label={`Ordenar por ${label}`}
+          className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
+        >
+          {label}
+          <Icon aria-hidden="true" className="size-3" />
+        </button>
+      </TableHead>
+    )
+  }
 
   const irADetalle = (incidencia: Incidencia) => {
     void navigate({ to: "/incidencias/$id", params: { id: incidencia.id } })
@@ -92,75 +196,30 @@ export function IncidenciasTable({
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="h-9 px-4 text-xs font-medium uppercase tracking-wide text-slate-500">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
-                >
-                  ID
-                  <ArrowUpDown aria-hidden="true" className="size-3" />
-                </button>
+                ID
+              </TableHead>
+              {renderSortableHeader("Título", "titulo")}
+              <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
+                Categoría
               </TableHead>
               <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
-                >
-                  Título
-                  <ArrowUpDown aria-hidden="true" className="size-3" />
-                </button>
+                Estado
               </TableHead>
+              {renderSortableHeader("Prioridad", "prioridad")}
               <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
-                >
-                  Categoría
-                  <ArrowUpDown aria-hidden="true" className="size-3" />
-                </button>
+                Asignado
               </TableHead>
-              <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
-                >
-                  Estado
-                  <ArrowUpDown aria-hidden="true" className="size-3" />
-                </button>
-              </TableHead>
-              <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
-                >
-                  Prioridad
-                  <ArrowUpDown aria-hidden="true" className="size-3" />
-                </button>
-              </TableHead>
-              <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
-                >
-                  Asignado
-                  <ArrowUpDown aria-hidden="true" className="size-3" />
-                </button>
-              </TableHead>
-              <TableHead className="h-9 text-xs font-medium uppercase tracking-wide text-slate-500">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-900"
-                >
-                  Fecha
-                  <ArrowUpDown aria-hidden="true" className="size-3" />
-                </button>
-              </TableHead>
+              {renderSortableHeader(
+                "Fecha",
+                "creadoEn"
+              )}
               <TableHead className="h-9 w-12 px-4 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
                 <span className="sr-only">Acciones</span>
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {incidencias.length === 0 ? (
+            {sortedIncidencias.length === 0 ? (
               <TableRow className="hover:bg-transparent">
                 <TableCell
                   colSpan={8}
@@ -170,7 +229,7 @@ export function IncidenciasTable({
                 </TableCell>
               </TableRow>
             ) : (
-              incidencias.map((incidencia) => {
+              sortedIncidencias.map((incidencia) => {
                 const categoria = findCategoria(
                   incidencia.categoriaId,
                   categorias,
@@ -181,6 +240,9 @@ export function IncidenciasTable({
                   incidencia.estadoAprobacionId,
                   estadosAprobacion
                 )
+                const asignado = incidencia.asignadoA
+                  ? usuariosById.get(incidencia.asignadoA)
+                  : null
 
                 return (
                   <TableRow
@@ -226,7 +288,7 @@ export function IncidenciasTable({
                       <PrioridadBadge prioridad={incidencia.prioridad} />
                     </TableCell>
                     <TableCell className="py-2 text-sm text-slate-500">
-                      {incidencia.asignadoA ? incidencia.asignadoA : "Sin asignar"}
+                      {asignado ? asignado.nombre : "Sin asignar"}
                     </TableCell>
                     <TableCell className="py-2 text-sm text-slate-500">
                       {formatDate(incidencia.creadoEn)}
