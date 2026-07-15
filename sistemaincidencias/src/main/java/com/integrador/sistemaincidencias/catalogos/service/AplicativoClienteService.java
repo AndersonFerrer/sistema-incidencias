@@ -63,7 +63,7 @@ public class AplicativoClienteService {
 
     public void eliminar(UUID id) {
         AplicativoCliente actual = buscar(id);
-        aplicativoClienteDao.eliminar(actual.getId());
+        aplicativoClienteDao.cambiarActivo(actual.getId(), false);
     }
 
     private AplicativoCliente buscar(UUID id) {

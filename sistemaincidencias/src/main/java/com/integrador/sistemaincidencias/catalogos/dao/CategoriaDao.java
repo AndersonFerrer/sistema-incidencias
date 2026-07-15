@@ -90,4 +90,15 @@ public class CategoriaDao {
             throw new AccesoDatosException("Error al actualizar categoría", exception);
         }
     }
+
+    public void cambiarActivo(UUID id, boolean activo) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(CategoriaSql.DESACTIVAR)) {
+            statement.setBoolean(1, activo);
+            statement.setObject(2, id);
+            statement.executeUpdate();
+        } catch (SQLException exception) {
+            throw new AccesoDatosException("Error al cambiar estado de categoría", exception);
+        }
+    }
 }

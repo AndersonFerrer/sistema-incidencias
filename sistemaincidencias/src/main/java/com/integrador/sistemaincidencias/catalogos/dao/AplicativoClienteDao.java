@@ -99,13 +99,14 @@ public class AplicativoClienteDao {
         }
     }
 
-    public void eliminar(UUID id) {
+    public void cambiarActivo(UUID id, boolean activo) {
         try (Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(AplicativoClienteSql.ELIMINAR)) {
-            statement.setObject(1, id);
+                PreparedStatement statement = connection.prepareStatement(AplicativoClienteSql.DESACTIVAR)) {
+            statement.setBoolean(1, activo);
+            statement.setObject(2, id);
             statement.executeUpdate();
         } catch (SQLException exception) {
-            throw new AccesoDatosException("Error al eliminar aplicativo cliente", exception);
+            throw new AccesoDatosException("Error al cambiar estado de aplicativo cliente", exception);
         }
     }
 }

@@ -8,6 +8,7 @@ public final class CategoriaSql {
     public static final String LISTAR = """
             SELECT id, cliente_id, nombre, descripcion, activo
             FROM categorias
+            WHERE activo = true
             ORDER BY nombre ASC
             """;
 
@@ -33,6 +34,12 @@ public final class CategoriaSql {
     public static final String ACTUALIZAR = """
             UPDATE categorias
             SET cliente_id = ?, nombre = ?, descripcion = ?, activo = ?
+            WHERE id = ?
+            """;
+
+    public static final String DESACTIVAR = """
+            UPDATE categorias
+            SET activo = ?
             WHERE id = ?
             """;
 }

@@ -59,6 +59,18 @@ public class UsuarioDao {
         }
     }
 
+    public Optional<Usuario> buscarDemoPorEmail(String email) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(UsuarioSql.BUSCAR_DEMO_POR_EMAIL)) {
+            statement.setString(1, email);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() ? Optional.of(usuarioMapper.mapear(rs)) : Optional.empty();
+            }
+        } catch (SQLException exception) {
+            throw new AccesoDatosException("Error al buscar usuario demo por email", exception);
+        }
+    }
+
     public List<Usuario> listarAsignables() {
         try (Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(UsuarioSql.LISTAR_ASIGNABLES);

@@ -8,6 +8,7 @@ public final class AplicativoClienteSql {
     public static final String LISTAR = """
             SELECT id, nombre, api_key, activo
             FROM clientes
+            WHERE activo = true
             ORDER BY nombre ASC
             """;
 
@@ -42,8 +43,9 @@ public final class AplicativoClienteSql {
             WHERE id = ?
             """;
 
-    public static final String ELIMINAR = """
-            DELETE FROM clientes
+    public static final String DESACTIVAR = """
+            UPDATE clientes
+            SET activo = ?
             WHERE id = ?
             """;
 }

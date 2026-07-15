@@ -20,6 +20,13 @@ public class AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     private static final String BEARER_PREFIX = "Bearer ";
+    /**
+     * Fixed email for the seeded demo account. The /api/auth/demo endpoint
+     * resolves this exact active user (avoiding role-based first-user
+     * ambiguity). If the seed is missing or the user is inactive the
+     * endpoint must fail safely.
+     */
+    public static final String DEMO_EMAIL = "demo@sistema.com";
 
     private final UsuarioDao usuarioDao;
     private final PasswordEncoder passwordEncoder;
@@ -36,11 +43,13 @@ public class AuthService {
     }
 
     public AuthResponse loginDemo(String rolSolicitado) {
-        String rol = rolSolicitado == null || rolSolicitado.isBlank() ? "ADMINISTRADOR" : rolSolicitado.trim();
-        Usuario usuario = usuarioDao.buscarDemoPorRol(rol)
-                .orElseThrow(() -> new AutenticacionException("No existe usuario demo activo para el rol solicitado"));
+        // /api/auth/demo always resolves the fixed demo@sistema.com account. The
+        // optional `rol` parameter is accepted for backwards compatibility but
+        // intentionally ignored: the seed is authoritative.
+        Usuario usuario = usuarioDao.buscarDemoPorEmail(DEMO_EMAIL)
+                .orElseThrow(() -> new AutenticacionException("No existe usuario demo activo registrado"));
 
-        log.info("Login demo exitoso para rol {} con usuario {}", rol, usuario.getEmail());
+        log.info("Login demo exitoso para usuario {}", usuario.getEmail());
         return construirRespuesta(usuario);
     }
 
