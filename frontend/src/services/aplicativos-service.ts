@@ -12,9 +12,10 @@ export type ActualizarAplicativoInput = {
 }
 
 export const aplicativosService = {
-  listar() {
+  listar(signal?: AbortSignal) {
     return apiRequest<AplicativoCliente[]>("/api/aplicativos", {
       method: "GET",
+      signal,
     })
   },
 
