@@ -86,8 +86,11 @@ public class IncidenciaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<IncidenciaDetalleResponse> obtener(@PathVariable UUID id) {
-        return ResponseEntity.ok(incidenciaService.obtenerDetalle(id));
+    public ResponseEntity<IncidenciaDetalleResponse> obtener(
+            @PathVariable UUID id,
+            @RequestHeader("Authorization") String token
+    ) {
+        return ResponseEntity.ok(incidenciaService.obtenerDetalle(id, token));
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
