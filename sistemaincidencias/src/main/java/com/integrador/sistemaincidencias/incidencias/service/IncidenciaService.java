@@ -83,8 +83,30 @@ public class IncidenciaService {
         Usuario actual = authService.obtenerUsuarioActual(authorizationHeader);
         Incidencia incidencia = buscar(id);
         validarAlcance(actual, incidencia, "obtenerDetalle");
+        IncidenciaResponse incidenciaResponse = toResponse(incidencia);
+
+        // RBAC (solicitud del usuario): para no-admin (AGENTE/USUARIO) ocultar
+        // los campos sensibles que no necesitan ver para su trabajo.
+        // - cliente (quien origino la incidencia): info de negocio que el AGENTE
+        //   no requiere y el USUARIO no debe ver otros clientes.
+        // - categoria: misma razon.
+        // - creadoPorUsuarioId (solicitante): privacidad.
+        // - asignadoA (responsable): para AGENTE es redundante (el sabe que
+        //   es el mismo); para USUARIO no aplica (no deberia ver detalle).
+        // - estadoAprobacionId: el AGENTE no puede cambiar este estado (validarAlcance
+        //   ya bloquea aprobar/rechazar); exponer el valor seria leak de info.
+        if (!actual.getRol().esAdministrador()) {
+            incidenciaResponse.setClienteId(null);
+            incidenciaResponse.setCategoriaId(null);
+            incidenciaResponse.setCreadoPorUsuarioId(null);
+            incidenciaResponse.setAsignadoA(null);
+            incidenciaResponse.setEstadoAprobacionId(null);
+            // Mantener: estadoProcesoId (AGENTE lo cambia), prioridad, descripcion,
+            // codigo, titulo, creadoEn, actualizadoEn, resueltoEn, usuarioExternoId.
+        }
+
         return IncidenciaDetalleResponse.builder()
-                .incidencia(toResponse(incidencia))
+                .incidencia(incidenciaResponse)
                 .comentarios(comentarioDao.listarPorIncidencia(id).stream().map(this::toResponse).toList())
                 .adjuntos(adjuntoDao.listarPorIncidencia(id).stream().map(this::toResponse).toList())
                 .historial(historialDao.listarPorIncidencia(id).stream().map(this::toResponse).toList())
@@ -469,6 +491,13 @@ public class IncidenciaService {
         if (actual.getRol().esAgente()) {
             if (!Objects.equals(target.getAsignadoA(), actual.getId())) {
                 throw new AccesoDenegadoException("Solo puedes modificar incidencias asignadas a ti");
+            }
+            // AGENTE opera el estado de PROCESO (PENDIENTE -> EN_PROCESO -> FINALIZADA),
+            // pero NO el estado de APROBACION (SOLICITADA -> APROBADA/RECHAZADA) — eso
+            // es decision del ADMINISTRADOR segun AGENTS.md.
+            if ("aprobar".equals(metodo) || "rechazar".equals(metodo)) {
+                throw new AccesoDenegadoException(
+                        "Solo el administrador puede cambiar el estado de aprobacion");
             }
             return;
         }

@@ -120,18 +120,24 @@ export function IncidenciaDetallePage() {
       } catch (err) {
         if (signal?.aborted) return
         setDetalle(null)
-        setError(
-          err instanceof Error
-            ? err.message
-            : "No se pudo obtener el detalle de la incidencia."
-        )
+        const message =
+          err instanceof Error ? err.message : "No se pudo obtener el detalle de la incidencia."
+        // RBAC: USUARIO no tiene acceso al detalle. Si el backend rechaza
+        // con 403 + mensaje de permisos, redirigir al listado en lugar de
+        // mostrar la pagina vacia. Tambien aplica a AGENTE si la incidencia
+        // dejo de pertenecerle (caso raro pero posible).
+        if (message.toLowerCase().includes("permisos") || message.toLowerCase().includes("asignad")) {
+          navigate({ to: "/incidencias", replace: true })
+          return
+        }
+        setError(message)
       } finally {
         if (!signal?.aborted) {
           setIsLoading(false)
         }
       }
     },
-    [id]
+    [id, navigate]
   )
 
   useEffect(() => {
@@ -695,9 +701,14 @@ export function IncidenciaDetallePage() {
             aplicativo={aplicativo}
             solicitante={solicitante}
             asignado={asignado}
+            currentUserRol={currentUserRol}
           />
 
-          {puedeEditar && estadoAprobacionClave !== "RECHAZADA" && !esFinalizada ? (
+          {/* Cambiar estado de aprobacion: solo ADMIN.
+              (AGENTE no puede aprobar/rechazar; el backend tambien bloquea con 403
+              via validarAlcance, pero el frontend lo esconde para evitar enseniar
+              controles que el usuario no puede usar.) */}
+          {puedeEditar && currentUserRol === "ADMINISTRADOR" && estadoAprobacionClave !== "RECHAZADA" && !esFinalizada ? (
             <Card className="rounded-lg bg-white shadow-sm">
               <CardContent className="flex flex-col gap-1.5 p-3">
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
@@ -712,6 +723,11 @@ export function IncidenciaDetallePage() {
                   disabled={isActionSubmitting}
                   className="h-8 w-full rounded-md border border-input bg-white px-2.5 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
                 >
+                  <option value="" disabled>
+                    {estadosAprobacion.length === 0
+                      ? "Sin estados disponibles"
+                      : "Selecciona un estado"}
+                  </option>
                   {estadosAprobacion.map((estado) => (
                     <option key={estado.id} value={estado.id}>
                       {estado.etiqueta}

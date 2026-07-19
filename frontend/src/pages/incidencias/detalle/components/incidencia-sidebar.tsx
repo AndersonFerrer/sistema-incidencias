@@ -67,6 +67,18 @@ type IncidenciaSidebarProps = {
   aplicativo: AplicativoCliente | null;
   solicitante: Usuario | null;
   asignado: Usuario | null;
+  /**
+   * Rol del usuario actual. Se usa para esconder campos sensibles para
+   * no-admin segun el RF pendiente: AGENTE/USUARIO no ven solicitante,
+   * responsable, cliente, categoria, ni estado de aprobacion.
+   * El backend tambien sanitiza (defense in depth) via IncidenciaService
+   * pero el frontend refuerza ocultando las filas correspondientes.
+   *
+   * Tipo string (no union estricta) porque auth-store devuelve `rol: string`
+   * sin narrowing centralizado. La comparacion interna con === "ADMINISTRADOR"
+   * maneja el resto.
+   */
+  currentUserRol: string;
 };
 
 function initials(nombre: string) {
@@ -119,6 +131,7 @@ export function IncidenciaSidebar({
   aplicativo,
   solicitante,
   asignado,
+  currentUserRol,
 }: IncidenciaSidebarProps) {
   const estadoProcesoClave =
     estadoProceso && isEstadoProcesoClave(estadoProceso.clave)
@@ -126,16 +139,21 @@ export function IncidenciaSidebar({
       : null;
   const estadoProcesoEtiqueta = estadoProceso?.etiqueta ?? null;
 
+  // RBAC: estos campos solo para ADMIN. AGENTE/USUARIO los tienen bloqueados.
+  const isAdmin = currentUserRol === "ADMINISTRADOR";
+
   return (
     <Card className="rounded-lg bg-white shadow-sm">
       <CardContent className="flex flex-col gap-2.5 p-3.5">
-        <SidebarRow label="Estado (aprob.)" icon={ShieldCheck}>
-          {estadoAprobacion ? (
-            <EstadoAprobacionBadge estado={estadoAprobacion} />
-          ) : (
-            <span className="text-slate-500">—</span>
-          )}
-        </SidebarRow>
+        {isAdmin && (
+          <SidebarRow label="Estado (aprob.)" icon={ShieldCheck}>
+            {estadoAprobacion ? (
+              <EstadoAprobacionBadge estado={estadoAprobacion} />
+            ) : (
+              <span className="text-slate-500">—</span>
+            )}
+          </SidebarRow>
+        )}
 
         <SidebarRow label="Estado (proceso)" icon={GitBranch}>
           {estadoProcesoClave ? (
@@ -162,37 +180,45 @@ export function IncidenciaSidebar({
           <PrioridadBadge prioridad={incidencia.prioridad} />
         </SidebarRow>
 
-        <SidebarRow label="Categoría" icon={Tag}>
-          <span className="truncate font-medium text-slate-900">
-            {categoria?.nombre ?? "Sin categoría"}
-          </span>
-        </SidebarRow>
-
-        <SidebarRow label="Cliente" icon={Building2}>
-          {aplicativo ? (
+        {isAdmin && (
+          <SidebarRow label="Categoría" icon={Tag}>
             <span className="truncate font-medium text-slate-900">
-              {aplicativo.nombre}
+              {categoria?.nombre ?? "Sin categoría"}
             </span>
-          ) : (
-            <span className="text-slate-500">Sin cliente</span>
-          )}
-        </SidebarRow>
+          </SidebarRow>
+        )}
 
-        <SidebarRow label="Responsable" icon={User}>
-          {asignado ? (
-            <PersonRow usuario={asignado} />
-          ) : (
-            <span className="text-slate-500">Sin asignar</span>
-          )}
-        </SidebarRow>
+        {isAdmin && (
+          <SidebarRow label="Cliente" icon={Building2}>
+            {aplicativo ? (
+              <span className="truncate font-medium text-slate-900">
+                {aplicativo.nombre}
+              </span>
+            ) : (
+              <span className="text-slate-500">Sin cliente</span>
+            )}
+          </SidebarRow>
+        )}
 
-        <SidebarRow label="Solicitante" icon={UserCircle}>
-          {solicitante ? (
-            <PersonRow usuario={solicitante} />
-          ) : (
-            <span className="text-slate-500">—</span>
-          )}
-        </SidebarRow>
+        {isAdmin && (
+          <SidebarRow label="Responsable" icon={User}>
+            {asignado ? (
+              <PersonRow usuario={asignado} />
+            ) : (
+              <span className="text-slate-500">Sin asignar</span>
+            )}
+          </SidebarRow>
+        )}
+
+        {isAdmin && (
+          <SidebarRow label="Solicitante" icon={UserCircle}>
+            {solicitante ? (
+              <PersonRow usuario={solicitante} />
+            ) : (
+              <span className="text-slate-500">—</span>
+            )}
+          </SidebarRow>
+        )}
 
         <SidebarRow label="Creado" icon={CalendarPlus}>
           {formatDate(incidencia.creadoEn)}
