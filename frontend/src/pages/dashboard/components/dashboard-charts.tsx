@@ -55,7 +55,7 @@ export function DashboardCharts({
     .filter((item) => item.value > 0)
 
   return (
-    <section className="grid grid-cols-3 gap-7">
+    <section className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3 xl:gap-7">
       <ChartCard title="Incidencias por Categoría">
         <ResponsiveContainer height="100%" width="100%">
           <BarChart data={byCategoria} margin={{ left: 4, right: 12 }}>

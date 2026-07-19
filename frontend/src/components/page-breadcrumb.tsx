@@ -30,7 +30,7 @@ export function PageBreadcrumb({ items }: { items?: string[] } = {}) {
   const trail = items ?? ["Inicio", getRouteTitle(pathname)]
 
   return (
-    <Breadcrumb className="mb-3">
+    <Breadcrumb>
       <BreadcrumbList>
         {trail.map((label, idx) => {
           const isLast = idx === trail.length - 1

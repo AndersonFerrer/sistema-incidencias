@@ -88,7 +88,9 @@ function MainContent({
         sidebarOpen ? "md:left-64" : "md:left-16"
       } overflow-y-auto bg-slate-50 transition-[left] duration-200 ease-in-out`}
     >
-      <div className="w-full max-w-full px-4 py-4 md:px-6">{children}</div>
+      <div className="flex w-full max-w-full flex-col gap-4 px-4 py-4 md:px-6">
+        {children}
+      </div>
     </main>
   )
 }

@@ -70,16 +70,16 @@ export function AppHeader({ sidebarOpen, onToggleSidebar }: AppHeaderProps) {
     <header
       className={`fixed top-0 right-0 left-0 ${
         sidebarOpen ? "md:left-64" : "md:left-16"
-      } h-[60px] bg-white border-b border-slate-200 transition-[left] duration-200 ease-in-out z-30 md:left-auto`}
+      } h-[60px] bg-white border-b border-slate-200 transition-[left] duration-200 ease-in-out z-30`}
     >
-      <div className="flex h-full items-center justify-between px-3 md:px-5">
-        <div className="flex items-center gap-3">
+      <div className="flex h-full items-center justify-between gap-3 px-3 md:px-5">
+        <div className="flex min-w-0 items-center gap-3">
           {/* Toggle mobile: solo visible <md, abre/cierra el drawer */}
           <button
             type="button"
             aria-label="Abrir menu"
             onClick={onToggleSidebar}
-            className="flex size-8 items-center justify-center rounded-md text-slate-700 transition-colors hover:bg-slate-100 md:hidden"
+            className="flex size-8 shrink-0 items-center justify-center rounded-md text-slate-700 transition-colors hover:bg-slate-100 md:hidden"
           >
             <Menu aria-hidden="true" className="size-5" />
           </button>
@@ -88,7 +88,7 @@ export function AppHeader({ sidebarOpen, onToggleSidebar }: AppHeaderProps) {
             type="button"
             aria-label={sidebarOpen ? "Colapsar menu" : "Expandir menu"}
             onClick={onToggleSidebar}
-            className="hidden size-8 items-center justify-center rounded-md text-slate-700 transition-colors hover:bg-slate-100 md:flex"
+            className="hidden size-8 shrink-0 items-center justify-center rounded-md text-slate-700 transition-colors hover:bg-slate-100 md:flex"
           >
             {sidebarOpen ? (
               <PanelLeftClose aria-hidden="true" className="size-4" />
@@ -96,10 +96,14 @@ export function AppHeader({ sidebarOpen, onToggleSidebar }: AppHeaderProps) {
               <PanelLeftOpen aria-hidden="true" className="size-4" />
             )}
           </button>
-          <PageBreadcrumb />
+          {/* Breadcrumb: min-w-0 + flex-1 permite que se encoja y use truncate en
+              lugar de empujar a los iconos de la derecha fuera del header. */}
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <PageBreadcrumb />
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex shrink-0 items-center gap-2 md:gap-3">
           <NotificationDropdown
             trigger={
               <button
@@ -131,7 +135,7 @@ export function AppHeader({ sidebarOpen, onToggleSidebar }: AppHeaderProps) {
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div className="min-w-24">
+            <div className="min-w-0 max-w-[140px]">
               <p className="truncate text-xs font-semibold leading-tight text-slate-900">
                 {displayName}
               </p>
