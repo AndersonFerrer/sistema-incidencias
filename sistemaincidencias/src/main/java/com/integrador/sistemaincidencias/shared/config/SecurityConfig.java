@@ -44,6 +44,15 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/auth/demo").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
+                        // OpenAPI / Swagger UI: publico en dev para que el equipo consulte
+                        // la documentacion interactiva sin provisioning de token. En prod,
+                        // una capa inversa (nginx / ingress) deberia restringir /swagger-ui.
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
                 )
