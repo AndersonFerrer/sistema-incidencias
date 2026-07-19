@@ -1,4 +1,3 @@
-import { PageBreadcrumb } from "@/components/page-breadcrumb"
 import { PrivateRoute } from "@/components/auth/private-route"
 import { AppHeader } from "@/layout/app-header"
 import { AppSidebar } from "@/layout/app-sidebar"
@@ -14,11 +13,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <AppSidebar />
         <AppHeader />
         <main className="fixed bottom-0 left-64 right-0 top-[70px] overflow-y-auto bg-slate-50">
-          <div className="min-w-[1180px] px-6 py-4">
-            {/* RF-46: breadcrumb automatico en todas las paginas privadas */}
-            <PageBreadcrumb />
-            {children}
-          </div>
+          <div className="min-w-[1180px] px-6 py-4">{children}</div>
         </main>
       </div>
     </PrivateRoute>

@@ -1,13 +1,12 @@
 import { LogOut, PanelLeft, Bell } from "lucide-react"
-import { useRouterState } from "@tanstack/react-router"
 import { useState } from "react"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown"
+import { PageBreadcrumb } from "@/components/page-breadcrumb"
 import { useNotificationsPolling } from "@/hooks/use-notifications-polling"
 import { useAuthStore } from "@/store/auth-store"
-import { getRouteTitle } from "@/lib/route-meta"
 
 export function AppHeader() {
   const user = useAuthStore((state) => state.user)
@@ -20,11 +19,6 @@ export function AppHeader() {
     .join("")
     .slice(0, 2)
     .toUpperCase()
-
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  })
-  const title = getRouteTitle(pathname)
 
   const [bellOpen, setBellOpen] = useState(false)
   const { count, refresh: refreshCount } = useNotificationsPolling()
@@ -42,7 +36,7 @@ export function AppHeader() {
     <header className="fixed left-64 right-0 top-0 flex h-[60px] items-center justify-between border-b border-slate-200 bg-white px-5">
       <div className="flex items-center gap-3">
         <PanelLeft aria-hidden="true" className="size-4 text-slate-800" />
-        <p className="text-sm font-semibold text-slate-900">{title}</p>
+        <PageBreadcrumb />
       </div>
 
       <div className="flex items-center gap-3">
