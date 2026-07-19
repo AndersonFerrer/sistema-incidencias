@@ -376,20 +376,23 @@ export function IncidenciaDetallePage() {
     }
   }
 
-  const handleMoverEstado = async () => {
-    if (!detalle || !estadoProceso) return
-    const siguiente = siguienteEstadoProceso(estadoProceso, estadosProceso)
-    if (!siguiente) return
+  const handleCambiarProceso = async (
+    estadoId: string,
+    etiquetaDestino?: string
+  ) => {
+    if (!detalle) return
+    const estado = estadosProceso.find((item) => item.id === estadoId)
+    if (!estado) return
     setIsActionSubmitting(true)
     setActionError(null)
     try {
       await incidentsService.cambiarEstado(detalle.incidencia.id, {
-        estadoProcesoId: siguiente.id,
+        estadoProcesoId: estado.id,
       })
       await cargarDetalle()
       showToast({
         variant: "default",
-        message: `Estado actualizado a ${siguiente.etiqueta}.`,
+        message: `Estado actualizado a ${etiquetaDestino ?? estado.etiqueta}.`,
       })
     } catch (err) {
       setActionError(
@@ -401,10 +404,6 @@ export function IncidenciaDetallePage() {
       setIsActionSubmitting(false)
     }
   }
-
-  const siguienteEstado = estadoProceso
-    ? siguienteEstadoProceso(estadoProceso, estadosProceso)
-    : null
 
   const handleCambiarAprobacion = async (estadoId: string) => {
     if (!detalle) return
@@ -545,11 +544,6 @@ export function IncidenciaDetallePage() {
   const esFinalizada = estadoProceso?.esTerminal ?? false
   const motivoRechazo =
     historial.find((item) => item.accion === "RECHAZADA")?.nota ?? null
-  const puedeAvanzarEstado =
-    Boolean(estadoProceso) &&
-    !esFinalizada &&
-    estadoAprobacionClave === "APROBADA" &&
-    Boolean(siguienteEstado)
 
   const editDialogOpen = dialogMode.kind === "edit"
   const subirDialogOpen = dialogMode.kind === "subir-adjuntos"
@@ -758,20 +752,37 @@ export function IncidenciaDetallePage() {
             </Card>
           ) : null}
 
-          {puedeEditar && puedeAvanzarEstado ? (
-            <Button
-              type="button"
-              size="default"
-              onClick={handleMoverEstado}
-              disabled={isActionSubmitting}
-            >
-              {isActionSubmitting ? (
-                <Spinner className="size-4" />
-              ) : null}
-              {siguienteEstado
-                ? `Mover a ${siguienteEstado.etiqueta}`
-                : "Avanzar estado"}
-            </Button>
+          {/* Cambiar estado de proceso: AGENTE y ADMIN pueden
+              (USUARIO no — solo ve + comenta). Selector directo a cualquier
+              estado activo (no fuerza PENDIENTE -> EN_PROCESO -> FINALIZADA). */}
+          {puedeEditar && !esFinalizada && estadosProceso.length > 0 ? (
+            <Card className="rounded-lg bg-white shadow-sm">
+              <CardContent className="flex flex-col gap-1.5 p-3">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  Cambiar estado de proceso
+                </span>
+                <select
+                  aria-label="Estado de proceso"
+                  value={estadoProceso?.id ?? ""}
+                  onChange={(event) =>
+                    handleCambiarProceso(event.target.value)
+                  }
+                  disabled={isActionSubmitting}
+                  className="h-8 w-full rounded-md border border-input bg-white px-2.5 text-sm text-slate-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+                >
+                  <option value="" disabled>
+                    Selecciona un estado
+                  </option>
+                  {estadosProceso
+                    .filter((estado) => estado.activo)
+                    .map((estado) => (
+                      <option key={estado.id} value={estado.id}>
+                        {estado.etiqueta}
+                      </option>
+                    ))}
+                </select>
+              </CardContent>
+            </Card>
           ) : null}
         </div>
       </div>
@@ -834,14 +845,6 @@ export function IncidenciaDetallePage() {
   )
 }
 
-function siguienteEstadoProceso(
-  actual: EstadoProceso,
-  estados: EstadoProceso[]
-): EstadoProceso | null {
-  if (actual.esTerminal) return null
-  return (
-    estados.find(
-      (estado) => estado.activo && estado.orden === actual.orden + 1
-    ) ?? null
-  )
-}
+// (helpers previos eliminados — el flujo de cambio de estado de proceso
+// ahora es directo via el selector handleCambiarProceso(id), sin necesidad
+// de un secuenciador por orden.)
