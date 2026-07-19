@@ -15,26 +15,37 @@ import {
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAuthStore } from "@/store/auth-store"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 
 type SidebarItem = {
   label: string
   icon: typeof LayoutGrid
   to?: string
+  /**
+   * Si `true`, el item solo se muestra a `ADMINISTRADOR`. Refleja la regla
+   * de negocio del backend: AGENTE y USUARIO no tienen acceso (los endpoints
+   * devuelven 403 y las paginas renderizan vacias). El sidebar se filtra
+   * para que la UX sea consistente.
+   */
+  adminOnly?: boolean
 }
 
 const navigation: SidebarItem[] = [
   { label: "Dashboard", icon: LayoutGrid, to: "/dashboard" },
   { label: "Incidencias", icon: AlertTriangle, to: "/incidencias" },
-  { label: "Usuarios", icon: Users, to: "/usuarios" },
+  { label: "Usuarios", icon: Users, to: "/usuarios", adminOnly: true },
   { label: "Reportes", icon: BarChart3, to: "/reportes" },
 ]
 
 const configuration: SidebarItem[] = [
-  { label: "Clientes", icon: Briefcase, to: "/clientes" },
-  { label: "Categorías", icon: Tags, to: "/categorias" },
-  { label: "Configuración", icon: Settings, to: "/configuracion" },
+  { label: "Clientes", icon: Briefcase, to: "/clientes", adminOnly: true },
+  { label: "Categorías", icon: Tags, to: "/categorias", adminOnly: true },
+  { label: "Configuración", icon: Settings, to: "/configuracion", adminOnly: true },
 ]
+
+function filterByRole(items: SidebarItem[], isAdmin: boolean): SidebarItem[] {
+  return items.filter((item) => isAdmin || !item.adminOnly)
+}
 
 function SidebarSection({
   title,
@@ -95,6 +106,7 @@ function SidebarSection({
 export function AppSidebar() {
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
+  const isAdmin = user?.rol === "ADMINISTRADOR"
   const displayName = user?.nombre ?? "Carlos Méndez"
   const role = user?.rol ?? "Admin"
   const initials = displayName
@@ -105,6 +117,18 @@ export function AppSidebar() {
     .toUpperCase()
 
   const [menuOpen, setMenuOpen] = useState(false)
+
+  // Filtrar items por rol para que la UX del sidebar refleje la regla del
+  // backend. AGENTE / USUARIO ven solo Dashboard / Incidencias / Reportes
+  // (Reportes se filtra por scope a nivel SQL). ADMIN ve el menu completo.
+  const navigationItems = useMemo(
+    () => filterByRole(navigation, isAdmin),
+    [isAdmin]
+  )
+  const configurationItems = useMemo(
+    () => filterByRole(configuration, isAdmin),
+    [isAdmin]
+  )
 
   return (
     <aside className="fixed inset-y-0 left-0 flex w-64 flex-col overflow-hidden border-r border-slate-800 bg-slate-950 text-white">
@@ -119,8 +143,12 @@ export function AppSidebar() {
       </div>
 
       <div className="flex flex-1 flex-col gap-5 py-4">
-        <SidebarSection title="Navegación" items={navigation} />
-        <SidebarSection title="Configuración" items={configuration} />
+        {navigationItems.length > 0 ? (
+          <SidebarSection title="Navegación" items={navigationItems} />
+        ) : null}
+        {configurationItems.length > 0 ? (
+          <SidebarSection title="Configuración" items={configurationItems} />
+        ) : null}
       </div>
 
       <div className="relative border-t border-slate-800 px-2 py-2">
