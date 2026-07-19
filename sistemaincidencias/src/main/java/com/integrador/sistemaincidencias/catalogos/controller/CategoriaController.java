@@ -1,5 +1,6 @@
 package com.integrador.sistemaincidencias.catalogos.controller;
 
+import com.integrador.sistemaincidencias.auditoria.service.AuditService;
 import com.integrador.sistemaincidencias.catalogos.dto.CategoriaRequest;
 import com.integrador.sistemaincidencias.catalogos.dto.CategoriaResponse;
 import com.integrador.sistemaincidencias.catalogos.service.CategoriaService;
@@ -27,6 +28,7 @@ public class CategoriaController {
 
     private final CategoriaService categoriaService;
     private final PermisoAdministracionService permisoAdministracionService;
+    private final AuditService auditService;
 
     @GetMapping
     public ResponseEntity<List<CategoriaResponse>> listar(
@@ -46,8 +48,11 @@ public class CategoriaController {
             @RequestHeader("Authorization") String token,
             @Valid @RequestBody CategoriaRequest request
     ) {
-        permisoAdministracionService.validarAdministrador(token);
-        return ResponseEntity.status(HttpStatus.CREATED).body(categoriaService.crear(request));
+        var admin = permisoAdministracionService.validarAdministrador(token);
+        CategoriaResponse creado = categoriaService.crear(request);
+        auditService.registrar(admin.getId(), "CATALOG_CREATED", "categorias", creado.getId(),
+                "{\"nombre\":\"" + escape(creado.getNombre()) + "\"}", true);
+        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 
     @PutMapping("/{id}")
@@ -56,8 +61,10 @@ public class CategoriaController {
             @RequestHeader("Authorization") String token,
             @Valid @RequestBody CategoriaRequest request
     ) {
-        permisoAdministracionService.validarAdministrador(token);
-        return ResponseEntity.ok(categoriaService.actualizar(id, request));
+        var admin = permisoAdministracionService.validarAdministrador(token);
+        CategoriaResponse actualizado = categoriaService.actualizar(id, request);
+        auditService.registrar(admin.getId(), "CATALOG_UPDATED", "categorias", id, null, true);
+        return ResponseEntity.ok(actualizado);
     }
 
     @DeleteMapping("/{id}")
@@ -65,8 +72,13 @@ public class CategoriaController {
             @PathVariable UUID id,
             @RequestHeader("Authorization") String token
     ) {
-        permisoAdministracionService.validarAdministrador(token);
+        var admin = permisoAdministracionService.validarAdministrador(token);
         categoriaService.eliminar(id);
+        auditService.registrar(admin.getId(), "CATALOG_DELETED", "categorias", id, null, true);
         return ResponseEntity.noContent().build();
+    }
+
+    private static String escape(String s) {
+        return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

@@ -1,11 +1,14 @@
 package com.integrador.sistemaincidencias.usuarios.controller;
 
+import com.integrador.sistemaincidencias.auditoria.service.AuditService;
+import com.integrador.sistemaincidencias.shared.exception.AccesoDenegadoException;
 import com.integrador.sistemaincidencias.usuarios.dto.ActualizarPerfilRequest;
 import com.integrador.sistemaincidencias.usuarios.dto.ActualizarUsuarioRequest;
 import com.integrador.sistemaincidencias.usuarios.dto.CambiarPasswordPropiaRequest;
 import com.integrador.sistemaincidencias.usuarios.dto.CambiarPasswordRequest;
 import com.integrador.sistemaincidencias.usuarios.dto.CrearUsuarioRequest;
 import com.integrador.sistemaincidencias.usuarios.dto.UsuarioResponse;
+import com.integrador.sistemaincidencias.usuarios.service.PermisoAdministracionService;
 import com.integrador.sistemaincidencias.usuarios.service.UsuarioService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -31,6 +34,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
+    private final PermisoAdministracionService permisoAdministracionService;
+    private final AuditService auditService;
 
     @GetMapping
     public ResponseEntity<List<UsuarioResponse>> listar(
@@ -68,7 +73,10 @@ public class UsuarioController {
             @RequestHeader("Authorization") String authorizationHeader,
             @Valid @RequestBody CambiarPasswordPropiaRequest request
     ) {
+        var actual = permisoAdministracionService.validarAutenticado(authorizationHeader);
         usuarioService.cambiarPasswordPropia(authorizationHeader, request);
+        auditService.registrar(actual.getId(), "USER_PASSWORD_CHANGED_SELF", "usuarios",
+                actual.getId(), null, true);
         return ResponseEntity.noContent().build();
     }
 
@@ -92,7 +100,11 @@ public class UsuarioController {
             @RequestHeader("Authorization") String authorizationHeader,
             @Valid @RequestBody CrearUsuarioRequest request
     ) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.crear(authorizationHeader, request));
+        var admin = permisoAdministracionService.validarAdministrador(authorizationHeader);
+        UsuarioResponse creado = usuarioService.crear(authorizationHeader, request);
+        auditService.registrar(admin.getId(), "USER_CREATED", "usuarios", creado.getId(),
+                jsonOf("email", creado.getEmail(), "rol", creado.getRol().getCodigo()), true);
+        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 
     @PutMapping("/{id}")
@@ -101,7 +113,11 @@ public class UsuarioController {
             @PathVariable UUID id,
             @Valid @RequestBody ActualizarUsuarioRequest request
     ) {
-        return ResponseEntity.ok(usuarioService.actualizar(authorizationHeader, id, request));
+        var admin = permisoAdministracionService.validarAdministrador(authorizationHeader);
+        UsuarioResponse actualizado = usuarioService.actualizar(authorizationHeader, id, request);
+        auditService.registrar(admin.getId(), "USER_UPDATED", "usuarios", id,
+                jsonOf("rol", actualizado.getRol().getCodigo()), true);
+        return ResponseEntity.ok(actualizado);
     }
 
     @PatchMapping("/{id}/password")
@@ -110,7 +126,9 @@ public class UsuarioController {
             @PathVariable UUID id,
             @Valid @RequestBody CambiarPasswordRequest request
     ) {
+        var admin = permisoAdministracionService.validarAdministrador(authorizationHeader);
         usuarioService.cambiarPassword(authorizationHeader, id, request);
+        auditService.registrar(admin.getId(), "USER_PASSWORD_CHANGED_BY_ADMIN", "usuarios", id, null, true);
         return ResponseEntity.noContent().build();
     }
 
@@ -119,7 +137,10 @@ public class UsuarioController {
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable UUID id
     ) {
-        return ResponseEntity.ok(usuarioService.cambiarActivo(authorizationHeader, id, true));
+        var admin = permisoAdministracionService.validarAdministrador(authorizationHeader);
+        UsuarioResponse out = usuarioService.cambiarActivo(authorizationHeader, id, true);
+        auditService.registrar(admin.getId(), "USER_ACTIVATED", "usuarios", id, null, true);
+        return ResponseEntity.ok(out);
     }
 
     @PatchMapping("/{id}/desactivar")
@@ -127,7 +148,10 @@ public class UsuarioController {
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable UUID id
     ) {
-        return ResponseEntity.ok(usuarioService.cambiarActivo(authorizationHeader, id, false));
+        var admin = permisoAdministracionService.validarAdministrador(authorizationHeader);
+        UsuarioResponse out = usuarioService.cambiarActivo(authorizationHeader, id, false);
+        auditService.registrar(admin.getId(), "USER_DEACTIVATED", "usuarios", id, null, true);
+        return ResponseEntity.ok(out);
     }
 
     /**
@@ -138,7 +162,35 @@ public class UsuarioController {
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable UUID id
     ) {
+        var admin = permisoAdministracionService.validarAdministrador(authorizationHeader);
         usuarioService.eliminar(authorizationHeader, id);
+        auditService.registrar(admin.getId(), "USER_DELETED", "usuarios", id, null, true);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Helper para serializar pares clave-valor como JSON minimo valido.
+     * Escapado simple: backslash y comillas dobles.
+     */
+    private static String jsonOf(String... kv) {
+        if (kv.length % 2 != 0) {
+            throw new IllegalArgumentException("kv pairs must be even");
+        }
+        StringBuilder sb = new StringBuilder("{");
+        for (int i = 0; i < kv.length; i += 2) {
+            if (i > 0) sb.append(",");
+            sb.append("\"").append(escape(kv[i])).append("\":");
+            String v = kv[i + 1];
+            if (v == null) {
+                sb.append("null");
+            } else {
+                sb.append("\"").append(escape(v)).append("\"");
+            }
+        }
+        return sb.append("}").toString();
+    }
+
+    private static String escape(String s) {
+        return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

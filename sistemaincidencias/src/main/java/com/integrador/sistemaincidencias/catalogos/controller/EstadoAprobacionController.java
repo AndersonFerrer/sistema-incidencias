@@ -1,5 +1,6 @@
 package com.integrador.sistemaincidencias.catalogos.controller;
 
+import com.integrador.sistemaincidencias.auditoria.service.AuditService;
 import com.integrador.sistemaincidencias.catalogos.dto.EstadoAprobacionRequest;
 import com.integrador.sistemaincidencias.catalogos.dto.EstadoAprobacionResponse;
 import com.integrador.sistemaincidencias.catalogos.service.EstadoAprobacionService;
@@ -27,6 +28,7 @@ public class EstadoAprobacionController {
 
     private final EstadoAprobacionService estadoAprobacionService;
     private final PermisoAdministracionService permisoAdministracionService;
+    private final AuditService auditService;
 
     @GetMapping
     public ResponseEntity<List<EstadoAprobacionResponse>> listar(
@@ -46,8 +48,11 @@ public class EstadoAprobacionController {
             @RequestHeader("Authorization") String token,
             @Valid @RequestBody EstadoAprobacionRequest request
     ) {
-        permisoAdministracionService.validarAdministrador(token);
-        return ResponseEntity.status(HttpStatus.CREATED).body(estadoAprobacionService.crear(request));
+        var admin = permisoAdministracionService.validarAdministrador(token);
+        EstadoAprobacionResponse creado = estadoAprobacionService.crear(request);
+        auditService.registrar(admin.getId(), "CATALOG_CREATED", "estados_aprobacion", creado.getId(),
+                "{\"clave\":\"" + escape(creado.getClave()) + "\"}", true);
+        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 
     @PutMapping("/{id}")
@@ -56,8 +61,10 @@ public class EstadoAprobacionController {
             @RequestHeader("Authorization") String token,
             @Valid @RequestBody EstadoAprobacionRequest request
     ) {
-        permisoAdministracionService.validarAdministrador(token);
-        return ResponseEntity.ok(estadoAprobacionService.actualizar(id, request));
+        var admin = permisoAdministracionService.validarAdministrador(token);
+        EstadoAprobacionResponse actualizado = estadoAprobacionService.actualizar(id, request);
+        auditService.registrar(admin.getId(), "CATALOG_UPDATED", "estados_aprobacion", id, null, true);
+        return ResponseEntity.ok(actualizado);
     }
 
     @DeleteMapping("/{id}")
@@ -65,8 +72,13 @@ public class EstadoAprobacionController {
             @PathVariable UUID id,
             @RequestHeader("Authorization") String token
     ) {
-        permisoAdministracionService.validarAdministrador(token);
+        var admin = permisoAdministracionService.validarAdministrador(token);
         estadoAprobacionService.eliminar(id);
+        auditService.registrar(admin.getId(), "CATALOG_DELETED", "estados_aprobacion", id, null, true);
         return ResponseEntity.noContent().build();
+    }
+
+    private static String escape(String s) {
+        return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

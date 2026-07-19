@@ -1,5 +1,6 @@
 package com.integrador.sistemaincidencias.catalogos.controller;
 
+import com.integrador.sistemaincidencias.auditoria.service.AuditService;
 import com.integrador.sistemaincidencias.catalogos.dto.AplicativoClienteRequest;
 import com.integrador.sistemaincidencias.catalogos.dto.AplicativoClienteResponse;
 import com.integrador.sistemaincidencias.catalogos.service.AplicativoClienteService;
@@ -28,6 +29,7 @@ public class AplicativoClienteController {
 
     private final AplicativoClienteService aplicativoClienteService;
     private final PermisoAdministracionService permisoAdministracionService;
+    private final AuditService auditService;
 
     @GetMapping
     public ResponseEntity<List<AplicativoClienteResponse>> listar(
@@ -47,8 +49,11 @@ public class AplicativoClienteController {
             @RequestHeader("Authorization") String token,
             @Valid @RequestBody AplicativoClienteRequest request
     ) {
-        permisoAdministracionService.validarAdministrador(token);
-        return ResponseEntity.status(HttpStatus.CREATED).body(aplicativoClienteService.crear(request));
+        var admin = permisoAdministracionService.validarAdministrador(token);
+        AplicativoClienteResponse creado = aplicativoClienteService.crear(request);
+        auditService.registrar(admin.getId(), "CATALOG_CREATED", "aplicativos", creado.getId(),
+                "{\"nombre\":\"" + escape(creado.getNombre()) + "\"}", true);
+        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 
     @PutMapping("/{id}")
@@ -57,8 +62,10 @@ public class AplicativoClienteController {
             @RequestHeader("Authorization") String token,
             @Valid @RequestBody AplicativoClienteRequest request
     ) {
-        permisoAdministracionService.validarAdministrador(token);
-        return ResponseEntity.ok(aplicativoClienteService.actualizar(id, request));
+        var admin = permisoAdministracionService.validarAdministrador(token);
+        AplicativoClienteResponse actualizado = aplicativoClienteService.actualizar(id, request);
+        auditService.registrar(admin.getId(), "CATALOG_UPDATED", "aplicativos", id, null, true);
+        return ResponseEntity.ok(actualizado);
     }
 
     @PatchMapping("/{id}/rotar-api-key")
@@ -66,8 +73,10 @@ public class AplicativoClienteController {
             @PathVariable UUID id,
             @RequestHeader("Authorization") String token
     ) {
-        permisoAdministracionService.validarAdministrador(token);
-        return ResponseEntity.ok(aplicativoClienteService.rotarApiKey(id));
+        var admin = permisoAdministracionService.validarAdministrador(token);
+        AplicativoClienteResponse rotado = aplicativoClienteService.rotarApiKey(id);
+        auditService.registrar(admin.getId(), "CATALOG_API_KEY_ROTATED", "aplicativos", id, null, true);
+        return ResponseEntity.ok(rotado);
     }
 
     @DeleteMapping("/{id}")
@@ -75,8 +84,13 @@ public class AplicativoClienteController {
             @PathVariable UUID id,
             @RequestHeader("Authorization") String token
     ) {
-        permisoAdministracionService.validarAdministrador(token);
+        var admin = permisoAdministracionService.validarAdministrador(token);
         aplicativoClienteService.eliminar(id);
+        auditService.registrar(admin.getId(), "CATALOG_DELETED", "aplicativos", id, null, true);
         return ResponseEntity.noContent().build();
+    }
+
+    private static String escape(String s) {
+        return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

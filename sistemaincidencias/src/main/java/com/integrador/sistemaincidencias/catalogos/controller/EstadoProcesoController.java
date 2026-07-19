@@ -1,5 +1,6 @@
 package com.integrador.sistemaincidencias.catalogos.controller;
 
+import com.integrador.sistemaincidencias.auditoria.service.AuditService;
 import com.integrador.sistemaincidencias.catalogos.dto.EstadoProcesoRequest;
 import com.integrador.sistemaincidencias.catalogos.dto.EstadoProcesoResponse;
 import com.integrador.sistemaincidencias.catalogos.service.EstadoProcesoService;
@@ -27,6 +28,7 @@ public class EstadoProcesoController {
 
     private final EstadoProcesoService estadoProcesoService;
     private final PermisoAdministracionService permisoAdministracionService;
+    private final AuditService auditService;
 
     @GetMapping
     public ResponseEntity<List<EstadoProcesoResponse>> listar(
@@ -46,8 +48,11 @@ public class EstadoProcesoController {
             @RequestHeader("Authorization") String token,
             @Valid @RequestBody EstadoProcesoRequest request
     ) {
-        permisoAdministracionService.validarAdministrador(token);
-        return ResponseEntity.status(HttpStatus.CREATED).body(estadoProcesoService.crear(request));
+        var admin = permisoAdministracionService.validarAdministrador(token);
+        EstadoProcesoResponse creado = estadoProcesoService.crear(request);
+        auditService.registrar(admin.getId(), "CATALOG_CREATED", "estados_proceso", creado.getId(),
+                "{\"clave\":\"" + escape(creado.getClave()) + "\"}", true);
+        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 
     @PutMapping("/{id}")
@@ -56,8 +61,10 @@ public class EstadoProcesoController {
             @RequestHeader("Authorization") String token,
             @Valid @RequestBody EstadoProcesoRequest request
     ) {
-        permisoAdministracionService.validarAdministrador(token);
-        return ResponseEntity.ok(estadoProcesoService.actualizar(id, request));
+        var admin = permisoAdministracionService.validarAdministrador(token);
+        EstadoProcesoResponse actualizado = estadoProcesoService.actualizar(id, request);
+        auditService.registrar(admin.getId(), "CATALOG_UPDATED", "estados_proceso", id, null, true);
+        return ResponseEntity.ok(actualizado);
     }
 
     @DeleteMapping("/{id}")
@@ -65,8 +72,13 @@ public class EstadoProcesoController {
             @PathVariable UUID id,
             @RequestHeader("Authorization") String token
     ) {
-        permisoAdministracionService.validarAdministrador(token);
+        var admin = permisoAdministracionService.validarAdministrador(token);
         estadoProcesoService.eliminar(id);
+        auditService.registrar(admin.getId(), "CATALOG_DELETED", "estados_proceso", id, null, true);
         return ResponseEntity.noContent().build();
+    }
+
+    private static String escape(String s) {
+        return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }
