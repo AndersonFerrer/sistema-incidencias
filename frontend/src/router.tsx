@@ -3,6 +3,7 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  redirect,
 } from "@tanstack/react-router"
 
 import { AppLayout } from "@/layout/app-layout"
@@ -18,6 +19,21 @@ import { NotificacionesPage } from "@/pages/notificaciones"
 import { PerfilPage } from "@/pages/perfil"
 import { ReportesPage } from "@/pages/reportes"
 import { UsuariosPage } from "@/pages/usuarios"
+import { useAuthStore } from "@/store/auth-store"
+
+/**
+ * Guard global: solo ADMINISTRADOR puede atravesar esta ruta. Si el rol no
+ * coincide, lanza un `redirect` en `beforeLoad` → el navegador cae en /dashboard.
+ * Sincronico (lee `useAuthStore.getState()` sin hook) para encajar en
+ * la firma de `beforeLoad`. El auth-check global lo hace `PrivateRoute`
+ * dentro de `AppLayout`; este guard es EXCLUSIVAMENTE por rol.
+ */
+function requireAdmin() {
+  const rol = useAuthStore.getState().user?.rol
+  if (rol !== "ADMINISTRADOR") {
+    throw redirect({ to: "/dashboard" })
+  }
+}
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -68,6 +84,7 @@ const incidenciaDetalleRoute = createRoute({
 const clientesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/clientes",
+  beforeLoad: requireAdmin,
   component: () => (
     <AppLayout>
       <ClientesPage />
@@ -78,6 +95,7 @@ const clientesRoute = createRoute({
 const categoriasRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/categorias",
+  beforeLoad: requireAdmin,
   component: () => (
     <AppLayout>
       <CategoriasPage />
@@ -88,6 +106,7 @@ const categoriasRoute = createRoute({
 const usuariosRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/usuarios",
+  beforeLoad: requireAdmin,
   component: () => (
     <AppLayout>
       <UsuariosPage />
@@ -128,6 +147,7 @@ const perfilRoute = createRoute({
 const configuracionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/configuracion",
+  beforeLoad: requireAdmin,
   component: () => (
     <AppLayout>
       <ConfiguracionPage />
