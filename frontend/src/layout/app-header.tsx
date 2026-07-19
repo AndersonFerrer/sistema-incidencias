@@ -7,19 +7,7 @@ import { Button } from "@/components/ui/button"
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown"
 import { useNotificationsPolling } from "@/hooks/use-notifications-polling"
 import { useAuthStore } from "@/store/auth-store"
-
-const routeTitles: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/incidencias": "Incidencias",
-  "/clientes": "Clientes",
-  "/categorias": "Categorías",
-  "/notificaciones": "Notificaciones",
-  "/perfil": "Mi perfil",
-}
-
-function getRouteTitle(pathname: string) {
-  return routeTitles[pathname] ?? "GestIncidencias"
-}
+import { getRouteTitle } from "@/lib/route-meta"
 
 export function AppHeader() {
   const user = useAuthStore((state) => state.user)
