@@ -61,7 +61,7 @@ export function ReporteCharts({
     .filter((item) => item.value > 0)
 
   return (
-    <section className="grid grid-cols-2 gap-6">
+    <section className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:gap-6">
       <ChartCard title="Estado de proceso">
         {pieData.length === 0 ? (
           <EmptyState texto="Sin datos en el rango seleccionado." />

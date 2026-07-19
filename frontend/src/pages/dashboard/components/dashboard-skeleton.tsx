@@ -14,13 +14,13 @@ export function DashboardSkeleton() {
         Cargando dashboard...
       </div>
 
-      <section className="grid grid-cols-5 gap-5">
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 xl:gap-5">
         {Array.from({ length: 5 }).map((_, i) => (
           <SkeletonCard key={`kpi-${i}`} />
         ))}
       </section>
 
-      <section className="grid grid-cols-3 gap-7">
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3 xl:gap-7">
         <SkeletonCard className="h-[330px]" />
         <SkeletonCard className="h-[330px]" />
         <SkeletonCard className="h-[330px]" />
