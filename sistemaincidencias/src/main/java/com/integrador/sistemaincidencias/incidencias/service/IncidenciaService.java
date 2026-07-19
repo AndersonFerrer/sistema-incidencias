@@ -501,9 +501,10 @@ public class IncidenciaService {
             }
             return;
         }
-        boolean esComentarioOAdjunto = metodo.startsWith("agregarComentario")
+        boolean esOperacionPermitidaUSUARIO = metodo.startsWith("obtenerDetalle")
+                || metodo.startsWith("agregarComentario")
                 || metodo.startsWith("agregarAdjunto");
-        if (!esComentarioOAdjunto) {
+        if (!esOperacionPermitidaUSUARIO) {
             throw new AccesoDenegadoException("No tienes permisos para realizar esta operacion");
         }
         if (!Objects.equals(target.getCreadoPorUsuarioId(), actual.getId())) {

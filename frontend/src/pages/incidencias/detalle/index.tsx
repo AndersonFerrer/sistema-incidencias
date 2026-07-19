@@ -152,26 +152,46 @@ export function IncidenciaDetallePage() {
 
     async function loadCatalogos() {
       try {
-        const [
-          categoriasResponse,
-          aplicativosResponse,
-          usuariosResponse,
-          aprobacionResponse,
-          procesoResponse,
-        ] = await Promise.all([
-          categoriasService.listar(),
-          aplicativosService.listar(),
-          usuariosService.listar(),
-          estadosAprobacionService.listar(),
-          estadosProcesoService.listar(),
-        ])
+        // Por rol: ADMIN ve todo; AGENTE/USUARIO no pueden listar todos los
+        // usuarios (admin-only) ni necesitan ver cliente/categoria/solicitante/
+        // responsable (sanitizados en el response de detalle). Solo cargan
+        // estados (necesarios para los dropdowns de cambio de estado de proceso)
+        // y /api/usuarios/agentes-asignables si la pagina lo necesitara.
+        const esAdmin = currentUserRol === "ADMINISTRADOR";
 
-        if (cancelled) return
-        setCategorias(categoriasResponse)
-        setAplicativos(aplicativosResponse)
-        setUsuarios(usuariosResponse)
-        setEstadosAprobacion(aprobacionResponse)
-        setEstadosProceso(procesoResponse)
+        if (esAdmin) {
+          const [categorias, aplicativos, aprobacion, proceso, users] =
+            await Promise.all([
+              categoriasService.listar(),
+              aplicativosService.listar(),
+              estadosAprobacionService.listar(),
+              estadosProcesoService.listar(),
+              usuariosService.listar(),
+            ])
+          if (cancelled) return
+          setCategorias(categorias)
+          setAplicativos(aplicativos)
+          setUsuarios(users)
+          setEstadosAprobacion(aprobacion)
+          setEstadosProceso(proceso)
+        } else {
+          // AGENTE / USUARIO: saltamos /api/usuarios (admin-only, causa 403).
+          // Tampoco necesitan categorias/aplicativos para VER detalle (los
+          // campos estan sanitizados en el response). Cargarlos solo si
+          // abriran el edit dialog (futuro: fetch on demand).
+          const [categorias, aplicativos, aprobacion, proceso] =
+            await Promise.all([
+              categoriasService.listar(),
+              aplicativosService.listar(),
+              estadosAprobacionService.listar(),
+              estadosProcesoService.listar(),
+            ])
+          if (cancelled) return
+          setCategorias(categorias)
+          setAplicativos(aplicativos)
+          setEstadosAprobacion(aprobacion)
+          setEstadosProceso(proceso)
+        }
       } catch {
         if (cancelled) return
       }
@@ -182,7 +202,7 @@ export function IncidenciaDetallePage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [currentUserRol])
 
   const voltar = () => {
     void navigate({ to: "/incidencias" })
