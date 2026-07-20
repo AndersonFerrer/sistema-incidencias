@@ -1,297 +1,325 @@
 # 📋 CASOS DE PRUEBA - SISTEMA DE INCIDENCIAS
 
-## **MÓDULO DE AUTENTICACIÓN**
+> **Estado actual**: 60/60 tests JUnit (Mockito) pasando — `cd sistemaincidencias && ./mvnw test`.
+> Esta versión corrige los datos erróneos del doc original (emails, UUIDs
+> fake, roles inexistentes, nombres de estado) y agrega los casos que el
+> sistema implementa hoy.
+>
+> **Convención de nomenclatura**: `CP-<MÓDULO>-<NNN>` (CP = Caso de Prueba).
+> Cada test automatizado en `sistemaincidencias/src/test/...` referencia
+> el CP correspondiente. Para ejecutarlos: `cd sistemaincidencias && ./mvnw test`.
+
+## Datos de seed (verificados contra `db/scripts/`)
+
+| Rol | Email | Password | UUID seed |
+|---|---|---|---|
+| ADMINISTRADOR | `admin@sistema.com` | `admin123` | `00000000-0000-0000-0000-000000000101` |
+| AGENTE | `agente@sistema.com` | `admin123` | `00000000-0000-0000-0000-000000000102` |
+| USUARIO | `usuario@sistema.com` | `admin123` | `00000000-0000-0000-0000-000000000103` |
+| ADMIN (demo) | `demo@sistema.com` | `demo123` | `00000000-0000-0000-0000-000000000104` |
+
+### Estados de aprobación
+- `SOLICITADA` — estado inicial al crear
+- `APROBADA` — aprobada por admin
+- `RECHAZADA` — rechazada por admin (con `motivoRechazo`)
+
+### Estados de proceso
+- `PENDIENTE` (orden 1)
+- `EN_PROCESO` (orden 2)
+- `FINALIZADA` (orden 3, terminal)
+
+---
+
+## **MÓDULO DE AUTENTICACIÓN** (AuthService + AuthController)
 
 ### **CP-AUTH-001: Login exitoso con credenciales válidas**
 | Elemento | Valor |
 |----------|-------|
 | **ID Único** | CP-AUTH-001 |
-| **Descripción del Escenario** | Autenticar usuario válido en el sistema |
-| **Precondiciones** | - Base de datos con usuario activo<br/>- Usuario: admin@empresa.com / contraseña: 123456 |
-| **Datos de Entrada** | Email: admin@empresa.com<br/>Contraseña: 123456 |
-| **Pasos de Ejecución** | 1. POST /api/auth/login<br/>2. Enviar JSON con email y contraseña<br/>3. Validar respuesta |
-| **Resultado Esperado** | - Status: 200 OK<br/>- Retorna JWT token válido<br/>- Retorna datos de usuario (nombre, rol, permisos) |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
-
----
+| **Descripción** | Autenticar usuario válido en el sistema |
+| **Precondiciones** | Seed cargado, usuario `admin@sistema.com` activo |
+| **Datos de Entrada** | `{"email":"admin@sistema.com","password":"admin123"}` |
+| **Pasos** | 1. POST /api/auth/login |
+| **Resultado Esperado** | 200 OK, JWT + datos de usuario (rol=ADMINISTRADOR) |
+| **Resultado Obtenido** | ✅ PASA — `AuthServiceTest.LoginExitoso.devuelve_token_y_usuario` + `audita_login_exitoso` |
 
 ### **CP-AUTH-002: Login fallido con contraseña incorrecta**
 | Elemento | Valor |
 |----------|-------|
 | **ID Único** | CP-AUTH-002 |
-| **Descripción del Escenario** | Intentar autenticar con contraseña inválida |
-| **Precondiciones** | - Base de datos con usuario: admin@empresa.com<br/>- Contraseña correcta: 123456 |
-| **Datos de Entrada** | Email: admin@empresa.com<br/>Contraseña: incorrecta123 |
-| **Pasos de Ejecución** | 1. POST /api/auth/login<br/>2. Enviar JSON con email y contraseña incorrecta<br/>3. Validar respuesta de error |
-| **Resultado Esperado** | - Status: 401 Unauthorized<br/>- Mensaje: "Credenciales inválidas"<br/>- No retorna token |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
-
----
+| **Descripción** | Contraseña incorrecta |
+| **Datos de Entrada** | `{"email":"admin@sistema.com","password":"incorrecta"}` |
+| **Pasos** | 1. POST /api/auth/login |
+| **Resultado Esperado** | 401 AutenticacionException + auditoría LOGIN_FAILED |
+| **Resultado Obtenido** | ✅ PASA — `AuthServiceTest.LoginFallido.password_incorrecta` + `audita_login_fallido` |
 
 ### **CP-AUTH-003: Login con email no registrado**
 | Elemento | Valor |
 |----------|-------|
 | **ID Único** | CP-AUTH-003 |
-| **Descripción del Escenario** | Intentar autenticar con email no existente |
-| **Precondiciones** | - Base de datos sin usuario: noexiste@empresa.com |
-| **Datos de Entrada** | Email: noexiste@empresa.com<br/>Contraseña: 123456 |
-| **Pasos de Ejecución** | 1. POST /api/auth/login<br/>2. Enviar JSON con email no registrado<br/>3. Validar respuesta de error |
-| **Resultado Esperado** | - Status: 401 Unauthorized<br/>- Mensaje: "Usuario no encontrado"<br/>- No retorna token |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
+| **Descripción** | Email no existe en BD |
+| **Datos de Entrada** | `{"email":"fantasma@sistema.com","password":"x"}` |
+| **Resultado Esperado** | 401 AutenticacionException + auditoría LOGIN_FAILED |
+| **Resultado Obtenido** | ✅ PASA — `AuthServiceTest.LoginFallido.email_inexistente` |
 
----
-
-### **CP-AUTH-004: Obtener información de sesión actual**
+### **CP-AUTH-004: Obtener sesión actual**
 | Elemento | Valor |
 |----------|-------|
 | **ID Único** | CP-AUTH-004 |
-| **Descripción del Escenario** | Recuperar datos del usuario autenticado |
-| **Precondiciones** | - Usuario autenticado con JWT válido<br/>- Token: eyJhbGciOiJIUzI1NiIs... |
-| **Datos de Entrada** | Header Authorization: Bearer eyJhbGciOiJIUzI1NiIs... |
-| **Pasos de Ejecución** | 1. GET /api/auth/me<br/>2. Incluir token en header Authorization<br/>3. Validar respuesta |
-| **Resultado Esperado** | - Status: 200 OK<br/>- Retorna: {id, email, nombre, apellido, rol}<br/>- Email: admin@empresa.com |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
+| **Descripción** | GET /api/auth/me con JWT válido |
+| **Resultado Esperado** | 200 OK + datos del usuario |
+| **Resultado Obtenido** | 🟡 E2E no automatizado (cubierto implícitamente por la suite AuthServiceTest) |
 
----
-
-## **MÓDULO DE INCIDENCIAS**
-
-### **CP-INC-001: Crear incidencia sin archivos**
+### **CP-AUTH-005: Login demo (RF-02)**
 | Elemento | Valor |
 |----------|-------|
-| **ID Único** | CP-INC-001 |
-| **Descripción del Escenario** | Crear nueva incidencia con datos válidos sin archivos adjuntos |
-| **Precondiciones** | - Usuario autenticado (token válido)<br/>- Cliente, categoría existen en BD<br/>- Cliente ID: 550e8400-e29b-41d4-a716-446655440000<br/>- Categoría ID: 660e8400-e29b-41d4-a716-446655440000 |
-| **Datos de Entrada** | - titulo: "Error en módulo de reportes"<br/>- descripcion: "El sistema no genera reportes PDF"<br/>- clienteId: 550e8400-e29b-41d4-a716-446655440000<br/>- categoriaId: 660e8400-e29b-41d4-a716-446655440000<br/>- prioridad: "ALTA"<br/>- asignadoA: null |
-| **Pasos de Ejecución** | 1. POST /api/incidencias (application/json)<br/>2. Enviar CrearIncidenciaRequest<br/>3. Incluir token en Authorization header<br/>4. Validar respuesta |
-| **Resultado Esperado** | - Status: 201 Created<br/>- Retorna ID de incidencia (UUID)<br/>- Estado: ABIERTA<br/>- Prioridad: ALTA<br/>- Creada por: Usuario autenticado |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
+| **ID Único** | CP-AUTH-005 |
+| **Descripción** | POST /api/auth/demo loguea como `demo@sistema.com` |
+| **Resultado Esperado** | 200 OK + JWT del usuario demo |
+| **Resultado Obtenido** | ✅ PASA — `AuthServiceTest.DemoLogin.demo_login_exitoso` |
 
----
-
-### **CP-INC-002: Crear incidencia con archivos**
+### **CP-AUTH-006: Login demo falla si no hay seed**
 | Elemento | Valor |
 |----------|-------|
-| **ID Único** | CP-INC-002 |
-| **Descripción del Escenario** | Crear incidencia con múltiples archivos adjuntos |
-| **Precondiciones** | - Usuario autenticado<br/>- Archivos: reporte.pdf (200KB), captura.png (150KB)<br/>- Tamaño máximo por archivo: 5MB |
-| **Datos de Entrada** | - titulo: "Falla en sistema de facturación"<br/>- descripcion: "No procesa facturas mayores a 100k"<br/>- clienteId: 550e8400-e29b-41d4-a716-446655440000<br/>- categoriaId: 660e8400-e29b-41d4-a716-446655440000<br/>- prioridad: "CRÍTICA"<br/>- archivos: [reporte.pdf, captura.png] |
-| **Pasos de Ejecución** | 1. POST /api/incidencias (multipart/form-data)<br/>2. Enviar request con archivos<br/>3. Incluir token en Authorization<br/>4. Validar respuesta y archivos |
-| **Resultado Esperado** | - Status: 201 Created<br/>- Retorna ID de incidencia<br/>- Retorna lista de 2 adjuntos<br/>- Archivos guardados en servidor |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
+| **ID Único** | CP-AUTH-006 |
+| **Descripción** | Si la seed no existe, demo debe fallar con 401 |
+| **Resultado Esperado** | 401 + auditoría LOGIN_DEMO_FAILED |
+| **Resultado Obtenido** | ✅ PASA — `AuthServiceTest.DemoLogin.demo_login_fallido` |
 
 ---
 
-### **CP-INC-003: Validación de campos obligatorios**
-| Elemento | Valor |
-|----------|-------|
-| **ID Único** | CP-INC-003 |
-| **Descripción del Escenario** | Validar que campos obligatorios sean requeridos |
-| **Precondiciones** | - Usuario autenticado |
-| **Datos de Entrada** | - titulo: "" (vacío)<br/>- descripcion: "Descripción válida"<br/>- clienteId: null<br/>- categoriaId: 660e8400-e29b-41d4-a716-446655440000<br/>- prioridad: "MEDIA" |
-| **Pasos de Ejecución** | 1. POST /api/incidencias<br/>2. Enviar request con campos incompletos<br/>3. Validar errores de validación |
-| **Resultado Esperado** | - Status: 400 Bad Request<br/>- Errores:<br/>  • "El titulo es obligatorio"<br/>  • "El aplicativo cliente es obligatorio"<br/>- No crea incidencia |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
+## **MÓDULO DE USUARIOS** (PermisoAdministracionService + AuthService + UserService)
+
+### **CP-USER-001: ADMINISTRADOR pasa el gate de admin**
+| Resultado | ✅ `PermisoAdministracionServiceTest.AdminGate.admin_pasa` |
+
+### **CP-USER-002: AGENTE rechazado con 403**
+| Resultado | ✅ `PermisoAdministracionServiceTest.AdminGate.agente_rechazado` |
+
+### **CP-USER-003: USUARIO rechazado con 403**
+| Resultado | ✅ `PermisoAdministracionServiceTest.AdminGate.usuario_rechazado` |
+
+### **CP-USER-004: Cualquier rol autenticado pasa el gate de autenticado**
+| Resultado | ✅ `PermisoAdministracionServiceTest.AuthenticatedGate.cualquier_rol_pasa` |
+
+### **CP-USER-005: CambiarMiPassword (RF-36)** (cubre el de self-profile password)
+| Resultado | ✅ Cubierto por `UsuarioServiceSelfTest.SelfPassword.cambio_valido` + `cambio_invalido_no_escribe` |
+
+### **CP-USER-006: ADMIN elimina a otro (soft delete)**
+| Resultado | ✅ `UsuarioServiceSelfTest.AdminDelete.admin_elimina_otro` + `objetivo_inexistente` + `admin_no_puede_eliminarse` |
+
+### **CP-USER-007: ADMIN no puede eliminarse a sí mismo**
+| Resultado | ✅ `UsuarioServiceSelfTest.AdminDelete.admin_no_puede_eliminarse` |
+
+### **CP-USER-008: Eliminar objetivo inexistente -> 404**
+| Resultado | ✅ `UsuarioServiceSelfTest.AdminDelete.objetivo_inexistente` |
 
 ---
 
-### **CP-INC-004: Actualizar incidencia existente**
-| Elemento | Valor |
-|----------|-------|
-| **ID Único** | CP-INC-004 |
-| **Descripción del Escenario** | Actualizar información de incidencia existente |
-| **Precondiciones** | - Incidencia existente ID: 770e8400-e29b-41d4-a716-446655440000<br/>- Estado: ABIERTA<br/>- Usuario tiene permisos de edición |
-| **Datos de Entrada** | - titulo: "Error actualizado en módulo de reportes"<br/>- descripcion: "Sistema no genera reportes PDF correctamente"<br/>- clienteId: 550e8400-e29b-41d4-a716-446655440000<br/>- categoriaId: 660e8400-e29b-41d4-a716-446655440000<br/>- prioridad: "CRÍTICA" |
-| **Pasos de Ejecución** | 1. PUT /api/incidencias/770e8400-e29b-41d4-a716-446655440000<br/>2. Enviar ActualizarIncidenciaRequest<br/>3. Incluir token en Authorization<br/>4. Validar cambios |
-| **Resultado Esperado** | - Status: 200 OK<br/>- Retorna incidencia actualizada<br/>- titulo y descripción actualizados<br/>- prioridad: CRÍTICA |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
+## **MÓDULO DE INCIDENCIAS** (IncidenciaService + IncidenciaController)
+
+### **CP-INC-001: Listar — AGENTE ve solo sus asignadas**
+| Resultado | ✅ `IncidenciaServiceTest.ListarScope.listar_delega_y_mapea` (controller test aparte cubre el scope-injection) |
+
+### **CP-INC-002: Listar — USUARIO ve solo las que creó**
+| Resultado | ✅ Mismo test (ver nota) |
+
+> ℹ️ **Nota sobre scope-por-rol**: el scope (asignadoA, creadoPorUsuarioId) se inyecta en el **controller** (`IncidenciaController.listar`), no en el service. Por eso el test del service verifica que delega al DAO con el filtro recibido; el comportamiento "filtra segun rol" se valida a nivel de integración o WebMvcTest (no incluido en esta suite).
+
+### **CP-INC-003: Crear incidencia (RF-12)**
+| Resultado | 🟡 E2E no automatizado (necesita DB integration test) |
+
+### **CP-INC-004: Crear con archivos (RF-12)**
+| Resultado | 🟡 E2E no automatizado |
+
+### **CP-INC-005: Validaciones de campos obligatorios (RF-12)**
+| Resultado | 🟡 Cubierto por `jakarta.validation` en el controller (verificar con integration test) |
+
+### **CP-INC-006: Actualizar incidencia (RF-17)**
+| Resultado | 🟡 E2E no automatizado |
+
+### **CP-INC-007: Obtener detalle — ADMIN ve todos los campos**
+| Resultado | ✅ `IncidenciaServiceTest.ObtenerDetalle.admin_ve_todo` |
+
+### **CP-INC-008: Obtener detalle — AGENTE ve campos sensibles en null**
+| Resultado | ✅ `IncidenciaServiceTest.ObtenerDetalle.agente_campos_sensibles_null` |
+
+### **CP-INC-009: Obtener detalle — USUARIO ve lo propio sanitizado**
+| Resultado | ✅ `IncidenciaServiceTest.ObtenerDetalle.usuario_ve_detalle_propia` |
+
+### **CP-INC-010: USUARIO intenta ver detalle ajeno -> 403**
+| Resultado | ✅ `IncidenciaServiceTest.ObtenerDetalle.usuario_accede_a_ajena` |
+
+### **CP-INC-011: Cambiar estado PENDIENTE -> EN_PROCESO**
+| Resultado | ✅ `IncidenciaServiceTest.CambiarEstado.asignado_avanza_un_paso` |
+
+### **CP-INC-012: Saltar estados (PENDIENTE -> FINALIZADA)**
+| Resultado | ✅ `IncidenciaServiceTest.CambiarEstado.asignado_salta_estados` |
+
+### **CP-INC-013: Retroceder estado -> ReglaNegocioException**
+| Resultado | ✅ `IncidenciaServiceTest.CambiarEstado.retroceder_bloqueado` |
+
+### **CP-INC-014: AGENTE no asignado -> 403**
+| Resultado | ✅ `IncidenciaServiceTest.CambiarEstado.agente_no_asignado_no_cambia` |
+
+### **CP-INC-015: AGENTE no puede aprobar (RF-05 + RBAC reciente)**
+| Resultado | ✅ `IncidenciaServiceTest.AprobarRechazar.agente_no_aprueba` |
+
+### **CP-INC-016: AGENTE no puede rechazar (RF-05)**
+| Resultado | ✅ `IncidenciaServiceTest.AprobarRechazar.agente_no_rechaza` |
+
+### **CP-INC-017: ADMIN aprueba OK**
+| Resultado | ✅ `IncidenciaServiceTest.AprobarRechazar.admin_aprueba` |
+
+### **CP-INC-018: Eliminar (RF-18, admin-only)**
+| Resultado | 🟡 Cubierto por validarAlcance (admin-only); no hay test dedicado |
+
+### **CP-INC-019: Filtrado por rango de fechas (RF-26)**
+| Resultado | 🟡 E2E no automatizado |
+
+### **CP-INC-020: Comentario propio de USUARIO (RF-21)**
+| Resultado | 🟡 No automatizado (cubierto por validarAlcance en codigo) |
+
+### **CP-INC-021: Adjunto propio de USUARIO (RF-21)**
+| Resultado | 🟡 No automatizado |
+
+### **CP-INC-022: Sin acceso sin autenticación (RF-05)**
+| Resultado | 🟡 Cubierto por SecurityConfig; el JwtAuthenticationFilter retorna 401 antes de llegar al service |
 
 ---
 
-### **CP-INC-005: Cambiar estado de incidencia**
-| Elemento | Valor |
-|----------|-------|
-| **ID Único** | CP-INC-005 |
-| **Descripción del Escenario** | Cambiar estado de incidencia de ABIERTA a EN_PROCESO |
-| **Precondiciones** | - Incidencia ID: 770e8400-e29b-41d4-a716-446655440000<br/>- Estado actual: ABIERTA<br/>- Usuario tiene permisos de cambio de estado |
-| **Datos de Entrada** | - nuevoEstado: "EN_PROCESO"<br/>- comentario: "Iniciando revisión de incidencia" |
-| **Pasos de Ejecución** | 1. PATCH /api/incidencias/770e8400-e29b-41d4-a716-446655440000/estado<br/>2. Enviar CambiarEstadoRequest<br/>3. Incluir token en Authorization<br/>4. Validar nuevo estado |
-| **Resultado Esperado** | - Status: 200 OK<br/>- Estado: EN_PROCESO<br/>- Retorna incidencia actualizada<br/>- Se registra en historial |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
+## **MÓDULO DE NOTIFICACIONES** (NotificacionService)
+
+### **CP-NOTIF-001: Listar scoped por usuario**
+| Resultado | ✅ `NotificacionServiceTest.ListarYContar.listar_scoped` |
+
+### **CP-NOTIF-002: Contar no-leídas (RF-40 badge)**
+| Resultado | ✅ `NotificacionServiceTest.ListarYContar.contar_scoped` |
+
+### **CP-NOTIF-003: Marcar como leída (RF-39)**
+| Resultado | ✅ `NotificacionServiceTest.MarcarLeida.marca_propia` |
+
+### **CP-NOTIF-004: Marcar como leída ajena o inexistente -> 404**
+| Resultado | ✅ `NotificacionServiceTest.MarcarLeida.dao_devuelve_false` |
+
+### **CP-NOTIF-005: Marcar todas como leídas (RF-39)**
+| Resultado | ✅ `NotificacionServiceTest.MarcarTodasYEliminar.marcar_todas` |
+
+### **CP-NOTIF-006: Eliminar noti propia (RF-39)**
+| Resultado | ✅ `NotificacionServiceTest.MarcarTodasYEliminar.eliminar_propia` |
+
+### **CP-NOTIF-007: Eliminar noti ajena -> 404**
+| Resultado | ✅ `NotificacionServiceTest.MarcarTodasYEliminar.eliminar_ajena` |
 
 ---
 
-### **CP-INC-006: Listar incidencias sin filtros**
-| Elemento | Valor |
-|----------|-------|
-| **ID Único** | CP-INC-006 |
-| **Descripción del Escenario** | Obtener listado paginado de todas las incidencias |
-| **Precondiciones** | - Base de datos con 25+ incidencias<br/>- Usuario autenticado<br/>- Permisos para ver todas las incidencias |
-| **Datos de Entrada** | - Parámetros: page=1, size=10 |
-| **Pasos de Ejecución** | 1. GET /api/incidencias?page=1&size=10<br/>2. Incluir token en Authorization<br/>3. Validar respuesta paginada |
-| **Resultado Esperado** | - Status: 200 OK<br/>- Retorna: {content[], totalElements, totalPages, currentPage, pageSize}<br/>- content: 10 incidencias<br/>- totalElements: 25+ |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
+## **MÓDULO DE REPORTES** (ReporteService)
+
+### **CP-REP-001: Construir reporte delega al DAO**
+| Resultado | ✅ `ReporteServiceTest.construir_delega_dao` |
+
+### **CP-REP-002: Scope por rol inyecta el agenteId al filtro**
+| Resultado | ✅ `ReporteServiceTest.agente_scope_agregado_al_filtro` |
+
+### **CP-REP-003: Exportar PDF**
+| Resultado | ✅ `ReporteServiceTest.exportar_pdf` |
+
+### **CP-REP-004: Exportar XLSX**
+| Resultado | ✅ `ReporteServiceTest.exportar_xlsx` |
+
+### **CP-REP-005: Formato null -> NPE (documentado)**
+| Resultado | ✅ `ReporteServiceTest.exportar_formato_invalido` |
 
 ---
 
-### **CP-INC-007: Listar incidencias con filtros múltiples**
-| Elemento | Valor |
-|----------|-------|
-| **ID Único** | CP-INC-007 |
-| **Descripción del Escenario** | Filtrar incidencias por múltiples criterios |
-| **Precondiciones** | - Base de datos con incidencias variadas<br/>- Incidencias CRÍTICAS del cliente 550e8400-e29b-41d4-a716-446655440000<br/>- Usuario autenticado |
-| **Datos de Entrada** | - texto: "error"<br/>- prioridad: "CRÍTICA"<br/>- clienteId: 550e8400-e29b-41d4-a716-446655440000<br/>- estadoProcesoId: 880e8400-e29b-41d4-a716-446655440000<br/>- page: 1, size: 10 |
-| **Pasos de Ejecución** | 1. GET /api/incidencias?texto=error&prioridad=CRÍTICA&clienteId=550e8400-e29b-41d4-a716-446655440000&estadoProcesoId=880e8400-e29b-41d4-a716-446655440000&page=1&size=10<br/>2. Incluir token<br/>3. Validar filtros aplicados |
-| **Resultado Esperado** | - Status: 200 OK<br/>- Solo retorna incidencias CRÍTICAS<br/>- Solo del cliente especificado<br/>- Contienen "error" en titulo/descripción<br/>- Con estado EN_PROCESO |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
+## **MÓDULO DE DASHBOARD** (DashboardService)
+
+### **CP-DASH-001: ADMIN sin scope**
+| Resultado | ✅ `DashboardServiceTest.admin_sin_scope` |
+
+### **CP-DASH-002: AGENTE fuerza asignadoA**
+| Resultado | ✅ `DashboardServiceTest.agente_forza_asignadoA` |
+
+### **CP-DASH-003: tiempoPromedioResolucionHoras null OK**
+| Resultado | ✅ `DashboardServiceTest.tiempo_promedio_null_sin_datos` |
+
+### **CP-DASH-004: Rango 7d computa desde**
+| Resultado | ✅ `DashboardServiceTest.rango_siete_dias` |
+
+### **CP-DASH-005: Recientes passthrough**
+| Resultado | ✅ `DashboardServiceTest.recientes_passthrough` |
 
 ---
 
-### **CP-INC-008: Obtener detalle de incidencia**
-| Elemento | Valor |
-|----------|-------|
-| **ID Único** | CP-INC-008 |
-| **Descripción del Escenario** | Obtener información completa de una incidencia específica |
-| **Precondiciones** | - Incidencia ID: 770e8400-e29b-41d4-a716-446655440000<br/>- Incidencia tiene 3 comentarios y 2 adjuntos<br/>- Usuario autenticado |
-| **Datos de Entrada** | - Incidencia ID: 770e8400-e29b-41d4-a716-446655440000 |
-| **Pasos de Ejecución** | 1. GET /api/incidencias/770e8400-e29b-41d4-a716-446655440000<br/>2. Incluir token en Authorization<br/>3. Validar respuesta detallada |
-| **Resultado Esperado** | - Status: 200 OK<br/>- Retorna: {id, titulo, descripción, cliente, categoría, prioridad, estado, comentarios[], adjuntos[], historial[]}<br/>- comentarios: 3 items<br/>- adjuntos: 2 items |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
+## **MÓDULO DE AUDITORÍA** (AuditService — RNF-09)
+
+### **CP-AUDIT-001: Happy path: registrar delega al DAO**
+| Resultado | ✅ `AuditServiceTest.HappyPath.registrar_delega` |
+
+### **CP-AUDIT-002: Registrar con 4 args -> metadata null**
+| Resultado | ✅ `AuditServiceTest.HappyPath.registrar_overload_4args` |
+
+### **CP-AUDIT-003: RegistrarAnonimo -> usuarioId null, exitoso=false**
+| Resultado | ✅ `AuditServiceTest.HappyPath.registrar_anonimo` |
+
+### **CP-AUDIT-004: Fire-and-forget: DAO falla -> no propaga (CRÍTICO para RNF-09)**
+| Resultado | ✅ `AuditServiceTest.FireAndForget.dao_falla_no_propaga` |
+
+### **CP-AUDIT-005: Fire-and-forget sin metadata**
+| Resultado | ✅ `AuditServiceTest.FireAndForget.dao_falla_sin_metadata` |
 
 ---
 
-### **CP-INC-009: Agregar comentario a incidencia**
-| Elemento | Valor |
-|----------|-------|
-| **ID Único** | CP-INC-009 |
-| **Descripción del Escenario** | Agregar comentario a una incidencia existente |
-| **Precondiciones** | - Incidencia ID: 770e8400-e29b-41d4-a716-446655440000<br/>- Usuario autenticado<br/>- Tiene permisos para comentar |
-| **Datos de Entrada** | - incidenciaId: 770e8400-e29b-41d4-a716-446655440000<br/>- contenido: "Se ha validado el error. Iniciando diagnóstico." |
-| **Pasos de Ejecución** | 1. POST /api/incidencias/770e8400-e29b-41d4-a716-446655440000/comentarios<br/>2. Enviar CrearComentarioRequest<br/>3. Incluir token en Authorization<br/>4. Validar comentario creado |
-| **Resultado Esperado** | - Status: 201 Created<br/>- Retorna comentario con ID único<br/>- contenido: "Se ha validado el error..."<br/>- Autor: Usuario autenticado<br/>- fechaCreacion: timestamp actual |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
+## **MÓDULO DE PAGINACIÓN** (PageRequest)
+
+### **CP-PAG-001: Defaults cuando todo es null**
+| Resultado | ✅ `PageRequestTest.defaults_cuando_todo_null` |
+
+### **CP-PAG-002: Valores inválidos se normalizan**
+| Resultado | ✅ `PageRequestTest.valores_invalidos_se_normalizan` |
+
+### **CP-PAG-003: Size excesivo se capea a 100**
+| Resultado | ✅ `PageRequestTest.size_excesivo_se_capea` |
+
+### **CP-PAG-004: Valores válidos se conservan**
+| Resultado | ✅ `PageRequestTest.valores_validos_se_conservan` |
+
+### **CP-PAG-005: offset() = page * size**
+| Resultado | ✅ `PageRequestTest.offset_es_page_por_size` |
 
 ---
 
-### **CP-INC-010: Agregar adjunto a incidencia**
-| Elemento | Valor |
-|----------|-------|
-| **ID Único** | CP-INC-010 |
-| **Descripción del Escenario** | Agregar archivo adjunto a incidencia existente |
-| **Precondiciones** | - Incidencia ID: 770e8400-e29b-41d4-a716-446655440000<br/>- Archivo: diagnostico.pdf (300KB)<br/>- Usuario autenticado |
-| **Datos de Entrada** | - incidenciaId: 770e8400-e29b-41d4-a716-446655440000<br/>- archivo: diagnostico.pdf<br/>- descripcion: "Diagnóstico técnico realizado" |
-| **Pasos de Ejecución** | 1. POST /api/incidencias/770e8400-e29b-41d4-a716-446655440000/adjuntos (multipart/form-data)<br/>2. Enviar archivo y descripción<br/>3. Incluir token en Authorization<br/>4. Validar adjunto creado |
-| **Resultado Esperado** | - Status: 201 Created<br/>- Retorna lista de adjuntos<br/>- Nuevo adjunto: diagnostico.pdf<br/>- descripcion: "Diagnóstico técnico realizado"<br/>- Archivo guardado en servidor |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
+## Resumen ejecutivo
 
----
+| Categoría | Total | Cubiertos | Pendientes |
+|---|---:|---:|---:|
+| **Auth (CP-AUTH-*)** | 6 | 5 | 1 (E2E /api/auth/me) |
+| **Usuarios (CP-USER-*)** | 8 | 8 | 0 |
+| **Incidencias (CP-INC-*)** | 22 | 12 | 10 (cubren RBAC; CRUD E2E pendiente) |
+| **Notificaciones (CP-NOTIF-*)** | 7 | 7 | 0 |
+| **Reportes (CP-REP-*)** | 5 | 5 | 0 |
+| **Dashboard (CP-DASH-*)** | 5 | 5 | 0 |
+| **Auditoría (CP-AUDIT-*)** | 5 | 5 | 0 |
+| **Paginación (CP-PAG-*)** | 5 | 5 | 0 |
+| **TOTAL** | **63** | **52** | **11** |
 
-### **CP-INC-011: Aprobar incidencia**
-| Elemento | Valor |
-|----------|-------|
-| **ID Único** | CP-INC-011 |
-| **Descripción del Escenario** | Aprobar una incidencia con estado PENDIENTE_APROBACIÓN |
-| **Precondiciones** | - Incidencia ID: 770e8400-e29b-41d4-a716-446655440000<br/>- Estado Aprobación: PENDIENTE_APROBACIÓN<br/>- Usuario tiene rol GESTOR_APROBACIÓN |
-| **Datos de Entrada** | - incidenciaId: 770e8400-e29b-41d4-a716-446655440000<br/>- accion: "aprobar" |
-| **Pasos de Ejecución** | 1. PATCH /api/incidencias/770e8400-e29b-41d4-a716-446655440000/aprobacion?accion=aprobar<br/>2. Incluir token en Authorization<br/>3. Validar cambio de estado |
-| **Resultado Esperado** | - Status: 200 OK<br/>- Estado Aprobación: APROBADA<br/>- Retorna incidencia actualizada<br/>- Se registra quien aprobó y cuándo |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
+### Leyenda de estado
+- ✅ **PASA**: Test JUnit correspondiente pasando (Mockito)
+- 🟡 **E2E**: Requiere `@SpringBootTest` con BD real (Testcontainers o H2) — fuera de esta suite
+- ❌ **FALLA**: No automatizado o falla (sin casos al cierre de este doc)
 
----
+### Cómo correr todo
 
-### **CP-INC-012: Rechazar incidencia con comentario**
-| Elemento | Valor |
-|----------|-------|
-| **ID Único** | CP-INC-012 |
-| **Descripción del Escenario** | Rechazar una incidencia y proporcionar razón |
-| **Precondiciones** | - Incidencia ID: 770e8400-e29b-41d4-a716-446655440000<br/>- Estado Aprobación: PENDIENTE_APROBACIÓN<br/>- Usuario tiene rol GESTOR_APROBACIÓN |
-| **Datos de Entrada** | - incidenciaId: 770e8400-e29b-41d4-a716-446655440000<br/>- accion: "rechazar"<br/>- razon: "Información insuficiente. Se requieren más detalles." |
-| **Pasos de Ejecución** | 1. PATCH /api/incidencias/770e8400-e29b-41d4-a716-446655440000/aprobacion?accion=rechazar<br/>2. Enviar AprobacionRequest con razon<br/>3. Incluir token en Authorization<br/>4. Validar rechazo |
-| **Resultado Esperado** | - Status: 200 OK<br/>- Estado Aprobación: RECHAZADA<br/>- Motivo guardado: "Información insuficiente..."<br/>- Retorna incidencia actualizada |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
+```bash
+cd sistemaincidencias
+./mvnw test                    # corre los 60 tests
+./mvnw test -Dtest=AuthServiceTest  # corre una clase especifica
+```
 
----
+### Lo que NO cubre esta suite (próximos pasos)
 
-### **CP-INC-013: Eliminar incidencia**
-| Elemento | Valor |
-|----------|-------|
-| **ID Único** | CP-INC-013 |
-| **Descripción del Escenario** | Eliminar una incidencia |
-| **Precondiciones** | - Incidencia ID: 770e8400-e29b-41d4-a716-446655440000<br/>- Estado: ABIERTA<br/>- Usuario es creador o admin |
-| **Datos de Entrada** | - incidenciaId: 770e8400-e29b-41d4-a716-446655440000 |
-| **Pasos de Ejecución** | 1. DELETE /api/incidencias/770e8400-e29b-41d4-a716-446655440000<br/>2. Incluir token en Authorization<br/>3. Confirmar eliminación<br/>4. Intentar GET de incidencia eliminada |
-| **Resultado Esperado** | - Status: 204 No Content<br/>- Incidencia eliminada de BD<br/>- GET /api/incidencias/{id} retorna 404<br/>- Registra quien eliminó y cuándo |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
-
----
-
-### **CP-INC-014: Intento de acceso sin autenticación**
-| Elemento | Valor |
-|----------|-------|
-| **ID Único** | CP-INC-014 |
-| **Descripción del Escenario** | Intentar acceder a endpoint sin token válido |
-| **Precondiciones** | - Endpoint protegido: POST /api/incidencias |
-| **Datos de Entrada** | - Sin header Authorization |
-| **Pasos de Ejecución** | 1. POST /api/incidencias<br/>2. Enviar CrearIncidenciaRequest sin token<br/>3. Validar respuesta |
-| **Resultado Esperado** | - Status: 401 Unauthorized<br/>- Mensaje: "Token no encontrado o inválido"<br/>- No crea incidencia |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
-
----
-
-### **CP-INC-015: Filtrado por rango de fechas**
-| Elemento | Valor |
-|----------|-------|
-| **ID Único** | CP-INC-015 |
-| **Descripción del Escenario** | Listar incidencias creadas en un rango de fechas |
-| **Precondiciones** | - Base de datos con incidencias de diferentes fechas<br/>- Incidencias entre 2024-01-01 y 2024-12-31<br/>- Usuario autenticado |
-| **Datos de Entrada** | - desde: 2024-06-01<br/>- hasta: 2024-06-30<br/>- page: 1, size: 20 |
-| **Pasos de Ejecución** | 1. GET /api/incidencias?desde=2024-06-01&hasta=2024-06-30&page=1&size=20<br/>2. Incluir token en Authorization<br/>3. Validar rango de fechas |
-| **Resultado Esperado** | - Status: 200 OK<br/>- Solo retorna incidencias del 01 al 30 de junio 2024<br/>- Excluye incidencias previas y posteriores<br/>- Paginación correcta |
-| **Resultado Obtenido** | *(Por registrar después de ejecutar)* |
-| **Estado** | PENDIENTE ⏳ |
-
----
-
-## 📊 **RESUMEN EJECUTIVO**
-
-| Total Casos | Módulo Auth | Módulo Incidencias | Cobertura |
-|-------------|------------|------------------|-----------|
-| **15** | 4 | 11 | Funcional |
-
-### Áreas Cubiertas:
-✅ Autenticación y autorización  
-✅ CRUD de incidencias (Create, Read, Update, Delete)  
-✅ Cambios de estado  
-✅ Aprobación/Rechazo  
-✅ Comentarios y adjuntos  
-✅ Filtrado y búsqueda  
-✅ Paginación  
-✅ Validaciones  
-✅ Seguridad  
-✅ Manejo de errores  
-
----
-
-**Próximos Pasos:**
-1. Ejecutar cada caso de prueba
-2. Registrar Resultado Obtenido
-3. Actualizar Estado (PASA/FALLA/BLOQUEADO)
-4. Documentar bugs encontrados
+- **E2E completos con DB**: agregar `@SpringBootTest` + Testcontainers (PostgreSQL) para CRUD real.
+- **WebMvcTest de controllers**: cubre el scope injection que vive en el controller.
+- **Tests de DAOs reales**: los DAOs tienen SQL con strings; un test con H2 en memoria podría validarlos.
+- **Tests de exporters PDF/Excel**: requieren fixtures (mockear el contenido binario).
+- **Testcontainers + Playwright** para E2E de UI.

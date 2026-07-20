@@ -238,9 +238,10 @@ public class IncidenciaService {
         if (nuevo.getOrden() < actual.getOrden()) {
             throw new ReglaNegocioException("No se permite retroceder el estado de la incidencia");
         }
-        if (nuevo.getOrden() - actual.getOrden() > 1) {
-            throw new ReglaNegocioException("No se permite saltar estados del flujo operativo");
-        }
+        // Salto de estados permitido: un AGENTE deberia poder llevar una incidencia
+        // de PENDIENTE a FINALIZADA sin pasar por EN_PROCESO (ej. trabajo ya hecho,
+        // cambio de prioridad). Mantenemos la prohibicion de retroceder para evitar
+        // inconsistencias en el historial.
 
         Incidencia actualizada = incidenciaDao.cambiarEstado(id, nuevo.getId(), Boolean.TRUE.equals(nuevo.getEsTerminal()));
         registrarHistorial(id, usuario.getId(), "CAMBIO_ESTADO", actual.getId(), nuevo.getId(), request.getNota());
